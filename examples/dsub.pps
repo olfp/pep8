@@ -1,0 +1,23 @@
+;
+; subtract double words
+;
+
+minend:	0765			; Minuend:	7654321 (oct)
+	4321
+subend:	0123			; Subtrahend:	1234567 (oct)
+	4567	
+differ:	0			; Differenz:	6417532 (oct)
+	0
+
+	page
+
+start:	rcl	(subend+1)	; subtrahend, niedriges wort
+	cll cma iac		; link leer, 2er komplement
+	tad	(minend+1)	; minuend, niedriges wort
+	sto	(differ+1)	; ergebnis, niedriger wert
+	rcl	subend		; subtrahend, hohes wort
+	cma			; 1er komplement bilden
+	tad	minend		; minuend, hohes wort + link
+	sto 	differ		; ergebnis, hohes wort
+	hlt
+

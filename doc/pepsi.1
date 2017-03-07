@@ -1,0 +1,286 @@
+.do hla de
+.do hpf hyphen.de
+.TH PEPSI 1 "2005-07-12" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
+.SH NAME
+pepsi \- Der pep-8 Simulator
+.SH SYNOPSIS
+.B pepsi
+.RI "[\-vsti] [ -o " addr " ] [ -d " addr:cnt " ...] [ -e "dev,... " ] [ " datei " ]
+.SH BESCHREIBUNG
+Dieses Handbuch dokumentiert das 
+.BR pepsi
+Kommando.
+.B pepsi
+simuliert einen pep-8 Prozessor. Es kann ein 
+.B .pmi
+Speicherabbild, welches durch den
+.BR pot (1)
+Übersetzer erzeugt wurde geladenen und ausgeführt werden.
+Der Simulator wird beendet wenn er eine
+.B HLT
+Anweisung ausführt.
+.PP
+Wird kein Speicherabbild übergeben oder der Einzelschritt-Modus
+gewählt geht
+.B pepsi
+in den interaktiven Modus.
+.PP
+.SH OPTIONEN
+.TP
+.I \-v
+Ausführlicher
+.RI ( verbose )
+Modus. Vor der Ausführung einer Anweisung wird der Inhalt aller internen 
+Register und ggf. der adressierten Speicherzelle ausgegeben. Ist der 
+Quelltext-Modus aktiv, wird weiterhin die aktuelle Quelltextzeile
+ausgegeben. 
+.TP
+.I \-s
+Quelltext 
+.RI ( source )
+Modus. Benutzt den Quelltext und die Symbole in der 
+.B .psy
+Datei. Die ermöglicht die Benutzung von symbolischen Adressen. Vor dem
+Inhalt der Register wird die aktuelle Quelltextzeile ausgegeben.
+.IP
+Die Erzeugung der
+.B .psy
+Datei muß explizit angefordert werden (siehe
+.BR pot (1)).
+.TP
+.I \-t
+Einzelschritt
+.RI ( trace )
+Modus. Der Simulator hält vor jeder Anweisung an und geht in den 
+interaktiven Modus. Der Einzelschritt Modus aktiviert automatisch
+den ausführlichen Modus. Der Quelltext-Modus muß ggf. zusätzlich
+aktiviert werden. Im Einzelschritt-Modus kann der Benutzer die
+angezeigte Anweisung ausführen, indem er die Eingabetaste 
+.RI ( return )
+betätigt oder ein Kommando absetzen, um den Zustand des Simulators
+zu inspizieren.
+.TP
+.I \-i
+Interaktiver 
+.RI ( interactive )
+Modus. Enspricht dem Aufruf mit \-st, also Quelltext- und 
+Einzelschritt-Modus aktiviert.
+.TP
+.I "\-o addr"
+Angabe der Startadresse 
+.RI ( origin )
+für die Simulation. Dabei kann 
+.I addr 
+eine Oktalzahl oder ein Symbol sein.
+.TP
+.I "\-d addr,cnt"
+Ausgabe
+.RI ( dump )
+von Speicherbereichen nach Ausführen einer
+.B HLT 
+Anweisung. Es werden 
+.I cnt
+Speicherworte beginnend mit 
+.I addr 
+in oktaler Notation ausgegeben. Dabei kann
+.I addr
+eine Oktalzahl oder ein Symbol sein. Die 
+.I \-d 
+Option kann mehrfach angegeben werden.
+.TP
+.IR "\-e dev" [ :params ] ,...
+Aktivieren von einem oder mehreren Geräten. Für jedes Gerät wird die
+Gerätenummer und ein Parametersatz angegeben. Mehrere Geräte werden
+durch Komma getrennt.
+.SH INTERAKTIVE KOMMANDOS
+Im interaktiven Modus hält der Simulator an, bevor er eine Anweisung ausführt
+und gibt die aktuelle Quelltextzeile (wenn verfügbar) und den Zustand
+der internen Register in der Form
+.I "pc: addr: word - l:b ac: cont"
+aus. Dies sind:
+.RS
+.TP 10
+.I Ausgabe
+.I Bedeutung
+.TP 10
+.BI pc: " addr"
+Programmzähler
+.RI ( "program counter" )
+.TP 10
+.I word
+Der Inhalt des aktuellen Speicherworts
+.TP 10
+.BI l: b
+Das Link-Bit
+.TP 10
+.BI ac: " cont"
+Der Akkumulator 
+.RI ( accumulator )
+.RE
+.PP
+Wenn die aktuelle Anweisung einen Operanden erfordert, wird dieser
+in der folgenden Zeile ausgegeben. Dies geschieht als Pfeil in der Form
+.RI -( XX )-> 
+wobei statt
+.I XX
+entweder
+.B ZP
+für die nullte Seite 
+.RI ( zeropage )
+oder die Nummer der aktuellen Speicherseite bei Adressierung relativ
+zur aktuellen Seite ausgegeben wird.
+Wenn es sich um eine indirekte Adresse handelt, wird ein zweiter Pfeil
+in der Form -(I)-> ausgegeben. Darauf folgt der Wert, der von der 
+indirekten Adresse referenziert wird.
+.PP
+Wenn die aktuelle Anweisung ein Sprung, also
+.B JMP
+oder
+.B JMS
+ist, wird das Ziel des Sprungs ausgegeben.
+Wenn es ein indirekter Sprung ist, wird ein Pfeil in der Form -(I)->
+ausgegeben, gefolgt vom Wert der referenziert wird.
+.PP
+Nach der Ausgabe der Register wird die aktuelle Beobachtungsliste abgearbeitet.
+Für jede beobachtete Adresse werden die entsprechenden Speicherworte ausgegeben. 
+Dann wird eine Eingabeaufforderung gedruckt und
+es kann eines der folgenden Kommandos eingegeben werden:
+.TP
+.BI < return >
+nächste Anweisung ausführen.
+.TP
+.BI . " (Punkt)"
+Gibt den Zustand der internen Register und die aktuelle Quelltextzeile
+(erneut) aus.
+.TP
+.BI b " addr"
+Unterbrechung 
+.RI ( breakpoint )
+an der angegebenen Adresse setzen. Wird bei der Ausführung eine Unterbrechung
+erreicht, wird die Ausführung unterbrochen und in den interaktiven Modus 
+geschaltet. Wird eine Unterbrechung auf den Beginn einer Unterroutine gesetzt, 
+d.h. auf die Adresse in der die Rücksprungadresse gespeichert wird, wird die
+Ausführung nach dem Speichern der Rücksprungadresse und vor der Ausführung des
+ersten Befehls der Unterroutine unterbrochen. In diesen Fall werden sowohl die
+Quellzeile mit der Unterbrechung als auch die folgende Zeile (die die nächste
+ausgeführte Anweisung enthält) angezeigt. 
+.TP
+.BI bc " addr"
+Unterbrechung an der mit
+.I addr 
+angegebenen Adresse löschen
+.RI ( "breakpoint clear" ).
+.TP
+.B bl
+Unterbrechungen
+auflisten
+.RI ( "breakpoint list" ).
+.TP
+.BI c "base value"
+Einen Wert 
+.I value
+mit Basis
+.I base
+umwandeln und ausgeben
+.RI ( convert ).
+Gültige Angaben für
+.I base 
+sind 
+.BR o " (oktal)," " d" " (dezimal) und" " h" " (hexadezimal),"
+der Wert wird jeweils in den anderen beiden Basen ausgegeben.
+.TP
+.BI d " addr value"
+Den Wert 
+.I value
+im Speicherwort an der Adresse 
+.I addr
+speichern
+.RI ( deposit ).
+.TP
+.B g
+Gehe bis zur nächsten Unterbrechung oder bis eine
+.B HLT
+Anweisung ausgeführt wird
+.RI ( go ).
+Deaktiviert den ausführlichen und den Einzelschritt-Modus.
+.TP
+.BI o " addr"
+Setze den Programmzähler auf die angegebene Adresse
+.RI ( origin ).
+.TP
+.BI "p [" "addr " [ cnt ]]
+Gibt die nächsten 
+.I cnt
+Quelltextzeilen ab der angegebenen Adresse aus
+.RI ( print ).
+Wird 
+.I cnt
+nicht angegeben, werden zehn Zeilen ausgegeben.
+Wird auch die Adresse weggelassen, werden
+zehn Zeilen ab der aktuellen Adresse ausgegeben.
+.TP
+.B s
+Gibt die Symboltabelle aus
+.RI ( symbols ).
+.TP
+.BI w " addr " [ cnt ]
+Setzt die Adresse
+.I addr
+auf die Beobachtungsliste
+.RI ( watch ). 
+Wird die Beobachtungsliste angezeigt, werden
+.I cnt
+Speicherworte ausgegeben. Wird
+.I cnt
+weggelassen, wird nur ein Wort ausgegeben.
+.TP
+.BI wc
+Löscht die Beobachtungsliste
+.RI ( "watchlist clear" ).
+.TP
+.BI x " addr " [ cnt ]
+Gibt 
+.I cnt
+Speicherworte an Adresse 
+.I addr 
+aus 
+.RI ( examine ).
+Wird 
+.I cnt
+weggelassen, wird nur ein Wort ausgegeben.
+.TP
+.B ?
+Gibt einen kurzen Hilfetext aus.
+.TP
+.B q
+Beendet den Simulator
+.RI ( quit ).
+.PP
+Adressen können entweder als absolute Adresse als Oktalzahlen mit bis zu
+vier Stellen oder in der Form
+.I page:offset
+mit separater Seitennummer und Offset innerhalb der
+Speicherseite angegeben werden. Seitennummer und Offset werden auch oktal
+angegeben. Im Quelltextmodus können statt numerischer Adressen auch die 
+im Programm definierten Symbole verwendet werden.
+.SH EIN-/AUSGABE
+Zur Zeit wird nur ein Ein-/Ausgabegerät unterstützt, ein Fernschreiber mit
+300 Baud. Die Gerätenummer ist null, das Gerät besitzt keine 
+Untereinheiten und verfügt weder über ein Statuswort noch eine 
+Meldungsauswahlmaske. Als Parameter bei der Aktivierung können Hostname und 
+Port des 
+.BR teletype (1)
+Servers der den Fernschreiber simuliert in der Form
+.IB host : port
+angegeben werden. Werden die Parameter weggelassen wird 
+.IB localhost : 4200
+benutzt. Wird 
+.BR teletype (1)
+ohne Parameter auf dem lokalen System gestartet wird ebenfalls Port 4200 
+benutzt, so dass im Regelfall ohne Parameter gearbeitet werden kann.
+.SH SIEHE AUCH
+.BR pot (1),
+.BR pot (5),
+.BR pep8 (7)
+.SH BUGS
+Wahrscheinlich reichlich, aber noch unentdeckt.

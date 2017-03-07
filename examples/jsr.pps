@@ -1,0 +1,61 @@
+;
+; emulate return stack on pep8
+;
+
+	JMP I	VEC
+VEC:	START
+
+ENTER:	GOSUB			; vector: start subroutine
+LEAVE:	ENDSUB			; vector: return from subroutine
+
+PTR:	0			; helper pointer
+TOS:	STACK			; pointer to top-of-stack
+
+CNT:	10			; variables
+
+	PAGE
+
+START:	JSR			; call
+	CNTDN			; countdown subroutine
+	HLT			; cnt should be 0
+
+CNTDN:	CLL CLA			; countdown subroutine
+	CMA
+	TAD	CNT		; decrement
+	STO	CNT
+	SNA			; ac non-zero, continue
+	JMP 	FINIS		; ac was zero, terminate
+	JSR
+	CNTDN			; recursion
+FINIS:	RET
+
+	PAGE			; stack calls need to work cross-page
+
+GOSUB:	NOP
+	RCL	GOSUB		; points to word after JSR
+	IAC			; occupied with target addr, skip
+	STO I	TOS		; put on stack
+
+	RCL 	TOS
+	IAC			; increment top-of-stack
+	STO	TOS
+
+	RCL I	GOSUB		; address of subroutine
+	STO 	PTR		; dereference
+	JMP I	PTR		; jump to subroutine
+
+ENDSUB:	CLL CLA
+	CMA
+	TAD 	TOS		; decrement top-of-stack
+	STO	TOS
+	RCL I	TOS		; return vector
+	STO 	PTR		; dereference
+	JMP I	PTR		; return from subroutine
+
+JSR=	JMS I	ENTER		; macro: enter subroutine
+RET=	JMP I	LEAVE		; macro: return from subroutine
+
+	PAGE
+
+STACK:				; 128 word stack growing upwards
+

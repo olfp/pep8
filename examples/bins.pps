@@ -1,0 +1,68 @@
+;
+; binäre suche
+;
+
+find:	42
+
+first:	tab
+last:	etab
+mid:	-1
+
+	page
+
+start:	rcl	first		; erster tab. wert
+	cll 			; link 0
+	tad 	last		; letzter + erster
+	cll rar			; link 0, rechts rotieren
+	sto 	mid		; mid = (last + first)/2
+	rcl i	mid		; wert an mid holen
+	cll cma iac		; link 0, 2er komplement
+	tad 	find		; mit suchwert vergleichen
+	sna			; nicht null?
+	jmp	found		; doch! fertig
+	sma			; kleiner null?
+	jmp	right		; nein! rechte hälfte
+left:	cll cla
+	cma			; akku -1
+	tad	mid		; plus mitte
+	sto	last		; neues ende = mid - 1
+	jmp	cont		
+right:	rcl	mid		; mitte holen
+	iac			; eins weiter ist
+	sto 	first		; neuer anfang
+cont:	rcl	first		; anfang holen
+	cll cma iac		; link 0, 2er komplement
+	tad 	last		; mit ende vergleichen
+	sma			; anfang == ende?
+	jmp	start		; nein! nächste runde
+found:	rcl i	mid		; mid zeigt auf wert
+	cll cma iac		; link 0, 2er komplement
+	tad 	find		; mit suchwert vergleichen
+	sza			; null wenn gefunden
+	jmp	notfnd		; nicht gefunden
+	jmp	finis		; und gut
+notfnd:	cla			; null für nicht gefunden
+	sto 	mid		; in mid speichern
+finis:	hlt			; und ende
+
+
+tab:	0020
+	0021
+	0036
+	0042
+	0067
+	0071
+	0076
+	0104
+	0124
+	0134
+	0170
+	0173
+	0176
+	0212
+	0406
+	0502
+	0532
+	0546
+	0703
+etab:	0706

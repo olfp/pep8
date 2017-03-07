@@ -1,0 +1,22 @@
+;
+; iot tests
+;
+
+TTY=	0		; TTY - device # in bits 4-6
+
+LOOP:	CLL CLA
+RETRY:	SRI	TTY
+	JMP	RETRY
+	DGA	TTY
+WAIT:	SRO	TTY
+	JMP	WAIT
+	DPA	TTY
+	CLL CMA IAC
+	TAD 	ESC
+	SZA
+	JMP 	LOOP
+	HLT
+
+ESC:	0033
+
+; EOF

@@ -1,0 +1,35 @@
+;
+; pep8 - distinguish odd and even
+;
+
+CURR:	0		; laufender wert
+LAST:	77		; maximalwert
+PTR:	ODDS		; zeiger in tabelle
+ODDS:			; ergebnistabelle ab hier
+
+	PAGE
+
+START:	CLA		; start wert ist null
+LOOP:	RAR		; bit 11 ins link
+	SNL		; link =1, dann ungrade
+	JMP 	EVEN	; sonst gerade
+	RAL		; ist ungerade, zurück
+	STO I	PTR	; abspeichern in tabelle
+	RCL 	PTR	; zeiger holen
+	IAC		; erhöhen
+	STO 	PTR	; und speichern
+EVEN:	RCL	CURR	; aktueller wert
+	CLL CMA IAC	; 2er komplement
+	TAD	LAST	; last - curr
+	SNA		; nicht null, weiter
+	JMP	FINIS	; fertig
+	RCL	CURR	; aktueller wert
+	IAC		; erhöhen
+	STO 	CURR	; und speicher
+	JMP 	LOOP	; weiter
+FINIS:	HLT
+
+; eof
+	
+	
+	

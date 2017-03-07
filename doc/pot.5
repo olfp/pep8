@@ -1,0 +1,167 @@
+.do hla de
+.do hpf hyphen.de
+.TH POT 5 "2005-08-10" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
+.SH NAME
+pot \- Format der Quelldateien
+für den
+.BR pot (1)
+Assembler.
+.SH BESCHREIBUNG
+Dieses Dokument erläutert das Format der Quelldateien, die der
+.BR pot (1)
+Assembler verarbeiten kann.
+.SH ZEILENFORMAT
+Eine
+.BR pot (1)
+Quelldatei besteht aus Zeilen, von denen jede
+.IR Symbole ,
+.IR Befehle ,
+.IR Oktalzahlen
+und
+.I Kommentare
+enthalten kann.
+Wenn eine Zeile zumindest einen
+.I Befehl
+oder eine
+.I Oktalzahl
+enthält, wird ein Speicherwert generiert und der Speicherzeiger erhöht. 
+.PP
+Der Speicherzeiger verweist dabei auf die Speicherzelle, in die der nächste
+Wert abgelegt werden soll. Zu Beginn verweist der Speicherzeiger auf die
+Speicherzelle mit der Adresse null.
+.PP
+Der Speicherzeiger kann über zwei verschiedene Pseudobefehle manipuliert 
+werden:
+.TP
+.BI "*" " <nnnn>"
+Setzt den Speicherzeiger auf den oktalen Wert
+.IR <nnnn> .
+.TP
+.B PAGE
+Setzt den Speicherzeiger auf den Anfang der nächsten Speicherseite.
+Eine Speicherseite besteht aus 128 Worten.
+.SH SYMBOLE
+.I Symbole
+stehen am Anfang einer Zeile. Damit ein Symbol korrekt erkannt wird, dürfen
+vor ihm höchstens Leer- und Tabulatorzeichen stehen.
+.I "Adressymbole"
+enden mit einem
+.B :
+(Doppelpunkt). Ihnen wird der aktuelle Wert des Speicherzeigers zugewiesen.
+.I "Wertsymbole"
+weden mit
+.B =
+abgeschlossen. Ihr Wert wird bestimmt, indem der Rest der Zeile ausgewertet
+und das Ergebnis dem Symbol zugewiesen wird. Der Speicherzeiger wird dabei
+nicht erhöht.
+.PP
+Wenn ein Symbol nicht durch
+.B :
+oder
+.B =
+terminiert wird, so gilt es als referenziert und wird duch seinen Wert
+ersetzt.
+.SH ANWEISUNGEN
+Eine Anweisung besteht aus einem oder mehr 
+.IR Befehlen , " Symbolen"
+und/oder
+.IR Oktalzahlen .
+Zusätzlich können Symbole und Oktalzahlen mit arithmetischen Operationen
+.RB "(" + , \ - ")"
+zu Ausdrücken zusammengefasst werden. Der Ausdruck muß dazu in runde Klammern
+.B "( )"
+gesetzt werden. Ausdrücke werden berechnet und durch ihren Wert ersetzt. 
+Die Befehle (Siehe
+.BR pep8 (7))
+und Symbole werden durch ihre Werte ersetzt. 
+Die sich ergebende Menge von Oktalzahlen
+wird oder-verküpft um ein einzelnes Anweisungswort zu erhalten.
+.PP
+Die Adressierung der Zero\-Page wird automatisch erkannt und berücksichtigt.
+Sie bedarf keines speziellen Symbols. Indirekte Adressierung wird durch das
+spezielle Symbol
+.B I
+angezeigt.
+.SH TEXT
+Mit dem Pseudobefehl 
+.B TEXT
+kann Text als gepackte
+.BR sixbit(7)
+Zeichen im Speicher abgelegt werden. Das erste Zeichen nach dem
+.B TEXT
+Befehl wird als Trennzeiche aufgefasst und darf im Text nicht vorkommen.
+Dieses Zeichen beendet den abzulegenden Text. Zunächst wird ein
+Wort mit der Anzahl der Zeichen im Text abgelegt, dann die Zeichen, je
+zwei pro Wort. Das erste Zeichen wird in
+den Bit 0-5 der ersten Wortes abgelegt, das zweite in Bit 6-11 der ersten
+Wortes. Dann wird das zweite Wort gefüllt usw.
+.TP
+.I Beispiel:
+.TS
+l l l l .
+	TEXT	/HELLO WORLD!/	; Begruessung
+.TE
+.LP
+Beinhaltet zwölf Zeichen und erzeugt damit sieben Worte im Speicher.
+.SH KOMMENTARE
+.I Kommentare
+werden durch
+.B ; 
+eingeleitet und erstrecken sich bis zum Ende der Eingabezeile.
+.SH BEISPIEL
+.TS
+l
+l s s
+l
+l l l l .
+;
+; Aufaddieren der Werte einer Tabelle
+;
+
+CLLA=	CLA CLL		; Wertsymbol zuweisen
+
+	JMP I	VEC	; Erzeugt indirekten Sprung
+VEC:	START		; zum Programmstart
+
+RESULT:	0		; Platz für das Ergebnis
+
+TAB:	1		; Die 
+	3		; ersten
+	5		; sechs
+	7		; Primzahlen.
+	13		; Natürlich
+ENDT:	15		; oktal.
+
+TLEN:	(ENDT-TAB+1)		; Länge der Tabelle
+
+TPTR:	TAB		; Zeiger zum Anfang
+TEND:	ENDT		; und Ende der Tabelle
+
+	PAGE		; Der Code beginnt auf
+			; einer neuen Speicherseite
+
+START:	RCL	RESULT	; Zwischenergebiss holen
+	CLL		; Link löschen
+	TAD I	TPTR	; Nächsten Wert addieren
+	STO	RESULT	; Neues Zwischenergebniss
+	RCL	TPTR	; Zeiger holen
+	CLL CMA IAC		; Zum Vergleichen subtrahieren
+	TAD	TEND	; Zeiger mit Endezeiger vergleichen 
+	SNA		; Nicht gleich? Weitermachen
+	JMP	FINISH	; Sonst fertig
+	RCL	TPTR	; Zeiger holen
+	IAC		; erhöhen
+	STO	TPTR	; und zurückspeichern
+	JMP	START	; Nächster Wert
+FINISH:	HLT
+.TE
+.PP
+Nach dem Ausführen diese Programms steht in der Speicherzelle 
+.I 0002 
+(Result) der Wert
+.IR 0050 .
+.SH SIEHE AUCH
+.BR pot (1),
+.BR pepsi (1),
+.BR pep8 (7)
+

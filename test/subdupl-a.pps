@@ -1,0 +1,25 @@
+;
+; pep8 -SUBTRAHIEREN DOPPELT GENAUER ZAHLEN
+;
+	JMP I 	VEC         
+VEC: 	START           
+
+NOONEH:  64           
+NOONEL:  32           
+NOTWOH:  57 
+NOTWOL:  11 
+NOTREH:  0             
+NOTREL:  0
+
+        PAGE           
+                        
+
+START:  RCL     NOTWOL      ; lädt 23 
+        CMA     IAC    CLL  ; x -1 ,löscht linkbit, invertiert
+        TAD     NOONEL      ; (=-23) +40
+        STO     NOTREL      ; speichert 17
+        RCL	NOTWOH      ; lädt 50
+        CMA	            ; invertieren
+        TAD	NOONEH      ; addiert 40
+        STO     NOTREH      ; speichert 7 (Ergebnis) ????
+FINIS:	HLT

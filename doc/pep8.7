@@ -1,0 +1,248 @@
+.do hla de
+.do hpf hyphen.de
+.TH PEP8 7 "2005-07-11" "pep\-8 Projekt" "pep\-8 Projekt Handbuch" \" -*- nroff -*-
+.SH NAME
+pep-8 \- Beschreibung der pep-8 Architektur
+.SH BESCHREIBUNG
+Der
+.BR pep\-8
+(Practical Education Processor based on pdp-8) ist von der
+.BR "DEC pdp-8"
+abgeleitet, und soll der Vermittlung grundlegender Konzepte
+von Rechnerarchitekturen und Assemblerprogrammierung dienen.
+.SH PROGRAMMIERMODELL
+Der extrem einfach aufgebaute pep-8 Prozessor besteht aus einem
+Programmzähler (Program Counter, PC) und einem Akkumulator (accumulator, AC),
+die zwölf Bit breit sind sowie dem Verbindungsbit (Link Bit, L).
+Der Speicher ist ebenfalls 12 Bit breit ist und wird
+mit 12 Bit Adressen angesprochen. Er umfasst also 4096
+12\-Bit Worte. Andere Einheiten als ein 12\-Bit Wort
+können nicht adressiert werden.
+Die Bits eines Wortes werden von null bis elf durchnummeriert, wobei das
+signifikateste Bit mit Null bezeichnet wird:
+.PP
+.TS
+center tab(&) ;
+| c | c | c | c | c | c | c | c | c | c | c | c |
+| c | c | c | c | c | c | c | c | c | c | c | c |
+| c | c | c | c | c | c | c | c | c | c | c | c | .
+_&_&_&_&_&_&_&_&_&_&_&_
+ 0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+.TE
+.SH ADDRESSIERUNGSARTEN
+Bei allen Befehlen, die einen Hauptspeicheroperanden haben, wird dessen
+Adresse in Bit fünf bis elf codiert. Der Speicher ist logisch in Seiten
+zu 128 Worten aufgeteilt und eine Operandenadresse ist immer relativ zum
+Beginn der Speicherseite, in der sich der Befehl befindet, oder der
+Seite null ("Zero Page"). Welche dieser Alternativen gewählt wird enscheidet
+das "Zero Page" Bit, das im Befehl in Bit vier gespeichert wird.
+Ist es null, wird relativ zur Seite null adressert, sonst relativ zur
+laufenden Seite.
+Wird das Indirekt\-Bit gesetzt, das sich in Bit 3
+befindet, so wird der Operand als 12\-Bit Zeiger auf ein Speicherwort
+betrachtet, auf das sich der Befehl dann bezieht.
+Das ergibt die folgenden Adressierungsarten:
+.PP
+.TS
+center tab(&) ;
+| l | c | c | c | l |.
+_&_&_&_&_
+Name & I & ZP & Bits & Erreichbare Worte
+_&_&_&_&_
+Seitenrelativ & 0 & 1 & 7 Bit & In der aktuellen Seite
+Zero Page & 0 & 0 & 7 Bit & In der nullten Seite
+Indirekt & 1 & 1 & 12 Bit & Im gesamten Speicher, Zeiger in der aktuellen Seite
+Indirekt Zero Page & 1 & 0 & 12 Bit & Im gesamten Speicher, Zeiger in der nullten Seite
+_&_&_&_&_
+.TE
+.PP
+Die effektive Adresse für jeden Befehl mit einem Hauptspeicheroperanden
+berrechnet sich aus der Adresse im Befehl (7 Bit, A0-7) und der effektiven Seite 
+(effective page, P0-4).
+Die effektive Seite ist Null wenn das Zero\-Page\-Bit null ist, und entspricht 
+sonst den fünf signifikatesten Bits des Programmzählers. 
+.PP
+.TS
+center tab(&) ;
+| c | c | c | c | c | c | c | c | c | c | c | c |
+| c | c | c | c | c | c | c | c | c | c | c | c |
+| c | c | c | c | c | c | c | c | c | c | c | c |
+cccccccccccc.
+_&_&_&_&_&_&_&_&_&_&_&_
+0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+P0&P1&P2&P3&P4&A0&A1&A2&A3&A4&A5&A6
+.TE
+.PP
+Ist das Indirekt\-Bit
+gesetzt wird dieser Wert noch dereferenziert, d.h. der Inhalt des durch ihn 
+adressierten Speicherwortes bildet die effektive Adresse. 
+Wird nicht indirekt adressiert, bildet der Wert aus effektiver Seite und 
+Adresse im Befehlswort direkt die effektive Adresse.
+.SH BEFEHLE
+Der pep-8 Prozessor verfügt über sieben Befehle die auf dem Hauptspeicher
+operieren. Bei diesen wird der Operationscode in den Bits null bis drei
+abgelegt. Zu jeden Befehl sind die Mnemonische
+Abkürzung, der englische Begriff aus den sich diese ableitet, sowie der
+Operationscode in Binärdarstellung aufgeführt.
+.TP
+.BR RCL " (Recall, 000)"
+Läd das im Hauptspeicher adressierte Wort in den Akkumulator.
+.TP
+.BR STO " (Store, 001) "
+Speichert den Akkumulator im adressierten Speicherwort.
+.TP
+.BR AND " (And accumulator, 010)"
+Der Akkumulator wird mit dem adressierten Wort bitweise und-verknüpft.
+Das Ergebnis wird in den Akkumulator zurückgeschrieben.
+.TP
+.BR ORA " (Or accumulator, 011)"
+Der Akkumulator wird mit dem adressierten Wort bitweise oder-verknüpft.
+Das Ergebnis wird in den Akkumulator zurückgeschrieben.
+.TP
+.BR TAD " (Two's Complement Add, 100)"
+Der Operand wird zu dem 13\-Bit Wert der duch das
+Verbindungsbit und Akkumulator gebildet wird (L, AC) addiert. Negative
+Zahlen werden im Zweierkomplement repräsentiert.
+.TP
+.BR JMP " (Jump, 101)"
+Das adressierte Hauptspeicherwort wird in den Programmzähler geladen.
+.TP
+.BR JMS " (Jump to Subroutine, 110)"
+Der Programmzähler wird im adressierten Hauptspeicherwort gespeichert.
+Dann wird die Adresse des darauf folgenden Speicherwortes in den
+Programmzähler geladen.
+.PP
+Die verbleibende Bitkombination 
+.I 111 
+identifizert einen der restlichen Befehle
+des pep-8, die keinen Hauptspeicheroperanden benötigen und deshalb
+die Bits drei bis elf zur Bestimmung des Befehls heranziehen können. Zu jedem
+Befehl wird hier der vollständige 12\-Bit Befehlscode als Oktalzahl angegeben.
+.PP
+.I "Befehle die den internen Zustand ändern"
+.PP
+Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
+Kombination keinen logischen Konflikt darstellt. Die Befehle werden in 
+zwei Phasen abgearbeitet, jede Phase muß konfliktfrei sein.
+.TP
+.BR NOP " (No Operation, 7000)"
+Nichtstun.
+.TP
+.BR IAC " (Increment accumulator, 7001)"
+Akkumulator erhöhen (Phase 2).
+.TP
+.BR RAL " (Rotate left Link and accumulator, 7004)"
+Den 13\-Bit Wert Verbindungsbit-Akkumulator nach links rotieren (Phase 2).
+.TP
+.BR RAR " (Rotate right Link and accumulator, 7010)"
+Den 13\-Bit Wert Verbindungsbit-Akkumulator nach rechts rotieren (Phase 2).
+.TP
+.BR CML " (Complement Link, 7020)"
+Verbindungsbit invertieren (Phase 1).
+.TP
+.BR CMA " (Complement accumulator, 7040)"
+Einerkomplement des Akkunulators bilden und dort ablegen (Phase 1).
+.TP
+.BR CLL " (Clear Link Bit, 7100)"
+Verbindungsbit löschen (Phase 1).
+.TP
+.BR STL " (Set Link Bit, 7120)"
+Verbindungsbit setzen (Phase 1).
+.TP
+.BR CLA " (Clear accumulator, 7200)"
+Akkumulator löschen (Phase 1).
+.TP
+.BR STA " (Set accumulator, 7240)"
+Alle Bits des Akkumulators auf eins setzen (Phase 1).
+.PP
+Die sicherlich wichtigste Befehlskombination dient der Subtraktion. 
+Man läd den Subtrahenden in den Akkumulator und wendet den kombinierten
+Befehl
+.B "CLL CMA IAC" 
+(7141) an, der das Link-Bit löscht und das Zweierkomplement bildet. 
+Anschließend wir mit
+.B TAD
+der Minuend addiert, und die Differenz steht im Akkumulator.
+.PP
+.I "Befehle die den Programmfluß verändern"
+.PP
+Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
+Befehle zum gleichen Kombinationstyp gehören. Die Sprungbedingungen 
+werden oder-verknüpft, wenn Bit 8 des Befehlswortes null ist
+.RI ( Oder-Typ ).
+Ist Bit 8 eins, werden sie und-verknüft
+.RI ( Und-Typ ).
+.TP
+.BR HLT " (Halt the program, 7402)"
+Das Programm anhalten.
+.TP
+.BR SKP " (Skip always, 7410)"
+Den Programmzähler erhöhen (Und-Typ).
+.TP
+.BR SNL " (Skip on non-zero Link, 7420)"
+Wenn das Verbindungsbit nicht null ist, den Programmzähler erhöhen (Oder-Typ).
+.TP
+.BR SZL " (Skip on zero Link, 7430)"
+Wenn das Verbindungsbit null ist, den Programmzähler erhöhen (Und-Typ).
+.TP
+.BR SZA " (Skip on zero accumulator, 7440)"
+Wenn der Akkumulator null ist, den Programmzähler erhöhen (Oder-Typ).
+.TP
+.BR SNA " (Skip on non-zero accumulator, 7450)"
+Wenn der Akkumulator nicht null ist, den Programmzähler erhöhen (Und-Typ).
+.TP
+.BR SMA " (Skip on minus accumulator, 7500)"
+Bei negativem Akkumulator den Programmzähler erhöhen (Oder-Typ).
+.TP
+.BR SPA " (Skip on plus accumulator, 7510)"
+Bei positivem Akkumulator den Programmzähler erhöhen (Und-Typ).
+.PP
+.I "Befehle zum Ansprechen von Ein-/Ausgabegeräten"
+.PP
+Mit diesen Befehlen können Ein-/Ausgabegeräte gesteuert werden.
+Jedes Gerät besitzt eine oder mehrere Untereinheiten mit je einem 
+Ein- und Ausgabekanal.
+Das jeweils angesprochene Gerät wird im Befehlswort in Bit 4-6 kodiert.
+Diese Befehle können nicht kombiniert werden.
+.TP
+.BR SRI " (Skip on ready for input, 7401)"
+Den Programmzähler erhöhen wenn der Eingabekanal bereit ist.
+.TP
+.BR SRO " (Skip on ready for output, 7441)"
+Den Programmzähler erhöhen wenn der Ausgabekanal bereit ist.
+.TP
+.BR DGA " (Device get word to accumulator, 7501)"
+Den  Akkumulator mit dem aktuellen Wert des Eingabekanals laden.
+.TP
+.BR DPA " (Device put word from accumulator, 7541)"
+Den Wert des Akkumulators in den Ausgabekanal schreiben.
+.TP
+.BR DUS " (Device unit select, 7601)"
+Untereinheit gemäß dem Wert im Akkumulator auswählen.
+.TP
+.BR DGS " (Device get status word, 7641)"
+Statuswort des Geräts bzw. der Untereinheit im Akkumulator speichern.
+.TP
+.BR DSM " (Device sense mask, 7701)"
+Den Wert des Akkumulators als Meldungsauswahlmaske an das Gerät 
+übergeben.
+.TP
+.BR RSD " (Reset device, 7741)"
+Das Gerät zurücksetzen und Untereinheit null auswählen.
+.PP
+.I Implementierte Geräte: Teletype, Gerät 0 (Null)
+.PP
+In Verbindung mit dem Terminalsimulator 
+.BR teletype (1)
+kann 
+.BR pepsi (1)
+Zeichen ein- und ausgeben, wenn das Gerät beim Start freigeschaltet wird.
+Das Teletype (TTY) unterstützt die Befehle 
+.BR SRI ",  " SRO ", " DGA " und " DPA . 
+Die Gerätenummer in 0 (Null).
+.SH SIEHE AUCH
+.BR pot (1),
+.BR pot (5),
+.BR pepsi (1)

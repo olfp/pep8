@@ -1,0 +1,13 @@
+;
+; subroutine test pgm
+;
+MAIN:	CLA
+	JMS	SUB1
+	HLT
+
+SUB1:	NOP
+	CMA
+	JMP I SUB1
+
+; EOF
+

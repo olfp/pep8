@@ -1,0 +1,82 @@
+;
+; bubblesort
+;
+
+begin=	7777		; sub start marker
+end=	jmp i		; sub return 
+
+ptr1:	0		; zeiger auf erstes datenelement
+ptr2:	0		; zeiger auf zweites datenelement
+
+tabsp:	tab		; zeiger auf tabellenstart
+tabep:	etab		; zeiger auf tabellenende
+tablen:	(etab-tab+1)	; länge datentabelle
+
+xcnt:	0		; anzahl vertauschungen pro lauf
+
+temp:	0		; vorrübergehendes speicherwort
+
+	page
+
+start:	cla		; äußere schleife
+	sto	xcnt	; vertauschungszähler initialisieren
+	rcl	tabsp	; tabellenstart holen
+	sto	ptr1	; ersten zeiger initialisieren
+	iac		; eine  weiterschieben
+	sto	ptr2	; zweiten zeiger initialisieren
+
+loop:	rcl i	ptr2	; zweites datenelement holen
+	cll cma iac 	; link löschen, zweierkomplement bilden
+	tad i	ptr1	; erstes datenelement addieren
+	sma 		; zweites größer erstes? dann nix tun
+	jms	exch	; sonst vertauschen
+	rcl	ptr2	; zweiten zeiger holen
+	cll cma iac	; link löschen, zweierkomplement bilden
+	tad 	tabep	; tabellenende addieren
+	sna		; ungleich null, zweiter < ende
+	jmp	chkcnt	; sonst ende duchlauf, abbruch prüfen
+	rcl	ptr2	; zweiten zeiger laden
+	sto	ptr1	; als ersten ablegen
+	iac		; weiterschieben
+	sto	ptr2	; als neuen zweiten ablegen
+	jmp	loop	; und vergleichen
+
+chkcnt:	rcl	xcnt	; anzahl der vertauschungen
+	sza		; wenn  null, fertig
+	jmp	start	; sonst weitermachen
+finis:	hlt
+
+exch:	begin		; datenworte an ptr1 und ptr2 tauschen
+	rcl i	ptr1	; erstes wort laden
+	sto 	temp	; aufheben
+	rcl i	ptr2	; zweites wort laden
+	sto i	ptr1	; als erstes sichen
+	rcl 	temp	; gesicherte wort laden
+	sto i	ptr2	; als zweites sichern
+	rcl 	xcnt	; vertauschungszähler holen
+	iac		; erhöhen
+	sto	xcnt	; und sichern
+	end	exch	; rücksprung
+
+	page
+
+tab:	124		; datentabelle
+	706
+	076
+	067
+	021
+	036
+	170
+	502
+	020
+	406
+	173
+	104
+	042
+	212
+	176
+	546
+	071
+	703
+	134
+etab:	532		; ende daten

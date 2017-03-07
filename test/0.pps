@@ -1,0 +1,28 @@
+; 
+; pep8 - subtrahieren
+; 
+CLLA=   CLA CLL                              
+  
+  	JMP I	VEC
+VEC:    START
+
+NOONEL: 34
+NOTWOL: 56
+NOONEH:	0
+NOTWOH: 0
+NOTHRE: 0
+RESULT: 0
+
+        PAGE
+  
+
+START:  CLLA
+        RCL     NOTWOL
+        CMA     IAC    CLL
+        TAD     NOONEL
+        STO     NOTHRE
+        RCL     NOTWOH
+        CMA
+        TAD     NOONEH
+        STO     RESULT
+        HLT

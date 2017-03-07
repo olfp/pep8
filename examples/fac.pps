@@ -1,0 +1,128 @@
+; n! (n-Fakultät, also n*(n.1)*(n-2)*...*1) rekursiv berechnen
+
+enter:  gosub		; vektor: start subroutine
+leave:  endsub		; vektor: rücksprung
+acpush:	pushac		; vektor: akku poppen
+acpop:	popac		; vektor: akku pushen
+
+n:	6		; 6! = 720(10) = 1320(8) < 4096
+
+result:	0
+this:	0
+
+	page
+
+start:	rcl	n	; damit gehts los
+	jsr		; fac(n) berechnen
+	fac
+	sto	result	; endergebnis
+	hlt
+
+fac:	sna		; akku größer null?
+	jmp	done	; nein, rekursionsende
+	psh		; aktuelles n auf stack
+	cma iac		; 2er komplement
+	iac 		; erhöhen
+	cma iac		; 2er komp. -> ac--
+	jsr		; rekursiver aufruf:
+	fac		; akku wird fac(n-1)
+	sto	this	; sichern
+	pop		; aktuelles n holen
+	jms	mul	; multiplizieren
+	this		; mit zwischenergebnis
+	skp		; überspringen, zum rückspr.
+done:	iac		; akku wird eins
+	rts		; rücksprung
+
+mul:	nop		; akku = akku * (next)
+	sto 	base	; akku sichern, 1. faktor
+	rcl i	mul	; wort nach dem aufruf ist 
+	sto 	cnt	; zeiger auf zweiten faktor,
+	rcl i	cnt	; also dereferenzieren und
+	sto 	cnt	; zurückspeichern.
+	rcl	mul	; rücksprungaddr
+	iac
+	sto	mul	; einen weiter
+
+	; base * cnt = base + base + ... (cnt)
+
+	cla cll		; startwert
+loop:	tad 	base	; einmal mehr
+	sto	curr	; zwischenergebnis sichern
+	cll cla
+	cma		; minus 1
+	tad	cnt	; zähler dazu = zähler - 1
+	sna		; nicht null? weitermachen!
+	jmp	mul0	; fertig
+	sto	cnt
+	rcl	curr	; zwischenergebnis holen
+	jmp	loop	; nächste runde
+
+mul0:	rcl	curr	; zwischen- ist endergebnis
+	jmp i	mul	; rücksprung
+
+base:	0
+curr:	0
+cnt:	0
+
+	page		
+
+jsr=    jms i	enter	; makro: subroutine anspringen
+rts=    jmp i   leave	; makro: rücksprung aus routine
+psh=	jms i	acpush	; makro: akku auf stack
+pop=	jms i	acpop	; makro: akku vom stack
+
+	; subroutinen für subroutinen mit stack
+
+gosub:	nop		; subroutine mit stack aufrufen
+	sto	temp	; akku sichern
+	rcl	gosub	; zeigt zum wort hinter JSR
+	iac		; zieladdresse, überspringen
+	sto i	tos	; auf den stack
+	jms	tosinc
+	rcl i	gosub	; adresse der subroutine
+	sto 	gosub	; dereferenzieren
+	rcl	temp	; akku zurück
+	jmp i	gosub	; subroutine anspringen
+
+endsub:	    		; subroutine mit stack beenden
+	sto 	temp	; akku sichern
+	jms	tosdec
+	rcl i	tos	; rücksprung-vektor
+	sto 	gosub	; dereferenzieren
+	rcl	temp	; akku zurück
+	jmp i	gosub	; rücksprung aus subroutine
+
+	; push und pop
+
+pushac:	nop		; akku auf dem stack pushen
+	sto	temp	; push soll akku erhalten
+	sto i	tos	; push ac
+	jms 	tosinc	; stackpointer erhöhen
+	rcl	temp	; akku zurückholen
+	jmp i	pushac	; rücksprung
+
+popac:	nop 		; akku vom stack poppen
+	jms	tosdec	; stackpointer erniedrigen
+	rcl i	tos	; akku poppen
+	jmp i	popac
+
+	; tos manipulieren
+
+tosinc:	nop		; stackpointer erhöhen
+	rcl 	tos
+	iac		
+	sto	tos
+	jmp i	tosinc
+
+tosdec:	nop		; stackpointer erniedrigen
+	cll cla
+	cma		; minus 1
+	tad 	tos	; tos dazu
+	sto	tos
+	jmp i	tosdec
+
+temp:	0
+
+tos:    stack		; pointer to top-of-stack
+stack:	0		; stack, wächst nach oben

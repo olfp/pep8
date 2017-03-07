@@ -1,0 +1,40 @@
+;
+; Aufddieren der Werte einer Tabelle
+;
+
+CLLA=	CLA CLL		; Wertsymbol zuweisen
+
+	JMP I	VEC	; Erzeugt indirekten Sprung
+VEC:	START		; zum Programmstart
+
+RESULT:	0		; Platz für das Ergebnis
+
+TAB:	1		; Die 
+	3		; ersten
+	5		; sechs
+	7		; Primzahlen.
+	13		; Natürlich
+ENDT:	15		; oktal.
+
+TLEN:	(ENDT-TAB+1)	; Länge der Tabelle
+
+TPTR:	TAB		; Zeiger zum Anfang
+TEND:	ENDT		; und Ende der Tabelle
+
+	PAGE		; Der Code beginnt auf
+			; einer neuen Speicherseite
+
+START:	RCL	RESULT	; Zwischenergebiss holen
+	CLL		; Link löschen
+	TAD I	TPTR	; Nächsten Wert addieren
+	STO	RESULT	; Neues Zwischenergebniss
+	RCL	TPTR	; Zeiger holen
+	CLL CMA IAC	; Zum vergleichen subtrahieren
+	TAD	TEND	; Zeiger mit Endezeiger vergleichen 
+	SNA		; Nicht gleich? Weitermachen
+	JMP	FINISH	; Sonst fertig
+	RCL	TPTR	; Zeiger holen
+	IAC		; erhöhen
+	STO	TPTR	; und zurückspeichern
+	JMP	START	; Nächster Wert
+FINISH:	HLT

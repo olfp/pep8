@@ -1,0 +1,35 @@
+;
+; pep8 - opcode tests
+;
+CLLA=	CLA CLL		; Wertsymbol zuweisen
+RET=	JMP I		; Return from Subroutine 
+
+	JMP I	VEC	; Erzeugt indirekten Sprung
+VEC:	START		; zum Programmstart
+
+ONE:	0770		; Seicher mit erstem und
+TWO:	7007		; zweitem Wert belegen
+MASK:	1111		; Maske belegen
+ORVAL:	7007		; Oder Wert
+RESULT:	0		; Platz für Ergebnis
+
+
+
+
+	PAGE		; Der Code beginnt auf einer 
+			; neuen Speicherseite
+
+START:	CLLA		; Wertsymbol referenzieren
+	RCL	ONE	; Ersten Wert laden
+	TAD	TWO	; Zweiten Wert addieren
+	JMS	LOGOP	; Subroutine aufrufen
+	STO	RESULT	; Ergebnis speichern
+
+	HLT		; Programm anhalten
+
+LOGOP:	NOP		; Platzhalter für Rücksprungadr.
+	AND	MASK	; AND mit Maske
+	ORA	ORVAL	; OR mit Wert
+	RET	LOGOP	; Rücksprung
+
+; eof

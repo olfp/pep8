@@ -1,0 +1,107 @@
+.do hla de
+.do hpf hyphen.de
+.TH POT 1 "2005-07-12" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
+.SH NAME
+pot \- Pep-8 Opcode Translator
+.SH SYNOPSIS
+.B pot
+[\-lsS<n>]
+.I datei
+.SH BESCHREIBUNG
+Das 
+.BR pot
+Kommando überführt eine Textdatei mit pep-8 Befehlen (wie in 
+.BR pep8 (7) 
+und 
+.BR pot (5)
+beschrieben) in ein Speicherabbild, das mit dem
+.BR pepsi (1)
+Emulator geladen und ausgeführt werden kann. Von der Eingabedatei wird
+angenommen, das ihr Name die Endung
+.B .pps
+.RI ( "pep program source" )
+aufweist. Ist dies nicht der Fall,
+wird der angegebene Dateiname entsprechend ergänzt.
+Die Ausgabdatei, in die das Speicherabbild geschrieben wird,
+hat den gleichen Namen, nur daß die Endung durch
+.B .pmi
+.RI ( "pep memory image" ) 
+ersetzt wird.
+.SH OPTIONEN
+.TP
+.I \-l
+Es wird ein Programmlisting erzeugt, das die erzeugten Befehle, Fehlermeldungen
+und den Quelltext enthält. Es wird in eine Datei mit der Endung
+.B .pls
+(pot listing) geschrieben.
+.TP
+.I \-s
+Die Symboltabelle wird in einer Datei gespeichert, die die Endung
+.B .psy
+(pot symbols).
+.TP
+.I \-S<n>
+Stellt die Größe der Symboltabelle auf 
+.B <n>
+Einträge ein. Standard sind 4096 Einträge.
+.SH FEHLERMELDUNGEN
+.SS Warnungen
+Eine Warung signalisiert eine Inkonsistenz, die aber die Verarbeitung 
+nicht behindert.
+.TP
+.I "Symbol too long"
+Die maximale Länge eines Symbols ist sechs Zeichen. Weitere Zeichen
+werden vernachlässigt.
+.SS "Nicht-kritische Fehler"
+Wenn ein nicht-kritischer Fehler auftritt wird eine entsprechende Meldung 
+ausgegeben. In der Programmliste wird in der aktuellen Zeile in
+Spalte zwei ein Fehlerspezifisches Zeichen eingesetzt.
+.TP
+.I "Not a number"
+Es wurde eine Oktalzahl erwartet, aber nicht gefunden. Dies wird mit einem
+.B N
+gekennzeichnet.
+.TP
+.I "Unterminated expression"
+Es wurde ein arithmetischer Ausdruck mit 
+.B (
+eingeleitet aber nicht mit
+. )
+abgeschlossen. Dies wird mit einem
+.B U
+gekennzeichnet.
+.TP
+.I "Off page reference"
+Das Argument eines Befehls verweist auf eine Speicherzelle, die sich weder
+in der laufenden Seite noch in der Zero\-Page befindet. Dies wird mit einem
+.B P
+gekennzeichent.
+.TP
+.I "Undefined symbol"
+Ein Symbol wurde referenziert, aber nicht definiert. Dies wird mit einem
+.B S
+gekennzeichnet.
+.TP
+.I "Duplicate symbol"
+Ein Symbol wurde mindestens zwei mal definiert. Tritt meist auf, wenn die
+Maximallänge von sechs Zeichen für Symbole nicht beachtetet wird. Dies wird
+mit einem 
+.B D
+gekennzeichnet.
+.SS "Kritische Fehler"
+Wenn ein kritischer Fehler auftritt, wird eine Meldung
+ausgegeben und die Verarbeitung bricht ab.
+.TP
+.I "Page out of range"
+Eine
+.B PAGE
+Direktive würde zu einer illegalen Seitenreferenz (also größer 31)
+geführt haben.
+.TP
+.I "Symbol table overflow"
+Es wurden mehr Symbole definiert als die Symboltabelle Einträge hat.
+.SH SIEHE AUCH
+.BR pot (5),
+.BR pepsi (1),
+.BR pep8 (7)
+

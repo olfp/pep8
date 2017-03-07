@@ -1,0 +1,23 @@
+; 
+; pep8 - subtrahieren                        
+; 
+CLLA=   CLA CLL
+  
+  
+VEC:    START
+
+ONE:  1
+TWO:  23
+RESULT: 0
+
+        PAGE
+
+
+START:  CLLA
+        TAD     ONE
+        RCL     ONE
+        CMA     IAC CLL
+        TAD     TWO
+        CMA
+        STO     RESULT
+        HLT

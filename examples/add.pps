@@ -1,0 +1,23 @@
+;
+; pep8 - addieren von 1 und 2
+;
+CLLA=	CLA CLL		; Wertsymbol zuweisen
+
+	JMP I	VEC	; Erzeugt indirekten Sprung
+VEC:	START		; zum Programmstart
+
+ONE:	1		; Seicher mit erstem und
+TWO:	2		; zweitem Wert belegen
+RESULT:	0		; Platz für Ergebnis
+
+	PAGE		; Der Code beginnt auf einer 
+			; neuen Speicherseite
+
+START:	CLLA		; Wertsymbol referenzieren
+	RCL	ONE	; Ersten Wert laden
+	TAD	TWO	; Zweiten Wert addieren
+	STO	RESULT	; Ergebnis speichern
+
+	HLT		; Programm anhalten
+
+; eof

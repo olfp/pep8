@@ -1,0 +1,560 @@
+;
+; simple rpn calculator
+;
+
+
+	JMP I	VEC		; jumpstart (just in case)
+VEC:	START
+
+WORDS:	DOWRDS			; longjump table
+INCTOS:	INTOS
+DECTOS:	DETOS
+PUTSV:	PUTS
+DNUMPR:	DECNUM
+
+SAR=	CLL RAR			; shift ac right
+CIAL=	CLL CMA IAC		; 2's complement, link clear
+PRINT=	JMS I	PUTSV		; print following counted str
+
+TTY=	(0*2)			; TTY is device zero
+
+LINEP:	LINBUF			; pointer to line buffer
+CHARP:	LINBUF			; pointer to current char
+ENDP:	(ENDBUF-2)		; pointer behind buffer (one for \0)
+
+BOS:	STACK			; base of stack
+TOS:	STACK			; top of stack
+
+EOF:	4			; ^D, end of file
+NL:	12			; ^J, new line
+CR:	15			; ^M, carriage retuen
+SPACE:	40			; ' '
+CHAR0:	60			; 0
+CHAR9:	71			; 9
+
+ERRCH:	77			; ?
+OKCHAR:	41			; !
+
+NUMVAL:	0
+NUMFLG:	0
+
+TEMP:	0
+CNT:	0
+
+FUNB:	FUNTAB			; func pointer base
+FUNP:	FUNTAB			; current func pointer
+
+GETCH:	NOP			; get char from tty
+WAITI:	SRI	TTY
+	JMP	WAITI
+	DGA	TTY		; read char
+	JMP I	GETCH
+
+PUTCH:	NOP			; print char on tty
+WAITO:	SRO	TTY
+	JMP	WAITO
+	DPA	TTY		; print char
+	JMP I	PUTCH
+
+TERPRI:	NOP			; print cr-lf
+  	RCL	CR		
+	JMS	PUTCH
+	RCL	NL
+	JMS	PUTCH
+	JMP I	TERPRI
+
+	PAGE
+
+START:	JMS	BANNER		; print startup banner
+MNLOOP:	JMS	READLN		; read line from tty
+	RCL I	LINEP		; get first char
+	CIAL
+	TAD	EOF		; compare with eof
+	SNA
+	JMP	FINIS		; got eof
+	JMS I	WORDS		; analyse line
+	JMS	TERPRI
+	JMP	MNLOOP		; loop
+
+FINIS:	HLT
+
+BANNER:	NOP
+	JMS	TERPRI
+	PRINT
+	TEXT	/RPN V1.1 (c) olf 2005/
+	JMS	TERPRI
+	JMP I	BANNER
+
+READLN:	NOP			; read line from tty with echo
+	RCL	LINEP
+	STO	CHARP		; reset char pointer
+	CLA
+	STO I	CHARP		; init end of line
+CHLOOP:	JMS	GETCH		; read char
+	STO I	CHARP		; save to buffer
+	JMS 	PUTCH		; echo char	
+
+	RCL 	CHARP
+	CIAL
+	TAD	ENDP		; compare with end of buffer
+	SNA
+	JMP	OVERFL		; end buffer, return
+	RCL I	CHARP
+	CIAL
+	TAD	EOF		; compare to eof
+	SNA
+	JMP	ENDLN		; return if eof
+	RCL I	CHARP
+	CIAL
+	TAD	NL		; compare to nl
+	SNA
+	JMP	ADDCR		; print cr, return
+	RCL I	CHARP
+	CIAL
+	TAD	CR		; compare to cr
+	SNA
+	JMP	ADDNL		; print nl, return
+	RCL 	CHARP
+	IAC
+	STO	CHARP		; advance char pointer
+	CLA
+	STO I	CHARP		; mark end
+	JMP	CHLOOP		; next char
+
+OVERFL:	JMS	TERPRI		; buffer overflow, terminate line
+	JMP	ENDLN
+
+ADDCR:	RCL	CR
+	JMS	PUTCH
+	JMP	ENDLN
+
+ADDNL:	RCL	NL
+	STO I	CHARP		; convert cr to nl in line
+	JMS	PUTCH
+	JMP	ENDLN
+
+ENDLN:	RCL 	CHARP
+	IAC
+	STO	CHARP		; advance char pointer
+	CLA
+	STO I	CHARP		; mark end of line
+
+	JMP I	READLN		; return to main loop
+
+	PAGE
+	
+DOWRDS:	NOP			; analyse line
+	RCL	LINEP
+	STO	CHARP
+SKIPSP:	RCL I	CHARP
+	CIAL
+	TAD	SPACE
+	SZA
+	JMP	WRLOOP
+	RCL	CHARP
+	IAC
+	STO	CHARP
+	JMP	SKIPSP
+WRLOOP:	RCL I	CHARP
+	SNA
+	JMP	TERMCH		; end of line
+	CIAL
+	TAD	NL		; compare to nl
+	SNA
+	JMP	NEXTW		; next (last) word
+	RCL I	CHARP
+	CIAL
+	TAD	SPACE		; compare to ' '
+	SNA
+	JMP	NEXTW		; next word
+	RCL I	CHARP
+	CIAL
+	TAD	CHAR0		; compare to '0'
+	SMA SZA			; inverted cond
+	JMP	NODIG		; not a digit
+	RCL I	CHARP
+	CIAL
+	TAD	CHAR9		; compare to '9'
+	SPA			; inverted cond
+	JMP	NODIG		; not a digit
+	
+	JMS	MUL10		; neue stelle
+	RCL	CHAR0
+	CIAL
+	TAD I	CHARP		; wert bilden
+	CLL
+	TAD	NUMVAL		; dazu
+	STO	NUMVAL
+	CLA IAC
+	STO	NUMFLG
+	CLL			; kein wortende
+
+NXTCHR:	RCL	CHARP		; advance char pointer
+	IAC
+	STO	CHARP
+	SNL
+	JMP	WRLOOP
+	JMP	SKIPSP
+
+NODIG:	RCL	NUMFLG		; already seen some digits?
+	SNA
+	JMP	FINCMD
+	RCL	CHARP
+	CIAL			; no DAC so CIAL CMA to decrement
+	CMA			; this way the non-digit is seen again
+	STO	CHARP		; and processed as a cmd char
+	JMP	NEXTW
+FINCMD:	JMS	FINDC
+	SZA
+	JMP	EXEC
+	RCL	ERRCH
+	JMS	PUTCH	
+	JMS	TERPRI
+
+NEXTSP:	RCL	CHARP	
+	IAC
+	STO	CHARP
+	RCL I	CHARP
+	SNA
+	JMP	TERMCH
+	CIAL
+	TAD	NL
+	SNA
+	JMP	TERMCH
+	RCL I	CHARP
+	CIAL
+	TAD	SPACE
+	SZA
+	JMP	NEXTSP
+	JMP	NXTCHR
+
+NEXTW:	RCL	NUMFLG
+	SNA
+	JMP	NONUMB
+	RCL	NUMVAL
+	STO I	TOS
+	RCL	TOS
+	IAC
+	STO	TOS
+	CLA
+	STO	NUMVAL
+	STO	NUMFLG
+	STL			; flag wortende
+NONUMB:	JMP	NXTCHR
+
+EXEC:	STO	VEC
+	JMS I	VEC
+	JMP	NEXTSP
+
+TERMCH:	JMS I	DOWRDS
+
+MUL10:	NOP			; numval *= 10
+	RCL	NUMVAL
+	CLL RAL
+	CLL RAL
+	CLL RAL			; mal acht
+	CLL
+	TAD	NUMVAL
+	CLL
+	TAD	NUMVAL
+	STO	NUMVAL
+	JMP I	MUL10
+
+FINDC:	NOP
+	RCL	FUNB
+FLOOP:	STO	FUNP
+	RCL I	FUNP		; get cmd char
+	SNA
+	JMP	FDONE		; nothing found
+	CIAL
+	TAD I	CHARP		; compare
+	SNA
+	JMP	FUFOU
+	RCL	FUNP
+	IAC
+	IAC			; advance pointer
+	JMP	FLOOP		; check next
+FUFOU:	RCL	FUNP
+	IAC
+	STO	FUNP		; position to vector
+	RCL I	FUNP		; return vec
+FDONE:	JMP I	FINDC
+	
+	PAGE
+
+DECNUM:	NOP			; print tos as decimal
+	RCL I	TOS
+	STO	NUMBER		; put in work area
+	RCL	DECMAX
+	STO	DECP		; current place
+NXTSUB:	RCL I	DECP
+	CIAL
+	TAD	NUMBER
+	SPA
+	JMP	NXTDIG		; underflow, next digit
+	STO	NUMBER
+	RCL	DIGIT
+	IAC
+	STO	DIGIT		; increment digit
+	JMP	NXTSUB
+
+NXTDIG:	RCL	DIGIT
+	SNA	
+	JMP	ISZERO
+	CLL
+	TAD	CHAR0
+	JMS	PUTCH
+	CLA
+ISZERO:	STO	DIGIT
+	RCL	DECP
+	IAC
+	STO	DECP
+	RCL I	DECP
+	SZA
+	JMP	NXTSUB
+
+	RCL	NUMBER		; do last digit
+	CLL
+	TAD	CHAR0
+	JMS	PUTCH
+	
+	JMP I	DECNUM
+
+DECTAB:	1750			; 1000 dec
+	144			; 100 dec
+	12			; 10 dec
+	0
+
+DECMAX:	DECTAB
+DECP:	0
+DIGIT:	0
+NUMBER: 0
+
+PUTS:	NOP			; print following counted str
+	RCL I	PUTS		; ret vec is ptr
+	STO 	LEN		; first word is length
+PLOOP:	RCL	PUTS
+	IAC
+	STO	PUTS		; increment to first char(s)
+	CLL			; unflag inword
+	JMS	CHKLEN
+	RCL I	PUTS		
+	SAR
+	SAR
+	SAR
+	SAR
+	SAR
+	SAR
+	CLL
+	TAD	ASCII
+	JMS	PUTCH
+	STL			; flag inword
+	JMS	CHKLEN
+	RCL I	PUTS		; lower sixbit
+	AND	MASK6
+	CLL
+	TAD	ASCII
+	JMS	PUTCH
+	JMP	PLOOP
+PDONE:	CLA
+	TAD	PUTS		; add inword flag
+	STO	PUTS
+	JMP I	PUTS
+
+CHKLEN:	NOP
+	RCL	LEN
+	SNA
+	JMP	PDONE
+	CMA IAC
+	CMA
+	STO	LEN
+	JMP I	CHKLEN
+
+LEN:	0			; length countdown
+ASCII:	40			; offset sixbit acsii
+MASK6:	77			; sixbit mask
+
+INTOS:	NOP			; tos++
+	RCL	TOS
+	IAC
+	STO	TOS
+	JMP I	INTOS
+
+DETOS:	NOP			; tos--
+	RCL	TOS
+	CIAL
+	TAD	BOS		; underflow?
+	SMA
+	JMP	UFLOW		; yep
+	CLL CLA 
+	CMA			; load -1
+	TAD	TOS
+	STO	TOS		; tos+-1
+	JMP	TOSSED
+UFLOW:	PRINT
+	TEXT	/?UNDERFLOW/
+	CLA			; error: return zero
+TOSSED:	JMP I	DETOS
+	
+	PAGE
+
+FQUIT:	NOP			; quit
+	JMS	TERPRI
+	HLT
+
+FHELP:	NOP			; print help
+	PRINT
+	TEXT	#ARTITH: + - * / PRINT TOS: . DROP TOS: , CLEAR STACK: C SHOW STACK: S QUIT: Q#
+	JMS	TERPRI
+	JMP I	FHELP
+
+FCLEAR:	NOP			; clear stack
+	RCL	BOS
+	STO	TOS
+	JMP I	FCLEAR
+
+FDROP:	NOP			; drop tos
+	JMS I	DECTOS
+	JMP I	FDROP
+
+FSHOW:	NOP			; show stack
+	RCL	TOS
+	STO	TEMP
+	RCL	BOS
+	CIAL
+	TAD	TEMP
+	SNA
+	JMP	ESTACK
+SLOOP:	JMS I	DECTOS
+	JMS I	DNUMPR		; print decimal
+	RCL	SPACE
+	JMS	PUTCH	
+	RCL	TOS
+	CIAL
+	TAD	BOS
+	SZA
+	JMP	SLOOP
+	JMP	ESHOW
+ESTACK:	PRINT
+	TEXT	/STACK EMPTY/
+ESHOW:	JMS	TERPRI
+	RCL	TEMP
+	STO	TOS
+	JMP I	FSHOW
+
+FPRINT:	NOP			; print tos
+	JMS I 	DECTOS		; decrement tos
+	SZA
+	JMS I	DNUMPR		; print decimal
+	JMS	TERPRI		; cr lf
+	JMS I	INCTOS		; re-adjust tos
+	JMP I	FPRINT
+
+FADD:	NOP			; add tos, nos
+	JMS I	DECTOS
+	RCL I	TOS		; first value
+	STO	TEMP
+	JMS I	DECTOS
+	RCL I	TOS		; second value
+	CLL
+	TAD	TEMP		; do actual add
+	STO I	TOS
+	JMS I	INCTOS
+	JMP I	FADD
+
+FSUB:	NOP			; sub tos from nos
+	JMS I	DECTOS
+	RCL I	TOS		; value to sub
+	CMA IAC			; complement
+	STO	TEMP
+	JMS I	DECTOS
+	RCL I	TOS		; value to sub from
+	CLL
+	TAD	TEMP		; subtract
+	STO I	TOS
+	JMS I	INCTOS
+	JMP I	FSUB
+
+	PAGE
+
+FMUL:	NOP			; multiply tos and nos
+	CLA
+	STO	TEMP		; start at zero
+	JMS I	DECTOS
+	RCL I	TOS		; first value 
+	STO	CNT
+	JMS I	DECTOS
+MLOOP:	RCL	TEMP
+	CLL
+	TAD I	TOS		; add second value
+	STO	TEMP
+	CLL CLA
+	CMA
+	TAD	CNT		; decrement cnt
+	STO	CNT
+	SZA			; cnt zero, done
+	JMP	MLOOP
+	RCL	TEMP
+	STO I	TOS
+	JMS I	INCTOS
+	JMP I	FMUL
+
+FDIV:	NOP			; divide nos by tos
+	CLA
+	STO	CNT		; start at zero
+	JMS I	DECTOS
+	RCL I	TOS
+	CMA IAC
+	STO	TEMP		; complement of divisor
+	JMS I	DECTOS
+DLOOP:	RCL	TEMP
+	CLL
+	TAD I	TOS		; subtract
+	SPA
+	JMP	DDONE		; less than zero, done
+	STO I 	TOS
+	RCL	CNT
+	IAC
+	STO	CNT
+	JMP	DLOOP
+DDONE:	RCL	CNT
+	STO I	TOS
+	JMS I	INCTOS
+	JMP I	FDIV
+	JMP I	FDIV
+	
+	PAGE
+
+FUNTAB:	123			; 'S'
+	FSHOW
+	121			; 'Q'
+	FQUIT
+	103			; 'C'
+	FCLEAR
+	110			; 'H'
+	FHELP
+	77			; '?'
+	FHELP
+	54			; ','
+	FDROP
+	56			; '.'
+	FPRINT
+	53			; '+'
+	FADD
+	55			; '-'
+	FSUB
+	52			; '*'
+	FMUL
+	57			; '/'
+	FDIV
+	0			; end mark
+
+LINBUF:	0
+	
+	PAGE
+
+ENDBUF:	
+	
+STACK:	0
+
+; eof
