@@ -21,9 +21,9 @@ void display() {
   if( usesource ) {
     if( (pc8 <= maxtxt) && text[pc8] && (text[pc8][0] != '\n')) {
       if(submod != 0) {
-      	printf( text[pc8 - submod] );
+      	printf( "%s", text[pc8 - submod] );
       }
-      printf( text[pc8] );
+      printf( "%s", text[pc8] );
     } else {
       printf( "no source available for current address!\n" );
     }

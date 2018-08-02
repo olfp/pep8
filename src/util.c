@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -95,7 +96,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
     /* look if its an absolute address or in page:offset form */
   
     num = (char *)strdup(tok);
-    if( tmp = strchr(num, PAGSEP) ) {
+    if((tmp = strchr(num, PAGSEP))) {
       *tmp = '\0';
       tmp++;
       if( !(checkoctal(tok, 0) && checkoctal(tmp, 0))) {

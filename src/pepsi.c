@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -130,7 +131,7 @@ int main( int argc, char *argv[] ) {
       break;
     case 'e':			/* enable devices */
       do {
-	if(next = strchr(optarg, ARGSEP)) {
+	if((next = strchr(optarg, ARGSEP))) {
 	  *(next++) = '\0';
 	}
 	if(isdigit(*optarg)) {
@@ -145,7 +146,7 @@ int main( int argc, char *argv[] ) {
 	} else {
 	  fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
 	}
-      } while(optarg = next);
+      } while((optarg = next));
       break;
     case 'd':			/* coredump */
       coredump = TRUE;

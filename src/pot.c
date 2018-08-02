@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "pot.h"
 
@@ -327,7 +328,7 @@ static int assemble( char *line, FILE *lstfile, WORD8 *assembly ) {
 	  strcat( errstr, "U" );
 	} else {
 	  *close = '\0';
-	  *tok++;
+	  (void)*tok++;
 	  val = 0;
 	  prevop = '+';
 	  while( *tok ) {
