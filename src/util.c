@@ -53,12 +53,12 @@ char *unspace( char *s ) {
   return(p);
 }
 
-char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
+char *getparam( char * cmd, int * addr, char **symp, int discard ) {
 
   char *tok, *num, *next, *tmp;
   unsigned int page;
   SYMBOL *sym;
-
+  
   /* if told, skip cmd char, check arg */
 
   if(discard) { 
@@ -82,7 +82,6 @@ char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
     upstr(tok);
 
     /* check if its a symbol */
-
     if(symp)
       *symp = NULL;
     for( sym = symbols; sym != NULL; sym = sym->next ) {
@@ -105,7 +104,7 @@ char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
         return next;
       } else {	    
         sscanf( tok, "%o", &page );
-        sscanf( tmp, "%o", addr );
+        sscanf( tmp, "%o", (unsigned *)addr );
         if( (page > MAXPAG) || (page < 0)) {
           *addr = ADRERR;
           return next;
@@ -121,7 +120,7 @@ char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
         *addr = ADRERR;
         return next;
       } else {
-        sscanf( tok, "%o", addr );
+          sscanf( tok, "%o", (unsigned *)addr );
       }
     }
   }
@@ -132,16 +131,16 @@ char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
 void dumpmem( WORD8 addr, int cnt) {
 
   int i;
-  
+
   for(i = 0; i < cnt; i++) {
     if(!(i % DMPLEN)) {
       if(i)
-	putchar('\n');
+		putchar('\n');
 
       printf("%04o: ", addr + i);
     }
 
-    printf("%04o ", mem8[addr +i]);
+    printf("%04o ", mem8[addr + i]);
   }
   putchar('\n');
 }

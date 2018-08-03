@@ -8,7 +8,7 @@
 #include "global.h"
 
 void dumpmem( WORD8 addr, int cnt );
-char *getparam( char * cmd, unsigned int * addr, char **sym, int discard);
+char *getparam( char * cmd, int * addr, char **sym, int discard);
 char *unspace( char *s );
 char *upstr( char *s );
 

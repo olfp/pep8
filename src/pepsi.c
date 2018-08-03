@@ -94,7 +94,7 @@ int main( int argc, char *argv[] ) {
   char linebuf[BUFLEN], last[BUFLEN], lblbuf[BUFLEN];
   char *prog, *file, *daddr, *dcnt, *next;
   int i, j, isopt, len, dev;
-  unsigned int addr;
+  int addr;
   unsigned char oc[3];
   char optch, *txt, *lbl;
   struct stat stbuf;
@@ -267,7 +267,7 @@ int main( int argc, char *argv[] ) {
       /* read source lines */
 
       while( fgets( linebuf, BUFLEN, srcfile )) {
-	sscanf( linebuf, "%o:", &addr );
+	sscanf( linebuf, "%o:", (unsigned *)&addr );
 	txt = last + SRCOFF;
 	if( addr != i ) {
 	  if(i < 0) 				/* first line, zero loc */
@@ -332,7 +332,7 @@ int main( int argc, char *argv[] ) {
   /* figure out where to start */
 
   if(origin) {
-    getparam( origin, &pc8, NULL, 0);
+    getparam( origin, (int *)&pc8, NULL, 0);
     if( pc8 < 0 ) {
       fprintf(stderr, "Fatal: bad origin %s, neither symbol nor octal.\n", 
 	      optarg);
@@ -393,7 +393,7 @@ int main( int argc, char *argv[] ) {
       } else {
 	if(!checkoctal(dumps->from, 0))
 	  printf("%s:\n", dumps->from);
-	dumpmem( addr, dumps->cnt );
+		dumpmem( addr, dumps->cnt );
       }
       
       dumps = dumps->next;

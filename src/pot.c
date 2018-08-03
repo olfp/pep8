@@ -473,18 +473,18 @@ int main( int argc, char *argv[] ) {
 
   outname = (char *) malloc( len );
   strcpy( outname, inname );
-  strcpy( strchr(outname, DOT ), DST );
+  strcpy( strrchr(outname, DOT ), DST );
 
   if( lstout ) {
     lstname = (char *) malloc( len );
     strcpy( lstname, inname );
-    strcpy( strchr(lstname, DOT ), LST );
+    strcpy( strrchr(lstname, DOT ), LST );
   }
 
   if( symout ) {
     symname = (char *) malloc( len );
     strcpy( symname, inname );
-    strcpy( strchr(symname, DOT ), SYM );
+    strcpy( strrchr(symname, DOT ), SYM );
   }
 
   /* open input file */

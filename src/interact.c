@@ -66,7 +66,7 @@ static void showsrc(WORD8 addr, int cnt) {
 static void deposit( char *cmd ) {
 
   char *tok;
-  unsigned int addr, val;
+  int addr, val;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -83,7 +83,7 @@ static void deposit( char *cmd ) {
 
 static void examine( char *cmd ) {
 
-  unsigned int addr, cnt;
+  int addr, cnt;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -109,7 +109,7 @@ static void clearwatch( ) {
 
 static void watch( char *cmd ) {
 
-  unsigned int addr, cnt;
+  int addr, cnt;
   char *sym;
   WATCH *newwatch;
 
@@ -132,7 +132,7 @@ static void watch( char *cmd ) {
 
 static void setorigin( char *cmd ) {
 
-  unsigned int addr;
+  int addr;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -145,7 +145,7 @@ static void setorigin( char *cmd ) {
 
 static void printsrc( char *cmd ) {
 
-  unsigned int addr, cnt;
+  int addr, cnt;
 
   if( !text ) {
     printf("no source available!\n");
@@ -170,7 +170,7 @@ static void printsrc( char *cmd ) {
 
 static void setbreak( char *cmd ) {
 
-  unsigned int addr;
+  int addr;
   BRKPNT *brk;
 
   cmd = getparam( cmd, &addr, NULL, 1);
@@ -191,7 +191,7 @@ static void setbreak( char *cmd ) {
 
 static void clearbreak( char *cmd ) {
 
-  unsigned int addr;
+  int addr;
   BRKPNT *brk, *prev;
 
   cmd = getparam( cmd, &addr, NULL, 2);
