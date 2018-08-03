@@ -11,6 +11,7 @@
 #include <signal.h> 
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -58,7 +59,7 @@ struct {
 
 static void usage(char *name) {
   fprintf(stderr, "%s - simulates a teletype\n", name);
-  fprintf(stderr, "usage: %s [-p <port>]\n");
+  fprintf(stderr, "usage: %s [-p <port>]\n", name);
   fprintf(stderr, "  p - listen on given port, default %d\n", DEFAULT_PORT);
   exit(EXIT_FAILURE);
 }
@@ -79,7 +80,7 @@ static void escape(char *cmd) {
   int i;
   char *tok, *rest;
 
-  tok = (char *)strtok_r(cmd, WHTSPC, &rest);
+  tok = strtok_r(cmd, WHTSPC, &rest);
   for(i = 0; ttycmd[i].func; i++) {
     if(!strncmp(tok, ttycmd[i].name, strlen(ttycmd[i].name))) {
       ttycmd[i].func(rest);
@@ -168,7 +169,7 @@ int main( int argc, char *argv[] ) {
 	exit(1);
       } else {
 	tio_raw();
-	if(pthread_create(&tid, NULL, keyb_listen, (void *)accept_sock)) {
+	if(pthread_create(&tid, NULL, keyb_listen, (void *)(intptr_t)accept_sock)) {
 	  perror("ERROR: Cannot create tty read thread:");
 	}
 	printf("TTY listening on port %d.\n", port);

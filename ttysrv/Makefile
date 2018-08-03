@@ -9,7 +9,7 @@ TTY = ../bin/teletype
 
 BINDIR = /usr/local/bin
 
-CFLAGS =  -ansi -pedantic -g $(GNURL)
+CFLAGS =  -pedantic -g $(GNURL)
 LDFLAGS = -g
 
 #LIBS = -lpthread -lsocket
