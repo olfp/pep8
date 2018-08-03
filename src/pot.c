@@ -14,7 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <getopt.h>
 
+#include "octal.h"
 #include "pot.h"
 
 WORD8 mem8[MEM8SIZ];		/* memory of pep8 */
@@ -82,7 +84,7 @@ static void symscan( char *line, FILE *symfile ) {
   int flag;
   int lblfld = TRUE;
   int cnt = 0;
-  int ibuf;
+  unsigned int ibuf;
   SYMTAB *tmpsym;
 
   tok = strtok( line, DELIMS );
@@ -196,7 +198,7 @@ static void symscan( char *line, FILE *symfile ) {
   }
 }
 
-static int valueof(char *tok, int *val) {
+static int valueof(char *tok, unsigned int *val) {
 
   OPCODE *code;
   SYMTAB *symptr;
@@ -244,7 +246,8 @@ static int assemble( char *line, FILE *lstfile, WORD8 *assembly ) {
   char buf[BUFLEN];
   int lblfld = TRUE;
   int len, cnt = 0;
-  int ibuf, type, val, newval, val6;
+  unsigned int ibuf, newval, val; 
+  int type, val6;
   char *close, *next;
   char prevop, opchar;
 
@@ -328,7 +331,7 @@ static int assemble( char *line, FILE *lstfile, WORD8 *assembly ) {
 	  strcat( errstr, "U" );
 	} else {
 	  *close = '\0';
-	  (void)*tok++;
+	  *tok++;
 	  val = 0;
 	  prevop = '+';
 	  while( *tok ) {
@@ -516,7 +519,7 @@ int main( int argc, char *argv[] ) {
   }
 
   if( symout )
-    close(symfile);
+    fclose(symfile);
 
   if( errcnt > 0 ) {
     fprintf( stderr, "%d error(s) after pass 1. Abort.\n", errcnt );
@@ -561,10 +564,10 @@ int main( int argc, char *argv[] ) {
 
   if( lstout ) {
     fputc( '\n', lstfile );
-    close(lstfile);
+    fclose(lstfile);
   }
   
-  close(infile);
+  fclose(infile);
 
   if( memtop == 0 ) {
     fprintf( stderr, "%s: Error. Input file generates no code.\n", argv[0] );

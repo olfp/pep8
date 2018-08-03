@@ -8,6 +8,7 @@
 #include "decode.h"
 
 #include "execute.h"
+#include "pepsi.h"
 
 extern int submod;
 
@@ -20,7 +21,7 @@ void execute( WORD8 opcode ) {
   if((opcode >> 9) < 7) {		/* opcodes that take an address */
 
     if( opcode & INPAGE ) {
-      arg = (opcode & MASK7) | (pc8 & ~MASK7);
+      arg = opcode & MASK7 | (pc8 & ~MASK7);
     } else {
       arg = opcode & MASK7;
     }

@@ -8,6 +8,7 @@
 
 #include "global.h"
 #include "decode.h"
+#include "util.h"
 
 extern int submod;
 

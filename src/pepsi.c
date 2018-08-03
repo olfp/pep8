@@ -20,11 +20,14 @@
 
 #include "util.h"
 #include "chario.h"
+#include "octal.h"
 #include "pepsi.h"
 
 extern int errno;
+#if 0
 extern int optind;
 extern char *optarg;
+#endif
 
 WORD8 mem8[MEM8SIZ];			/* memory of pdp8 */
 WORD8 pc8 = 0;				/* current mem location, default 0 */
@@ -92,7 +95,8 @@ int main( int argc, char *argv[] ) {
   char *inname, *corename, *srcname;
   char linebuf[BUFLEN], last[BUFLEN], lblbuf[BUFLEN];
   char *prog, *file, *daddr, *dcnt, *next;
-  int i, j, isopt, len, addr, dev;
+  int i, j, isopt, len, dev;
+  unsigned int addr;
   unsigned char oc[3];
   char optch, *txt, *lbl;
   struct stat stbuf;
@@ -127,11 +131,14 @@ int main( int argc, char *argv[] ) {
       singlestep = TRUE;
       break;
     case 'o':			/* set origin */
+/*
       origin = (char *)strdup(optarg);
+*/
+      origin = optarg;
       break;
     case 'e':			/* enable devices */
       do {
-	if((next = strchr(optarg, ARGSEP))) {
+	if(next = strchr(optarg, ARGSEP)) {
 	  *(next++) = '\0';
 	}
 	if(isdigit(*optarg)) {
@@ -139,24 +146,27 @@ int main( int argc, char *argv[] ) {
 	  if(!*optarg) {
 	    devices[dev] = "";
 	  } else if(*optarg == DEVSEP) {
+/*
 	    devices[dev] = (char *)strdup(++optarg);
+*/
+	    devices[dev] = ++optarg;
 	  } else {
 	    fprintf(stderr, "WARNING: Bad device spec: %s\n", optarg);
 	  }
 	} else {
 	  fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
 	}
-      } while((optarg = next));
+      } while(optarg = next);
       break;
     case 'd':			/* coredump */
       coredump = TRUE;
-      daddr = (char *)strdup(optarg);
+      daddr = optarg; /* (char *)strdup(optarg); */
       dcnt = strchr(daddr, OFFSEP);
       if(dcnt) {
 	*dcnt = '\0';
 	dcnt++;
       }
-      if(dcnt && !checkoctal(dcnt)) {
+      if(dcnt && !checkoctal(dcnt, 0)) {
 	fprintf(stderr, "Warning: bad dump range %s, count must be octal.\n",
 		optarg);
       } else {
@@ -241,7 +251,7 @@ int main( int argc, char *argv[] ) {
 
     if( usesource ) {
     
-      maxtxt = len - 1;
+      maxtxt = len; /*  - 1; */
 
       /* open source file */
       
@@ -252,7 +262,7 @@ int main( int argc, char *argv[] ) {
 
       text = (char **) malloc( maxtxt * sizeof(char **));
         
-      for( i = 0; i <= maxtxt; i++ )
+      for( i = 0; i < maxtxt; i++ )
 	text[i] = NULL;			/* make sure no junk is in there */
     
       i = -1;				/* current location */
@@ -263,6 +273,8 @@ int main( int argc, char *argv[] ) {
 	sscanf( linebuf, "%o:", &addr );
 	txt = last + SRCOFF;
 	if( addr != i ) {
+	  if(i < 0) 				/* first line, zero loc */
+	    i = 0;
 	  text[i] = malloc( strlen(txt) + 1 );
 	  strcpy( text[i], txt );
 	  i = addr;
@@ -273,9 +285,10 @@ int main( int argc, char *argv[] ) {
 	else
 	  txt = strtok( txt, COMM );		/* strip of comment */
 	lbl = txt = unspace(txt);		/* strip of whitespace */
-	while( txt && *txt && !strchr(LBLCHR, *txt))
+	while( txt && *txt && !strchr(LBLCHR, *txt) && !strchr(TOKDEL, *txt)) {
 	  txt++;
-	if( txt && *txt&& strchr(LBLCHR, *txt) ) {
+        }
+	if( txt && *txt && strchr(LBLCHR, *txt)) {
 	  *txt = '\0'; 				/* strip of LBLCHR */
 	  newsym = (SYMBOL *) malloc( sizeof(SYMBOL));
 	  newsym->location = addr;
@@ -370,9 +383,8 @@ int main( int argc, char *argv[] ) {
   chario_close();
 
   /* dump mem if requested */
-    
-  if( coredump ) {
 
+  if( coredump ) {
     while( dumps ) {
 
       getparam( dumps->from, &addr, NULL, 0);
@@ -382,7 +394,7 @@ int main( int argc, char *argv[] ) {
 		"Warning: cannot dump from %s, neither symbol nor octal.\n",
 		dumps->from);
       } else {
-	if(!checkoctal(dumps->from))
+	if(!checkoctal(dumps->from, 0))
 	  printf("%s:\n", dumps->from);
 	dumpmem( addr, dumps->cnt );
       }

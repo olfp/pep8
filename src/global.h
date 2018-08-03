@@ -33,7 +33,7 @@ typedef struct symtab_t {
 typedef struct watch_t {
   char *sym;			/* symbol or null */
   WORD8 addr;                   /* first word */
-  int cnt;                      /* so many words */
+  unsigned int cnt;             /* so many words */
   struct watch_t *next;
 } WATCH;
 
@@ -41,7 +41,7 @@ typedef struct watch_t {
 
 typedef struct dump_t {
   char *from;                   /* dump from (maybe sym) */
-  int cnt;                      /* so many words */
+  unsigned int cnt;             /* so many words */
   struct dump_t *next;
 } DUMP;
 

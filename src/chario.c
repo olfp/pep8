@@ -13,7 +13,6 @@
 #include <stropts.h>
 #endif
 #include <pthread.h>
-#include <sys/filio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -233,7 +232,7 @@ void chario_close() {
 int chario(int iop, int device, WORD8 *acp) {
   
   int skip = 0;
-  int (*func)(int *);
+  int (*func)(WORD8 *);
   DEVDESC devdesc = devices[device];
 
   switch(iop) {

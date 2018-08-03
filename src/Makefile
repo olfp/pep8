@@ -6,8 +6,11 @@ VER=VERSION
 
 CC = gcc
 
-ASM = pot
-SIM = pepsi
+BINDIR=../bin
+
+ASM = $(BINDIR)/pot
+SIM = $(BINDIR)/pepsi
+
 
 PROGRAMS = $(ASM) $(SIM)
 

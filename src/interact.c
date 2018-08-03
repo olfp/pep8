@@ -16,6 +16,7 @@
 
 #include "global.h"
 #include "octal.h"
+#include "display.h"
 #include "util.h"
 
 #include "interact.h"
@@ -65,7 +66,7 @@ static void showsrc(WORD8 addr, int cnt) {
 static void deposit( char *cmd ) {
 
   char *tok;
-  int addr, val;
+  unsigned int addr, val;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -82,7 +83,7 @@ static void deposit( char *cmd ) {
 
 static void examine( char *cmd ) {
 
-  int addr, cnt;
+  unsigned int addr, cnt;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -108,7 +109,7 @@ static void clearwatch( ) {
 
 static void watch( char *cmd ) {
 
-  int addr, cnt;
+  unsigned int addr, cnt;
   char *sym;
   WATCH *newwatch;
 
@@ -131,7 +132,7 @@ static void watch( char *cmd ) {
 
 static void setorigin( char *cmd ) {
 
-  int addr;
+  unsigned int addr;
 
   cmd = getparam( cmd, &addr, NULL, 1);
   if( addr >= 0 ) {
@@ -144,7 +145,7 @@ static void setorigin( char *cmd ) {
 
 static void printsrc( char *cmd ) {
 
-  int addr, cnt;
+  unsigned int addr, cnt;
 
   if( !text ) {
     printf("no source available!\n");
@@ -169,7 +170,7 @@ static void printsrc( char *cmd ) {
 
 static void setbreak( char *cmd ) {
 
-  int addr;
+  unsigned int addr;
   BRKPNT *brk;
 
   cmd = getparam( cmd, &addr, NULL, 1);
@@ -190,7 +191,7 @@ static void setbreak( char *cmd ) {
 
 static void clearbreak( char *cmd ) {
 
-  int addr;
+  unsigned int addr;
   BRKPNT *brk, *prev;
 
   cmd = getparam( cmd, &addr, NULL, 2);
@@ -262,7 +263,7 @@ static void printsym(char *cmd) {
   
 static void convert( char *cmd ) {
 
-  int num;
+  unsigned int num;
  
   if( *(cmd + 2) != ' ' ) {
     printf(ILLEGAL);
@@ -277,7 +278,7 @@ static void convert( char *cmd ) {
       printf("oct:%04o  dez:%04d\n", num, num );
       break;
     case 'd':                           /* convert from decimal */
-      sscanf( cmd + 3, "%d", &num );
+      sscanf( cmd + 3, "%u", &num );
       printf("oct:%04o  hex:%03x\n", num, num );
       break;	
     default:    

@@ -4,7 +4,7 @@
     functions dealing with octal numbers
 */
 
-#include <strings.h>
+#include <string.h>
 #include "types8.h"
 
 int checkoctal( char *tok, int n ) {

@@ -14,6 +14,7 @@
 #include <readline/readline.h>
 #endif
 
+#include "octal.h"
 #include "global.h"
 
 #define DMPLEN	12		/* words per line while dumping mem */
@@ -52,10 +53,10 @@ char *unspace( char *s ) {
   return(p);
 }
 
-char *getparam( char * cmd, int * addr, char **symp, int discard ) {
+char *getparam( char * cmd, unsigned int * addr, char **symp, int discard ) {
 
   char *tok, *num, *next, *tmp;
-  int page;
+  unsigned int page;
   SYMBOL *sym;
 
   /* if told, skip cmd char, check arg */
@@ -69,7 +70,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
 
   /* start tokenize, get first token */
 
-  tok = (char *)strtok_r( cmd, TOKDEL, &next );
+  tok = strtok_r( cmd, TOKDEL, &next );
 
   if( !tok ) {
     *addr = NOPARA;			/* no arg given */
@@ -95,8 +96,8 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
   
     /* look if its an absolute address or in page:offset form */
   
-    num = (char *)strdup(tok);
-    if((tmp = strchr(num, PAGSEP))) {
+    num = strdup(tok);
+    if( tmp = strchr(num, PAGSEP) ) {
       *tmp = '\0';
       tmp++;
       if( !(checkoctal(tok, 0) && checkoctal(tmp, 0))) {

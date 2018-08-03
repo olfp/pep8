@@ -5,7 +5,7 @@
 
 CC = gcc
 
-TTY = teletype
+TTY = ../bin/teletype
 
 BINDIR = /usr/local/bin
 
