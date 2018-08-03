@@ -24,10 +24,8 @@
 #include "pepsi.h"
 
 extern int errno;
-#if 0
 extern int optind;
 extern char *optarg;
-#endif
 
 WORD8 mem8[MEM8SIZ];			/* memory of pdp8 */
 WORD8 pc8 = 0;				/* current mem location, default 0 */

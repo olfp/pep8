@@ -18,7 +18,7 @@ PROGRAMS = $(ASM) $(SIM)
 GNURL     = -DGNURL -DMACRL
 GNURLLIBS = -lreadline -ltermcap
 
-CFLAGS =  -ansi -pedantic -g $(GNURL)
+CFLAGS = -pedantic -g $(GNURL)
 #CFLAGS =  -ansi -pedantic -g -D_POSIX_SOURCE $(GNURL)
 LDFLAGS = -g
 #CFLAGS = -ansi -pedantic -O6 -D_POSIX_SOURCE $(GNURL)
