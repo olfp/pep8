@@ -56,7 +56,7 @@ char *unspace( char *s ) {
 char *getparam( char * cmd, int * addr, char **symp, int discard ) {
 
   char *tok, *num, *next, *tmp;
-  unsigned int page;
+  int page;
   SYMBOL *sym;
   
   /* if told, skip cmd char, check arg */
@@ -96,7 +96,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
     /* look if its an absolute address or in page:offset form */
   
     num = strdup(tok);
-    if( tmp = strchr(num, PAGSEP) ) {
+    if((tmp = strchr(num, PAGSEP))) { /* extra parens for gcc */
       *tmp = '\0';
       tmp++;
       if( !(checkoctal(tok, 0) && checkoctal(tmp, 0))) {

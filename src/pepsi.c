@@ -136,7 +136,7 @@ int main( int argc, char *argv[] ) {
       break;
     case 'e':			/* enable devices */
       do {
-	if(next = strchr(optarg, ARGSEP)) {
+	if((next = strchr(optarg, ARGSEP))) { /* extra parens for gcc */
 	  *(next++) = '\0';
 	}
 	if(isdigit(*optarg)) {
@@ -154,7 +154,7 @@ int main( int argc, char *argv[] ) {
 	} else {
 	  fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
 	}
-      } while(optarg = next);
+      } while((optarg = next)); /* extra parens for gcc */
       break;
     case 'd':			/* coredump */
       coredump = TRUE;

@@ -26,10 +26,11 @@
 #define LBLCHR	",:"		/* Label delimiter */
 #define COMM	"/;"		/* Comment lead in */
 
-#define SYMLEN	6			/* max. length of symbols */
+#define SYMLEN	6		/* max. length of symbols */
 
-typedef unsigned int WORD8;	/* This is supposed to hold at least 13 bits */
-typedef unsigned int BIT8;  /* This should hold a single bit */
+				/* WORD8 must be signed to detect overflow */
+typedef int WORD8;		/* This is supposed to hold at least 13 bits */
+typedef int BIT8;		/* This should hold a single bit */
 
 #define isoctal(X) (((X) >= '0') && ((X) <= '7'))       /* check octal digit */
 
