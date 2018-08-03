@@ -1,7 +1,7 @@
 /*
    pep8 simulator
 
-   (c) olf 07/05
+   (c) olf 07/05, 2018
 
    takes .pmi file and executes it
 
