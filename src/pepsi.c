@@ -222,11 +222,11 @@ int main( int argc, char *argv[] ) {
 
     corename = malloc( len );
     strcpy( corename, inname );
-    strcpy( strchr(corename, DOT ), COR );
+    strcpy( strrchr(corename, DOT ), COR );
     
     srcname = malloc( len );
     strcpy( srcname, inname );
-    strcpy( strchr(srcname, DOT ), SRC );
+    strcpy( strrchr(srcname, DOT ), SRC );
 
     /* get size of image file */
 
@@ -248,7 +248,6 @@ int main( int argc, char *argv[] ) {
     }
 
     if( usesource ) {
-    
       maxtxt = len; /*  - 1; */
 
       /* open source file */
