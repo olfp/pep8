@@ -15,7 +15,8 @@ SIM = $(BINDIR)/pepsi
 PROGRAMS = $(ASM) $(SIM)
 
 # decide whether to use the GNU readline lib
-GNURL     = -DGNURL -DMACRL
+oldGNURL  = -DGNURL -DMACRL
+GNURL     = -DGNURL
 GNURLLIBS = -lreadline -ltermcap
 
 CFLAGS = -pedantic -g $(GNURL)

@@ -59,6 +59,8 @@ static int csd = -1;			/* client socket desc. */
 static char in_ch = -1;			/* input char buffer */
 static char out_ch = -1;		/* input char buffer */
 
+static FILE *ppt_file;			/* file actiong as paper tape */
+
 void *tty_write_sock(void *arg) {
 
   while(1) {
@@ -185,6 +187,24 @@ int tty_putc(WORD8 *acp) {
   return 0;
 }
 
+void ppt_init(int dev, char *devdesc) {
+  if((ppt_file = fopen(devdesc, "r")) == NULL ) {
+    fprintf( stderr, "Error opening data file %s as PPT.\n", devdesc);
+    exit(EXIT_FAILURE);
+  }
+}
+
+int ppt_rdyin(WORD8 *acp) {
+
+  return !feof(ppt_file);
+}
+
+int ppt_getc(WORD8 *acp) {
+
+  *acp = fgetc(ppt_file) & MASK8;
+  return 0;
+}
+
 static DEVDESC devices[MAXDEV] = {
   {
     "Teletype",
@@ -198,7 +218,20 @@ static DEVDESC devices[MAXDEV] = {
     0,
     0,
     0,
-  }
+  },
+  {
+    "Papertape",
+    ppt_init,
+    0,
+    ppt_rdyin,
+    0,
+    ppt_getc,
+    0,
+    0,
+    0,
+    0,
+    0,
+  },
 };
 
 void chario_init(int iobase, char *devdesc[]) {

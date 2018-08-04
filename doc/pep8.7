@@ -119,47 +119,44 @@ indirekten Sprung mit der Startadresse der Routine als Argument.
 .PP
 Die verbleibende Bitkombination 
 .I 111 
-identifizert einen der restlichen Befehle
+(OPR, Operate) identifiziert einen der restlichen Befehle
 des pep-8, die keinen Hauptspeicheroperanden benötigen und deshalb
 die Bits drei bis elf zur Bestimmung des Befehls heranziehen können. Zu jedem
 Befehl wird hier der vollständige 12\-Bit Befehlscode als Oktalzahl angegeben.
 .PP
 .I "Befehle die den internen Zustand ändern"
 .PP
-Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
-Kombination keinen logischen Konflikt wie z.B. links 
-.B und
-rechts rotieren darstellt. Die Befehle werden in 
-zwei Gruppen abgearbeitet, jede Gruppe muß konfliktfrei sein.
+Diese Befehle können in einem Befehlswort kombiniert werden.
+Bei diesen Befehlen ist Bit 4 auf null.
 .TP
 .BR NOP " (No Operation, 7000)"
 Nichtstun. Kann mit keinem anderen Befehl kombiniert werden.
 .TP
-.BR CLL " (Clear Link Bit, 7100, Gruppe 1)"
+.BR CLL " (Clear Link Bit, 7100)"
 Verbindungsbit auf Null setzen.
 .TP
-.BR STL " (Set Link Bit, 7120, Gruppe 1)"
+.BR STL " (Set Link Bit, 7120)"
 Verbindungsbit auf Eins setzen.
 .TP
-.BR CML " (Complement Link, 7020, Gruppe 1)"
+.BR CML " (Complement Link, 7020)"
 Verbindungsbit invertieren.
 .TP
-.BR CLA " (Clear accumulator, 7200, Gruppe 1)"
+.BR CLA " (Clear accumulator, 7200)"
 Akkumulator auf Null setzen.
 .TP
-.BR STA " (Set accumulator, 7240, Gruppe 1)"
+.BR STA " (Set accumulator, 7240)"
 Alle Bits des Akkumulators auf Eins setzen.
 .TP
-.BR CMA " (Complement accumulator, 7040, Gruppe 1)"
-Einerkomplement des Akkunulators bilden und dort ablegen.
+.BR CMA " (Complement accumulator, 7040)"
+Einerkomplement des Akkumulators bilden und dort ablegen.
 .TP
-.BR IAC " (Increment accumulator, 7001, Gruppe 2)"
+.BR IAC " (Increment accumulator, 7001)"
 Akkumulator um eins erhöhen.
 .TP
-.BR RAL " (Rotate left Link and accumulator, 7004, Gruppe 2)"
+.BR RAL " (Rotate left Link and accumulator, 7004)"
 Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach links rotieren.
 .TP
-.BR RAR " (Rotate right Link and accumulator, 7010, Gruppe 2)"
+.BR RAR " (Rotate right Link and accumulator, 7010)"
 Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach rechts rotieren.
 .PP
 Die sicherlich wichtigste Befehlskombination dient der Subtraktion. 
@@ -173,8 +170,10 @@ der Minuend addiert und die Differenz steht im Akkumulator.
 .PP
 .I "Befehle die den Programmfluß verändern"
 .PP
+Bei diesen Befehlen ist Bit 4 gesetzt und Bit 11 auf null.
 Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
-Befehle zum gleichen Kombinationstyp gehören. Die Sprungbedingungen 
+Befehle zum gleichen Kombinationstyp gehören. 
+Die Sprungbedingungen 
 werden oder-verknüpft, wenn Bit 8 des Befehlswortes null ist
 .RI ( Oder-Typ ).
 Ist Bit 8 eins, werden sie und-verknüft
@@ -183,33 +182,39 @@ Ist Bit 8 eins, werden sie und-verknüft
 .BR HLT " (Halt the program, 7402)"
 Das Programm anhalten.
 .TP
-.BR SKP " (Skip always, 7410)"
+.BR SNL " (Skip on non-zero Link, 7420, Oder-Typ)"
+Wenn das Verbindungsbit nicht null ist, den Programmzähler erhöhen.
+.TP
+.BR SZA " (Skip on zero accumulator, 7440, Oder-Typ)"
+Wenn der Akkumulator null ist, den Programmzähler erhöhen.
+.TP
+.BR SMA " (Skip on minus accumulator, 7500, Oder-Typ)"
+Bei negativem Akkumulator den Programmzähler erhöhen.
+.TP
+.BR SKP " (Skip always, 7410, Und-Typ)"
 Den Programmzähler erhöhen (Und-Typ).
 .TP
-.BR SNL " (Skip on non-zero Link, 7420)"
-Wenn das Verbindungsbit nicht null ist, den Programmzähler erhöhen (Oder-Typ).
+.BR SZL " (Skip on zero Link, 7430, Und-Typ)"
+Wenn das Verbindungsbit null ist, den Programmzähler erhöhen.
 .TP
-.BR SZL " (Skip on zero Link, 7430)"
-Wenn das Verbindungsbit null ist, den Programmzähler erhöhen (Und-Typ).
+.BR SNA " (Skip on non-zero accumulator, 7450, Und-Typ)"
+Wenn der Akkumulator nicht null ist, den Programmzähler erhöhen.
 .TP
-.BR SZA " (Skip on zero accumulator, 7440)"
-Wenn der Akkumulator null ist, den Programmzähler erhöhen (Oder-Typ).
-.TP
-.BR SNA " (Skip on non-zero accumulator, 7450)"
-Wenn der Akkumulator nicht null ist, den Programmzähler erhöhen (Und-Typ).
-.TP
-.BR SMA " (Skip on minus accumulator, 7500)"
-Bei negativem Akkumulator den Programmzähler erhöhen (Oder-Typ).
-.TP
-.BR SPA " (Skip on plus accumulator, 7510)"
-Bei positivem Akkumulator den Programmzähler erhöhen (Und-Typ).
+.BR SPA " (Skip on plus accumulator, 7510, Und-Typ)"
+Bei positivem Akkumulator den Programmzähler erhöhen.
 .PP
 .I "Befehle zum Ansprechen von Ein-/Ausgabegeräten"
 .PP
 Mit diesen Befehlen können Ein-/Ausgabegeräte gesteuert werden.
+Der pep-8 Prozessor unterstützt bis zu 16 Geräte
 Jedes Gerät besitzt eine oder mehrere Untereinheiten mit je einem 
-Ein- und Ausgabekanal.
-Das jeweils angesprochene Gerät wird im Befehlswort in Bit 4-6 kodiert.
+Ein- und/oder Ausgabekanal.
+Bei diesen Befehlen sind Bit 4 und Bit 11 gesetzt.
+Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 7-10 kodiert,
+entsprechend muss die Gerätenummer eine Stelle nach rechts geschoben werden (verdoppeln)
+bevor sie mit dem Befehlswort verodert wird (Beispiel: Lesen von Gerät 3: 
+.BR " DGA (3*2)" 
+)
 Diese Befehle können nicht kombiniert werden.
 .TP
 .BR SRI " (Skip on ready for input, 7401)"
@@ -237,7 +242,8 @@ Den Wert des Akkumulators als Meldungsauswahlmaske an das Gerät
 .BR RSD " (Reset device, 7741)"
 Das Gerät zurücksetzen und Untereinheit null auswählen.
 .PP
-.I Implementierte Geräte: Teletype, Gerät 0 (Null)
+.SH GERÄTE
+.I Teletype, Gerät 0 (Null)
 .PP
 In Verbindung mit dem Terminalsimulator 
 .BR teletype (1)
@@ -246,7 +252,13 @@ kann
 Zeichen ein- und ausgeben, wenn das Gerät beim Start freigeschaltet wird.
 Das Teletype (TTY) unterstützt die Befehle 
 .BR SRI ",  " SRO ", " DGA " und " DPA . 
-Die Gerätenummer in 0 (Null).
+.PP
+.I Papertape Reader, Gerät 1
+.PP
+Dem Gerät wird beim Freischalten eine Datei zugewiesen aus der  Einzelzeichen gelesen 
+werden können. Am Dateiende geht das Grät in den nicht-bereit Zustand. Der Papertape 
+Reader unterstützt die Befehle 
+.BR SRI " und " DGA .
 .SH SIEHE AUCH
 .BR pot (1),
 .BR pot (5),
