@@ -44,6 +44,8 @@ int		pass = 0;		/* assemler pass; 1=symscan, 2=assemble */
 
 MACDEF *macline = NULL;		/* pointer to current macro line */
 
+WORD8 macpara[MAXPARA]; /* mac invocation params, preassembled */
+
 extern int	optind;
 extern char    *optarg;		/* argument pointer for getopt */
 
@@ -259,6 +261,8 @@ symscan(char *line, FILE * symfile)
 				}
 			} else {
 				lblfld = FALSE;	/* none found, no more labels now */
+				
+				/* check for macro invocation */ 
 				for (symtmp = symtab; *(symtmp->symbol) != '\0'; symtmp++) {
 					if (!strcmp(tok, symtmp->symbol) && (symtmp->type = macro)) {
 						macroptr = symtmp->val.macdef;
@@ -266,6 +270,7 @@ symscan(char *line, FILE * symfile)
 							pc8++;
 							macroptr = macroptr->next;
 						} 
+						lblfld = TRUE;	
 					}
 				}
 			}
@@ -275,7 +280,7 @@ symscan(char *line, FILE * symfile)
 		tok = strtok(NULL, DELIMS);
 	}
 
-	if (!lblfld) {		/* if code was generated */
+	if (!lblfld && !macromode) {		/* if code was generated */
 		++pc8;
 	}
 }
@@ -284,9 +289,9 @@ static int
 valueof(char *tok, unsigned int *val)
 {
 
-	OPCODE         *code;
-	SYMTAB         *symptr;
-	int		type = TERROR;
+	OPCODE    *code;
+	SYMTAB    *symptr;
+	int				num, type = TERROR;
 
 	if (isdigit(*tok) || (strchr("+-", *tok) && isdigit(*(tok + 1)))) {
 		/* its a number! */
@@ -296,6 +301,14 @@ valueof(char *tok, unsigned int *val)
 		} else {
 			type = TISBAD;
 		}
+	} else if( *tok == PRM ) {
+		type = TISPRM;
+		num = *(++tok) - '1';
+		/* check for more chars ... error */
+		*val = macpara[num];
+	} else if( *tok == DOT ) {
+		type = TISVAL;
+		*val = pc8;
 	} else {
 		/* check for mnemonic or symbol */
 		for (code = opcodes; *(code->mnemonic) != '\0'; code++) {
@@ -342,7 +355,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	int 	mac = FALSE;
 	int		len       , cnt = 0;
 	unsigned int	ibuf, newval, val;
-	int		type      , val6;
+	int		type      , val6, parapos;
 	char           *close, *next;
 	char		prevop   , opchar;
 	
@@ -474,7 +487,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 				else
 					loc |= val;
 			}
-			if (type == TISVAL) {	/* its a valid number or * symbol */
+			if (type == TISVAL || type == TISPRM) {	/* its a valid number, param or * symbol */
 				op = (WORD8) val;
 				if (loc & UNUSED) {
 					loc = op;
@@ -493,6 +506,10 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 			if (type == TISMAC) {
 				mac = TRUE;
 				strcat(errstr, "M");
+				for(parapos = 0; parapos < MAXPARA; parapos++) {
+					macpara[parapos] = UNUSED;
+				}
+				parapos = 0;
 			}
 			if (type == TISBAD) {	/* its an invalid number */
 				fprintf(stderr, "%05d: bad octal number: %s\n", lineno, tok);
@@ -505,14 +522,15 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 				strcat(errstr, "S");
 			}
 		}
+		if(mac && (type != TISMAC)) {
+			macpara[parapos++] = loc;
+			loc = 0;
+		}
 
 		tok = strtok(NULL, DELIMS);
 	}
 
 	loc &= MASK12;
-
-	/* debug out */
-	printf("%04o: %-5s %04o\t%s", pc8, errstr, loc, buf);
 
 	if (lstfile && !cnt)
 		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, buf);
@@ -656,7 +674,6 @@ main(int argc, char *argv[])
 	/* Pass 1 done */
 	
 	/*
-	printf("\nMACRO DEFNS:\n");
 	for(symptr = symtab; *(symptr->symbol); symptr++) {
 		if(symptr->type == macro) {
 			MACDEF *def;
@@ -667,7 +684,9 @@ main(int argc, char *argv[])
 				def = def->next;
 			}
 			printf("ENDM: %s\n", symptr->symbol);
-		}				
+		} else {
+			printf("SYMBOL: %s - %o\n", symptr->symbol, symptr->val.location);							
+		}
 	}
 	*/
 	

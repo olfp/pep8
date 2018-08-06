@@ -20,6 +20,8 @@
 
 #define EQU	'='		/* Assign values to symbols */
 #define ORG	'*'		/* Set address of generated code */
+#define DOT	'.'		/* value of current pc */
+#define PRM	'\\'	/* Macro param lead in */
 #define EOA	'$'		/* Terminate assembly */
 
 #define DOT	'.'
@@ -48,7 +50,10 @@
 #define TISBAD	1		/* token is a invalid (octal) number */
 #define TISVAL	2		/* token is a (octal) number or symbol*/
 #define TISMAC	3		/* token is a mnemonic */
-#define TMNEMO	4		/* token is a macro */
+#define	TISPRM	4		/* token is a macro positional param */
+#define TMNEMO	5		/* token is a macro */
+
+#define MAXPARA 10		/* max macro params */
 
 /* pseudo operations */
 
