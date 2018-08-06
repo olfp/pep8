@@ -1,0 +1,29 @@
+;
+; pot8 MARCO Test/Design
+;
+	MACRO TSB	; thirteen bit subtract
+	CLL CMA IAC	; make two's complement
+	TAD	$1	; add arg
+	ENDM
+
+	MACRO JML	; jump via link
+	JMP I	.+1	; indirect via next word
+	$1		; link is here
+	ENDM
+
+RESET:	JML	START
+
+A:	42		; dec 34
+B:	13		; dec 11
+C:	0		; result for c = a - b = 27 (dec 23) 
+
+	PAGE
+
+START:	CLL
+	RCL	A
+	TSB	B
+	STO	C
+
+END:	HLT
+
+; EOF
