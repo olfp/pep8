@@ -103,7 +103,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
         *addr = ADRERR;
         return next;
       } else {	    
-        sscanf( tok, "%o", &page );
+        sscanf( tok, "%o", (unsigned *)&page );
         sscanf( tmp, "%o", (unsigned *)addr );
         if( (page > MAXPAG) || (page < 0)) {
           *addr = ADRERR;

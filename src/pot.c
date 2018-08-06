@@ -36,6 +36,11 @@ int		run = TRUE;	/* reset if end of assemble char seen */
 
 int		textmode = 0;	/* assemble nums/sysm or text/sixbit */
 int		macromode = 0;	/* true if defining macro */
+int		macrohead = 0;	/* true if MACRO line */
+
+MACDEF	*macroptr = NULL; /* assembly active macro line */
+
+int		pass = 0;		/* assemler pass; 1=symscan, 2=assemble */
 
 MACDEF *macline = NULL;		/* pointer to current macro line */
 
@@ -85,20 +90,6 @@ symtab_next()
 			*(symptr->symbol) = '\0';	/* mark end of table */
 }
 
-
-
-static void 
-po_next_page()
-{
-
-	pc8 &= ~MASK7;
-	pc8 += PAGE8;
-	if (pc8 > MASK12) {
-		fprintf(stderr, "Fatal: page %o is out of range!\n", pc8 >> 7);
-		exit(EXIT_FAILURE);
-	}
-}
-
 static void 
 macroline(char *line)
 {
@@ -117,6 +108,18 @@ macroline(char *line)
 }
 
 static void 
+po_next_page()
+{
+
+	pc8 &= ~MASK7;
+	pc8 += PAGE8;
+	if (pc8 > MASK12) {
+		fprintf(stderr, "Fatal: page %o is out of range!\n", pc8 >> 7);
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void 
 po_text()
 {
 	textmode = 0xff;
@@ -128,20 +131,23 @@ po_macro()
 	char *name;
 	SYMVAL symbuf;
 	
-	name = strtok(NULL, DELIMS);
-	symbuf.macdef = NULL;
-	symtab_insert(name, symbuf, macro);		
+	if(pass == 1) {
+		name = strtok(NULL, DELIMS);
+		symbuf.macdef = NULL;
+		symtab_insert(name, symbuf, macro);		
+		macromode = TRUE;
+		macrohead = TRUE;					
+	}
 	macromode = TRUE;
-					
-	printf("SYMSCAN MACRO: %s\n", name);
 }
 
 static void 
 po_mend()
 {
-	printf("SYMSCAN MEND: %s\n", symptr->symbol);
-
-	symtab_next();
+	if(pass == 1) {
+		symtab_next();
+		macline = NULL;
+	}
 	macromode = FALSE;
 }
 
@@ -170,12 +176,12 @@ symscan(char *line, FILE * symfile)
 	int		lblfld = TRUE;
 	int		cnt = 0;
 	unsigned int	ibuf;
+	SYMTAB         *symtmp;
 	SYMVAL				symbuf;
-
+	
 	tok = strtok(line, DELIMS);
 
 	while (tok != NULL) {
-
 		nxt = tok + strlen(tok) + 1;
 
 		/* check for end-of-assembly symbol */
@@ -253,6 +259,15 @@ symscan(char *line, FILE * symfile)
 				}
 			} else {
 				lblfld = FALSE;	/* none found, no more labels now */
+				for (symtmp = symtab; *(symtmp->symbol) != '\0'; symtmp++) {
+					if (!strcmp(tok, symtmp->symbol) && (symtmp->type = macro)) {
+						macroptr = symtmp->val.macdef;
+						while(macroptr) {
+							pc8++;
+							macroptr = macroptr->next;
+						} 
+					}
+				}
 			}
 			break;	/* done with this line */
 		}
@@ -291,11 +306,19 @@ valueof(char *tok, unsigned int *val)
 			}
 		}
 		if (*(code->mnemonic) == '\0') {	/* no mnemonic */
-			/* must be a symbol */
+			/* must be a symbol or macro*/
 			for (symptr = symtab; *(symptr->symbol) != '\0'; symptr++) {
 				if (!strcmp(tok, symptr->symbol)) {
-					type = TISVAL;
-					*val = symptr->val.location;
+					if(symptr->type == addr) {
+						type = TISVAL;
+						*val = symptr->val.location;
+					} else if(symptr->type == macro) {
+						type = TISMAC;
+						*val = 0;
+						macroptr = symptr->val.macdef;
+					} else {
+						type = TISBAD;
+					}
 					break;
 				}
 			}
@@ -316,11 +339,14 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	char		errstr    [6] = "";
 	char		buf       [BUFLEN];
 	int		lblfld = TRUE;
+	int 	mac = FALSE;
 	int		len       , cnt = 0;
 	unsigned int	ibuf, newval, val;
 	int		type      , val6;
 	char           *close, *next;
 	char		prevop   , opchar;
+	
+	//printf("LINE: %s", line);
 
 	strcpy(buf, line);	/* preserve input line for listing */
 
@@ -359,10 +385,6 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 		} else {
 
 			if (pseudoop(tok)) {	/* process pseudo ops */
-				if (macromode) {	/* pseudo was MACRO */
-					tok = strtok(NULL, DELIMS);
-					printf("ASSEMBLE MACRO: %s\n", tok);
-				}
 				if (textmode) {
 					tok += strlen(tok) + 1;
 					while (*tok && strchr(DELIMS, *tok)) {
@@ -391,6 +413,13 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 				}
 				break;	/* rest of line is ignored */
 			}
+			
+			if(macromode) {
+				assembly = 0;
+				tok = NULL;
+				break;
+			}
+			
 			/* process mnemonics & operands */
 
 			lblfld = FALSE;	/* no more labels now */
@@ -461,13 +490,16 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 					loc |= (op & ADDRMSK);
 				}
 			}
+			if (type == TISMAC) {
+				mac = TRUE;
+				strcat(errstr, "M");
+			}
 			if (type == TISBAD) {	/* its an invalid number */
 				fprintf(stderr, "%05d: bad octal number: %s\n", lineno, tok);
 				errcnt++;
 				strcat(errstr, "N");
 			}
-			if (type == TERROR) {	/* its a nothing, probably an
-						 * undef sym */
+			if (type == TERROR) {	/* its a nothing, probably an undef sym */
 				fprintf(stderr, "%05d: undefined symbol: %s\n", lineno, tok);
 				errcnt++;
 				strcat(errstr, "S");
@@ -479,29 +511,42 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 
 	loc &= MASK12;
 
+	/* debug out */
+	printf("%04o: %-5s %04o\t%s", pc8, errstr, loc, buf);
+
 	if (lstfile && !cnt)
 		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, buf);
 
 	if (assembly)		/* return generated bits if requested */
 		*assembly = loc;
 
-	if (!lblfld && !cnt && !assembly)	/* did code, no textmode, no
-						 * sympass */
+	if (!lblfld && !cnt && !mac && !assembly)	/* did code, no textmode, no sympass */
 		mem8[pc8++] = loc;
 
 	return (!lblfld);	/* return true if code was generated */
+}
+
+static char *nextline(char *buf, int len, FILE *infile) {
+	
+	if(macroptr) {
+		strncpy(buf, macroptr->line, len);
+		macroptr = macroptr->next;
+		return buf;
+	} else {
+		return fgets(buf, len, infile);	
+	}
 }
 
 int 
 main(int argc, char *argv[])
 {
 
-	FILE           *infile, *outfile, *lstfile, *symfile;
-	char           *inname, *outname, *lstname, *symname;
-	char		linebuf   [BUFLEN];
-	char           *prog, *file;
-	char		optch;
-	int		i         , j, f, l, len;
+	FILE    *infile, *outfile, *lstfile, *symfile;
+	char    *inname, *outname, *lstname, *symname;
+	char	*tmpline, linebuf   [BUFLEN];
+	char    *prog, *file;
+	char	optch;
+	int		i, j, f, l, len;
 	unsigned char	oc[3];
 
 	prog = argv[0];
@@ -567,6 +612,9 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: File %s not found.\n", argv[0], inname);
 		exit(EXIT_FAILURE);
 	}
+	
+	pass++;
+	
 	/* build symbol table */
 
 	symptr = symtab = (SYMTAB *) malloc(symsiz * sizeof(SYMTAB));
@@ -588,11 +636,12 @@ main(int argc, char *argv[])
 			linebuf[i] = toupper(linebuf[i]);
 		}
 		lineno++;
+		tmpline = strdup(linebuf);
 		symscan(linebuf, symfile);
-		if (macromode) {/* pseudo was MACRO */
-			printf("MACRO LINE: %s\n", linebuf);
-			macroline(linebuf);
+		if (macromode && !macrohead) {
+			macroline(tmpline);
 		}
+		macrohead = FALSE;
 	}
 
 	if (symout)
@@ -602,6 +651,26 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%d error(s) after pass 1. Abort.\n", errcnt);
 		exit(EXIT_FAILURE);
 	}
+	
+	pass++;
+	/* Pass 1 done */
+	
+	/*
+	printf("\nMACRO DEFNS:\n");
+	for(symptr = symtab; *(symptr->symbol); symptr++) {
+		if(symptr->type == macro) {
+			MACDEF *def;
+			printf("MACRO: %s\n", symptr->symbol);
+			def = symptr->val.macdef;
+			while(def) {
+				printf("%s", def->line);
+				def = def->next;
+			}
+			printf("ENDM: %s\n", symptr->symbol);
+		}				
+	}
+	*/
+	
 	/* initialize mem buffer / loc pointer */
 
 	for (j = 0; j < MEM8SIZ; j++)
@@ -627,7 +696,8 @@ main(int argc, char *argv[])
 
 	run = TRUE;
 
-	while (run && fgets(linebuf, BUFLEN, infile)) {
+	while (run && nextline(linebuf, BUFLEN, infile)) {
+		//printf("LINEBUF: %s", linebuf);
 		for (i = 0; i < strlen(linebuf); i++) {
 			linebuf[i] = toupper(linebuf[i]);
 		}

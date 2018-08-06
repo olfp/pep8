@@ -47,7 +47,8 @@
 #define TERROR	0		/* token error */
 #define TISBAD	1		/* token is a invalid (octal) number */
 #define TISVAL	2		/* token is a (octal) number or symbol*/
-#define TMNEMO	3		/* token is a mnemonic */
+#define TISMAC	3		/* token is a mnemonic */
+#define TMNEMO	4		/* token is a macro */
 
 /* pseudo operations */
 
@@ -84,14 +85,14 @@ typedef struct symtab_t {
 
 typedef struct pseudo_t {
   char pseudo[PLEN+1];
-  void  (*pseudoop)();
+  void (*pseudoop)();
 } PSEUDO;
 
 PSEUDO pseudos[] = {
   "PAGE",	po_next_page,	/* advance location counter to next page */
   "TEXT",	po_text,	    /* deposit SIXBIT text in memory */
   "MACRO",	po_macro,		/* start macro definition */
-  "MEND",	po_mend,		/* end of macro definition */
+  "ENDM",	po_mend,		/* end of macro definition */
   "",		0				/* table end marker */
 };
 
