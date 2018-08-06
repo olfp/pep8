@@ -53,12 +53,33 @@
 
 static void po_next_page(void);
 static void po_text(void);
+static void po_macro(void);
+static void po_mend(void);
+
+/* macros */
+
+typedef struct macdef_t {
+	char 			*line;	/* macro source line */
+	struct macdef_t	*next;	/* pointer to next line */
+} MACDEF;
+
+/* symbol types */
+
+typedef enum symtype_t {addr, macro} SYMTYPE;
+
+/* symbol value */
+
+typedef union symval_t {
+  WORD8 	location;		/* associated address */
+  MACDEF	*macdef;		/* pointer to macro definition */
+} SYMVAL;
 
 /* symbol table element */
 
 typedef struct symtab_t {
   char symbol[SYMLEN+1];	/* name of symbol */
-  WORD8 location;		/* associated address */
+  SYMTYPE type;				/* type of symbol */
+  SYMVAL val;				/* value of symbol */
 } SYMTAB;
 
 typedef struct pseudo_t {
@@ -68,8 +89,10 @@ typedef struct pseudo_t {
 
 PSEUDO pseudos[] = {
   "PAGE",	po_next_page,	/* advance location counter to next page */
-  "TEXT",	po_text,	/* deposit SIXBIT text in memory */
-  "",		0		/* table end marker */
+  "TEXT",	po_text,	    /* deposit SIXBIT text in memory */
+  "MACRO",	po_macro,		/* start macro definition */
+  "MEND",	po_mend,		/* end of macro definition */
+  "",		0				/* table end marker */
 };
 
 /* prototypes */
