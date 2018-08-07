@@ -253,8 +253,8 @@ int main( int argc, char *argv[] ) {
       /* open source file */
       
       if( (srcfile = fopen( srcname, "r" )) == NULL ) {
-	fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
-	exit(EXIT_FAILURE);
+		fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
+		exit(EXIT_FAILURE);
       }
 
       text = (char **) malloc( maxtxt * sizeof(char **));
@@ -385,18 +385,16 @@ int main( int argc, char *argv[] ) {
     while( dumps ) {
 
       getparam( dumps->from, &addr, NULL, 0);
-
       if(addr < 0) {
-	fprintf(stderr, 
-		"Warning: cannot dump from %s, neither symbol nor octal.\n",
-		dumps->from);
+		fprintf(stderr, "Warning: cannot dump from %s, %s.\n", dumps->from,
+			(symbols ? "neither symbol nor octal" : "no symbols loaded"));
       } else {
-	if(!checkoctal(dumps->from, 0))
-	  printf("%s:\n", dumps->from);
-		dumpmem( addr, dumps->cnt );
-      }
+		if(!checkoctal(dumps->from, 0))
+			printf("%s:\n", dumps->from);
+			dumpmem( addr, dumps->cnt );
+		}
       
-      dumps = dumps->next;
+		dumps = dumps->next;
     }
   }
 

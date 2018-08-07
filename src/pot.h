@@ -25,6 +25,7 @@
 #define EOA	'$'		/* Terminate assembly */
 
 #define DOT	'.'
+#define SEP '/'
 
 #define SRC	".pps"
 #define DST	".pmi"
@@ -44,7 +45,7 @@
 #define STRTEX	'('		/* start arithmetic expression */
 #define ENDEX	')'		/* end expression */
 
-#define ARITHC	"+-*/"		/* arithmetic operands */
+#define ARITHC	"+-*/&"		/* arithmetic operands */
 
 #define TERROR	0		/* token error */
 #define TISBAD	1		/* token is a invalid (octal) number */
@@ -55,12 +56,15 @@
 
 #define MAXPARA 10		/* max macro params */
 
+#define MAXNEST	10		/* file include deepth */
+
 /* pseudo operations */
 
 static void po_next_page(void);
 static void po_text(void);
 static void po_macro(void);
 static void po_mend(void);
+static void po_file_incl(void);
 
 /* macros */
 
@@ -98,12 +102,13 @@ PSEUDO pseudos[] = {
   "TEXT",	po_text,	    /* deposit SIXBIT text in memory */
   "MACRO",	po_macro,		/* start macro definition */
   "ENDM",	po_mend,		/* end of macro definition */
+  "FILE",	po_file_incl,	/* include file */
   "",		0				/* table end marker */
 };
 
 /* prototypes */
 
-static void symscan( char *line, FILE *symfile );
+static void symscan( FILE *symfile );
 static int assemble( char *line, FILE *lstfile, WORD8 *assembly );
   
 #endif

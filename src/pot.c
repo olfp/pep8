@@ -5,7 +5,7 @@
  * 
  * takes .pps file to produce an .pmi image file to be loaded into pepsi(1)
  * 
- * missing features: 1) . references current pc 2) more pseudos
+ * missing features: 2) more pseudos: FILE (include), DUBL (24 bit int), FLTG (36 Bit floating point)
  */
 
 #include <stdio.h>
@@ -17,22 +17,25 @@
 #include "octal.h"
 #include "pot.h"
 
-WORD8		mem8     [MEM8SIZ];	/* memory of pep8 */
-WORD8		pc8;		/* current mem location */
+WORD8	mem8[MEM8SIZ];	/* memory of pep8 */
+WORD8	pc8;			/* current mem location */
 
-int		memtop;		/* highest touched mem location */
+int		memtop;			/* highest touched mem location */
 
-SYMTAB         *symtab;		/* symbol table */
-SYMTAB         *symptr;		/* current symbol */
+SYMTAB  *symtab;		/* symbol table */
+SYMTAB  *symptr;		/* current symbol */
 int		symsiz = SYMSIZ;/* size of symbol table */
+
+int		verbose = FALSE;/* more or less output */
 
 int		symout = FALSE;	/* write symbol table to file */
 int		lstout = FALSE;	/* write listing to file */
 
-int		lineno = 0;	/* current linenumber */
-int		errcnt = 0;	/* number of errors */
+int		lineno = 0;		/* current linenumber */
+int		errcnt = 0;		/* number of errors */
 
-int		run = TRUE;	/* reset if end of assemble char seen */
+int		run = TRUE;		/* reset if end of assemble char seen */
+int		pass = 0;		/* assemler pass; 1=symscan, 2=assemble */
 
 int		textmode = 0;	/* assemble nums/sysm or text/sixbit */
 int		macromode = 0;	/* true if defining macro */
@@ -40,20 +43,25 @@ int		macrohead = 0;	/* true if MACRO line */
 
 MACDEF	*macroptr = NULL; /* assembly active macro line */
 
-int		pass = 0;		/* assemler pass; 1=symscan, 2=assemble */
-
-MACDEF *macline = NULL;		/* pointer to current macro line */
-
+MACDEF *macline = NULL;	/* pointer to current macro line */
 WORD8 macpara[MAXPARA]; /* mac invocation params, preassembled */
 
+FILE *infile;			/* active input file */
+char *inpath;			/* path to input file */
+FILE *files[MAXNEST];	/* input file stack for includes */
+int filetop = 0;		/* stack ptr for file stack */
+char oline[BUFLEN];		/* current input line case preserved */
+char uline[BUFLEN];		/* current input line upper cased */
+
 extern int	optind;
-extern char    *optarg;		/* argument pointer for getopt */
+extern char *optarg;	/* argument pointer for getopt */
 
 static void 
 usage(char *name)
 {
 	fprintf(stderr, "%s - pep8 opcode translator\n", name);
 	fprintf(stderr, "usage: %s [-lsS<n>] <infile>[.pps]\n", name);
+	fprintf(stderr, "  v - verbose - tell what's going on\n");
 	fprintf(stderr, "  l - write a .pls listing file\n");
 	fprintf(stderr, "  s - write symbols to a .psy file\n");
 	fprintf(stderr, "  S - set size of symbol to <n> (default: %d)\n", SYMSIZ);
@@ -65,24 +73,24 @@ symtab_insert(char *sym, SYMVAL val, SYMTYPE type)
 {
 	SYMTAB         *tmpsym;
 
-			if (strlen(sym) > SYMLEN) {
-				fprintf(stderr, "%s: symbol too long. Truncated.\n", sym);
-				sym[SYMLEN] = '\0';
-			}
-			/* check if symbol already exists */
+	if (strlen(sym) > SYMLEN) {
+		fprintf(stderr, "%s: symbol too long. Truncated.\n", sym);
+		sym[SYMLEN] = '\0';
+	}
+	/* check if symbol already exists */
 
-			for (tmpsym = symtab; tmpsym != symptr; tmpsym++) {
-				if (!strcmp(tmpsym->symbol, sym)) {
-					fprintf(stderr, "Duplicate symbol %s.\n", sym);
-					errcnt++;
-					break;
-				}
-			}
+	for (tmpsym = symtab; tmpsym != symptr; tmpsym++) {
+		if (!strcmp(tmpsym->symbol, sym)) {
+			fprintf(stderr, "Duplicate symbol %s.\n", sym);
+			errcnt++;
+			break;
+		}
+	}
 
-			symptr->type = type;
-			strncpy(symptr->symbol, sym, SYMLEN);			
-			(symptr->symbol)[SYMLEN] = '\0';
-			symptr->val = val;
+	symptr->type = type;
+	strncpy(symptr->symbol, sym, SYMLEN);			
+	(symptr->symbol)[SYMLEN] = '\0';
+	symptr->val = val;
 }
 
 static void
@@ -153,6 +161,38 @@ po_mend()
 	macromode = FALSE;
 }
 
+static void 
+po_file_incl()
+{
+	char *ufile, *file, *inname, obuf[BUFLEN];
+	int len;
+
+	/* go to some length to get teh case preserved file name ... */
+	ufile = strtok(NULL, DELIMS);
+	strcpy(obuf, oline + (ufile - uline));
+	file = strtok(obuf, DELIMS);
+	if(filetop >= MAXNEST) {
+		fprintf(stderr, "FILE %s: Nesting too deep (%d).\n", file, filetop);
+		exit(EXIT_FAILURE);
+	} 
+	len = (inpath ? strlen(inpath) : 0) + strlen(file) + strlen(SRC) + 1;
+	inname = (char *)malloc(len);
+	if(inpath) {
+		strcpy(inname, inpath);
+	} else {
+		*inname = '\0';
+	}
+	strcat(inname, file);
+	strcat(inname, SRC);
+	files[++filetop] = infile;
+	if ((infile = fopen(inname, "r")) == NULL) {
+		fprintf(stderr, "FILE %s: File %s not found.\n", file, inname);
+		exit(EXIT_FAILURE);
+	}
+	if(verbose)
+		printf("INFO: Including file: %s.\n", inname);
+}
+
 static int 
 pseudoop(char *tok)
 {
@@ -170,18 +210,18 @@ pseudoop(char *tok)
 }
 
 static void 
-symscan(char *line, FILE * symfile)
+symscan(FILE * symfile)
 {
 
-	char           *tok, *nxt;
+	char	*tok, *nxt;
 	int		flag;
 	int		lblfld = TRUE;
 	int		cnt = 0;
-	unsigned int	ibuf;
-	SYMTAB         *symtmp;
-	SYMVAL				symbuf;
+	unsigned ibuf;
+	SYMTAB  *symtmp;
+	SYMVAL	symbuf;
 	
-	tok = strtok(line, DELIMS);
+	tok = strtok(uline, DELIMS);
 
 	while (tok != NULL) {
 		nxt = tok + strlen(tok) + 1;
@@ -291,7 +331,7 @@ valueof(char *tok, unsigned int *val)
 
 	OPCODE    *code;
 	SYMTAB    *symptr;
-	int				num, type = TERROR;
+	int		  num, type = TERROR;
 
 	if (isdigit(*tok) || (strchr("+-", *tok) && isdigit(*(tok + 1)))) {
 		/* its a number! */
@@ -302,10 +342,13 @@ valueof(char *tok, unsigned int *val)
 			type = TISBAD;
 		}
 	} else if( *tok == PRM ) {
-		type = TISPRM;
 		num = *(++tok) - '1';
-		/* check for more chars ... error */
-		*val = macpara[num];
+		if((num > 9) || *(++tok)) {
+			type = TERROR;
+		} else {
+			type = TISPRM;
+			*val = macpara[num];
+		}
 	} else if( *tok == DOT ) {
 		type = TISVAL;
 		*val = pc8;
@@ -345,23 +388,20 @@ static int
 assemble(char *line, FILE * lstfile, WORD8 * assembly)
 {
 
-	char           *tok;
-	WORD8		pos     , op, loc = UNUSED;
-	OPCODE         *code;
-	SYMTAB         *symptr;
+	char        *tok;
+	WORD8		pos, op, loc = UNUSED;
+	OPCODE      *code;
+	SYMTAB      *symptr;
 	char		errstr    [6] = "";
-	char		buf       [BUFLEN];
-	int		lblfld = TRUE;
-	int 	mac = FALSE;
-	int		len       , cnt = 0;
-	unsigned int	ibuf, newval, val;
-	int		type      , val6, parapos;
-	char           *close, *next;
+	int			lblfld = TRUE;
+	int 		mac = FALSE;
+	int			len, cnt = 0;
+	unsigned 	ibuf, newval, val;
+	int			type, val6, parapos;
+	char        *close, *next;
 	char		prevop   , opchar;
 	
 	//printf("LINE: %s", line);
-
-	strcpy(buf, line);	/* preserve input line for listing */
 
 	tok = strtok(line, DELIMS);
 
@@ -406,7 +446,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 					if (*tok) {
 						textmode = *tok++;
 						len = strrchr(tok, textmode) - tok;
-						fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, len, buf);
+						fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, len, oline);
 						mem8[pc8++] = len;
 						cnt++;
 						while (*tok && (*tok != textmode)) {
@@ -471,6 +511,9 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 						case '-':
 							val -= newval;
 							break;
+						case '&':
+							val &= newval;
+							break;
 						}
 						prevop = opchar;
 						tok = next;
@@ -533,7 +576,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	loc &= MASK12;
 
 	if (lstfile && !cnt)
-		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, buf);
+		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, oline);
 
 	if (assembly)		/* return generated bits if requested */
 		*assembly = loc;
@@ -544,14 +587,22 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	return (!lblfld);	/* return true if code was generated */
 }
 
-static char *nextline(char *buf, int len, FILE *infile) {
+static char *nextline(char *buf, int len) {
+	char * line;
 	
 	if(macroptr) {
 		strncpy(buf, macroptr->line, len);
 		macroptr = macroptr->next;
 		return buf;
 	} else {
-		return fgets(buf, len, infile);	
+		line = fgets(buf, len, infile);	
+		if(!line && filetop) { /* we are in an include file */
+			fclose(infile);
+			infile = files[filetop--];
+			line = fgets(buf, len, infile);	
+		}
+
+		return line;
 	}
 }
 
@@ -559,9 +610,9 @@ int
 main(int argc, char *argv[])
 {
 
-	FILE    *infile, *outfile, *lstfile, *symfile;
+	FILE    *outfile, *lstfile, *symfile;
 	char    *inname, *outname, *lstname, *symname;
-	char	*tmpline, linebuf   [BUFLEN];
+	char	*lastsep, *tmpline;
 	char    *prog, *file;
 	char	optch;
 	int		i, j, f, l, len;
@@ -574,8 +625,11 @@ main(int argc, char *argv[])
 		prog++;
 	}
 
-	while ((optch = getopt(argc, argv, "lsS:?")) > 0) {
+	while ((optch = getopt(argc, argv, "vlsS:?")) > 0) {
 		switch (optch) {
+		case 'v':	/* verbose */
+			verbose = TRUE;
+			break;
 		case 'l':	/* write listing file */
 			lstout = TRUE;
 			break;
@@ -594,13 +648,16 @@ main(int argc, char *argv[])
 	if (optind >= argc) {
 		usage(prog);
 	}
+	
+	if(verbose)
+		printf("INFO: %s - pep8 opcode translator.\n", prog);
+	
 	/* process filename given */
 
 	file = argv[optind];
 
 	if (strchr(file, DOT)) {
-		len = strlen(file) + 4;	/* just to be sure take a few bytes
-					 * more */
+		len = strlen(file) + 4;	/* just to be sure take a few bytes more */
 		inname = (char *)malloc(len);
 		strcpy(inname, file);
 	} else {
@@ -608,6 +665,16 @@ main(int argc, char *argv[])
 		inname = (char *)malloc(len);
 		strcpy(inname, file);
 		strcat(inname, SRC);
+	}
+	
+	if(verbose)
+		printf("INFO: Input file: %s\n", inname);
+	
+	inpath = strdup(inname);
+	if((lastsep = strrchr(inpath, SEP))) { /* xtra parens for gcc */
+		*(++lastsep) = '\0';
+	} else {
+		inpath = NULL;
 	}
 
 	outname = (char *)malloc(len);
@@ -618,11 +685,15 @@ main(int argc, char *argv[])
 		lstname = (char *)malloc(len);
 		strcpy(lstname, inname);
 		strcpy(strrchr(lstname, DOT), LST);
+		if(verbose)
+			printf("INFO: Listing file: %s\n", lstname);
 	}
 	if (symout) {
 		symname = (char *)malloc(len);
 		strcpy(symname, inname);
 		strcpy(strrchr(symname, DOT), SYM);
+		if(verbose)
+			printf("INFO: Symbol file: %s\n", symname);
 	}
 	/* open input file */
 
@@ -630,8 +701,11 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: File %s not found.\n", argv[0], inname);
 		exit(EXIT_FAILURE);
 	}
+	files[0] = infile; /* push base file to bottom of include stack */
 	
 	pass++;
+	if(verbose)
+		printf("INFO: First pass, scanning symbols...\n");
 	
 	/* build symbol table */
 
@@ -649,15 +723,14 @@ main(int argc, char *argv[])
 
 	memtop = pc8 = 0;	/* start at loc zero by default */
 
-	while (run && fgets(linebuf, BUFLEN, infile)) {
-		for (i = 0; i < strlen(linebuf); i++) {
-			linebuf[i] = toupper(linebuf[i]);
+	while (run && nextline(oline, BUFLEN)) {
+		for (i = 0; i <= strlen(oline); i++) {
+			uline[i] = toupper(oline[i]);
 		}
 		lineno++;
-		tmpline = strdup(linebuf);
-		symscan(linebuf, symfile);
+		symscan(symfile);
 		if (macromode && !macrohead) {
-			macroline(tmpline);
+			macroline(oline);
 		}
 		macrohead = FALSE;
 	}
@@ -668,10 +741,7 @@ main(int argc, char *argv[])
 	if (errcnt > 0) {
 		fprintf(stderr, "%d error(s) after pass 1. Abort.\n", errcnt);
 		exit(EXIT_FAILURE);
-	}
-	
-	pass++;
-	/* Pass 1 done */
+	}	
 	
 	/*
 	for(symptr = symtab; *(symptr->symbol); symptr++) {
@@ -690,6 +760,15 @@ main(int argc, char *argv[])
 	}
 	*/
 	
+	if(verbose)
+		printf("INFO: Found %ld symbols and macro definitions.\n", (symptr - symtab));
+	
+	
+	/* Pass 1 done */
+	pass++;
+	if(verbose)
+		printf("INFO: Second pass, assembling code...\n");
+
 	/* initialize mem buffer / loc pointer */
 
 	for (j = 0; j < MEM8SIZ; j++)
@@ -715,17 +794,19 @@ main(int argc, char *argv[])
 
 	run = TRUE;
 
-	while (run && nextline(linebuf, BUFLEN, infile)) {
-		//printf("LINEBUF: %s", linebuf);
-		for (i = 0; i < strlen(linebuf); i++) {
-			linebuf[i] = toupper(linebuf[i]);
+	while (run && nextline(oline, BUFLEN)) {
+		for (i = 0; i <= strlen(oline); i++) {
+			uline[i] = toupper(oline[i]);
 		}
 		lineno++;
-		if (assemble(linebuf, lstfile, NULL)) {
+		if (assemble(uline, lstfile, NULL)) {
 			if (pc8 > memtop)
 				memtop = pc8;	/* keep track of user mem */
 		}
 	}
+
+	if(verbose)
+		printf("INFO: Allocated %d words in memory.\n", memtop);
 
 	if (lstout) {
 		fputc('\n', lstfile);
@@ -755,6 +836,9 @@ main(int argc, char *argv[])
 	}
 
 	fclose(outfile);
+
+	if(verbose)
+		printf("INFO: %s run finished.\n", prog);
 
 	exit(EXIT_SUCCESS);
 }

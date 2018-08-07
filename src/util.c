@@ -60,7 +60,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
   SYMBOL *sym;
   
   /* if told, skip cmd char, check arg */
-
+  
   if(discard) { 
     cmd += discard;
     if(*cmd != ' ' ) {
@@ -84,6 +84,7 @@ char *getparam( char * cmd, int * addr, char **symp, int discard ) {
     /* check if its a symbol */
     if(symp)
       *symp = NULL;
+
     for( sym = symbols; sym != NULL; sym = sym->next ) {
       if( !strcmp(sym->symbol, tok)) {
         *addr = sym->location;
