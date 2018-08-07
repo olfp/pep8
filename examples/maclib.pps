@@ -1,0 +1,19 @@
+;
+; first run at a prp8 macro lib
+;
+
+        MACRO JML       ; jump via link
+        JMP I (.+1)     ; indirect via next word
+        \1              ; link is here
+        ENDM
+
+	MACRO TSB	; thirteen bit subtract
+	STO (.+5)	; save ac
+	RCL \1		; value to subtract
+	CLL CMA IAC	; two's coomplement
+	TAD (.+2)	; add saved val
+	SKP
+	0
+	ENDM
+
+; EOF

@@ -1,0 +1,5 @@
+	RCL	B
+	CAA	A
+	STO	C
+
+; EOF

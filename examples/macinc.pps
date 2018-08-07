@@ -1,0 +1,13 @@
+; Define some macos
+
+	MACRO CAA	; complement A and add arg 
+	CLL CMA IAC	; make two's complement
+	TAD	\1	; add arg
+	ENDM
+
+	MACRO JML	; jump via link
+	JMP I (.+1)	; indirect via next word
+	\1		; link is here
+	ENDM
+
+; EOF

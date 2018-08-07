@@ -1,0 +1,20 @@
+;
+; maclib test suite
+;
+
+	file maclib
+
+reset:	jml start
+
+a:	42
+b:	13
+c:	0
+
+	page
+
+start:	rcl a
+	tsb b
+	sto c
+	hlt
+
+; eof

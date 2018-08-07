@@ -67,7 +67,7 @@ static void usage( char *name ) {
   fprintf(stderr ,"%s - pep8 simulator.\n", name);
   fprintf(stderr ,"usage: %s [-vsti] [-o addr] [-d addr,cnt ...] [-e d0,d1 ...] <image>.[pmi]\n", name);
   fprintf(stderr, "  v - verbose: print status information while running\n");
-  fprintf(stderr, "  s - source: use assembler source for display\n");
+  fprintf(stderr, "  s - source: use assembler source listing for display\n");
   fprintf(stderr, "  t - trace: enter interactive trace mode\n");
   fprintf(stderr, "  i - interactive: same as trace\n");
   fprintf(stderr, "  o - set origin of program counter\n");
@@ -267,6 +267,10 @@ int main( int argc, char *argv[] ) {
       /* read source lines */
 
       while( fgets( linebuf, BUFLEN, srcfile )) {
+        for (i = 0; i <= strlen(linebuf); i++) {
+        	linebuf[i] = toupper(linebuf[i]);
+        }
+
 	sscanf( linebuf, "%o:", (unsigned *)&addr );
 	txt = last + SRCOFF;
 	if( addr != i ) {

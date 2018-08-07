@@ -1,0 +1,20 @@
+;
+; pot8 MARCO Test/Design
+;
+
+	FILE	macinc
+
+RESET:	JML	START
+
+A:	42		; dec 34
+B:	13		; dec 11
+C:	0		; result for c = a - b = (-b) + a = 27 (dec 23) 
+
+	PAGE
+
+START:	CLL
+	FILE	macadd
+
+END:	HLT
+
+; EOF
