@@ -19,6 +19,11 @@ start:	rcl a
 again:	rcl a
 	tsb b
 	sto c
+	
+	_MOVI 66 a
+	_MOVI 33 b
+	_ADD  a b c
+	_ADDI c 42 a
 
 	hlt
 

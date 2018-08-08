@@ -14,6 +14,31 @@
 	TAD TSBS%%	; add saved val
 	SKP
 TSBS%%:	0
-		ENDM
+	ENDM
+	
+	MACRO _MOV	; TAC: MOV a b
+	RAL \1
+	STO \2
+	ENDM
+	
+	MACRO _MOVI	; TAC: mov #a b
+	SKP
+IMMV%%:	\1
+	RCL IMMV%%
+	STO \2
+	ENDM
+	
+	MACRO _ADD	; TAC: ADD s1 s2 d
+	RCL \1
+	TAD \2
+	STO \3
+	ENDM
 
+	MACRO _ADDI	; TAC: ADD s1 #s2 d
+	SKP
+IMAD%%:	\2
+	RCL \1
+	TAD IMAD%%
+	STO \3
+	ENDM
 ; EOF

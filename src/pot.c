@@ -416,7 +416,7 @@ valueof(char *tok, char *line, unsigned int *val)
 		}
 		if (*(code->mnemonic) == '\0') {	/* no mnemonic */
 			/* must be a symbol or macro*/
-			if(strchr(tok, MNO)) { /* symbol has a macro no placeholder (%+) */
+			if(strchr(tok, MNO)) { /* symbol has a macro ref placeholder (%+) */
 				macnify(tok);
 			}
 			for (symptr = symtab; *(symptr->symbol) != '\0'; symptr++) {
@@ -427,6 +427,7 @@ valueof(char *tok, char *line, unsigned int *val)
 					} else if(symptr->type == macro) {
 						type = TISMAC;
 						*val = 0;
+						curmac = symptr;
 						macroptr = symptr->val.macdef;
 						symptr->refcnt++;
 					} else {
@@ -491,7 +492,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 		if (lblfld && strchr(LBLCHR, tok[strlen(tok) - 1])) {
 
 			/* process labels */
-			if(strchr(tok, MNO)) { 	/* symbol has a macro no placeholder (%+) */
+			if(!macromode && strchr(tok, MNO)) { 	/* symbol has a macro ref placeholder (%+) */
 				macnify(tok);		/* apply ref num for listing */
 			}
 		} else {
