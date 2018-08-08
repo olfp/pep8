@@ -1,0 +1,22 @@
+;
+; pot8 MARCO Test/Design
+;
+
+	FILE 	incmac2	; include macro deinitions
+
+RESET:	JML	START
+
+A:	(43&7776)	; 42, dec 34
+B:	13			; dec 11
+C:	0			; result for c = a - b = (-b) + a = 27 (dec 23) 
+
+	PAGE
+
+START:	CLL
+	RCL	B
+	CAA	A
+	STO	C
+
+END:	HLT
+
+; EOF

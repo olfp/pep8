@@ -1,0 +1,10 @@
+chario.o: chario.c global.h types8.h chario.h
+display.o: display.c global.h types8.h decode.h util.h
+execute.o: execute.c global.h types8.h decode.h execute.h pepsi.h
+interact.o: interact.c global.h types8.h octal.h display.h util.h \
+ interact.h
+octal.o: octal.c types8.h
+operate.o: operate.c global.h types8.h chario.h operate.h
+pepsi.o: pepsi.c util.h global.h types8.h chario.h octal.h pepsi.h
+pot.o: pot.c octal.h pot.h types8.h codes8.h
+util.o: util.c octal.h global.h types8.h

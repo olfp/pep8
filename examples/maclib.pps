@@ -8,12 +8,12 @@
         ENDM
 
 	MACRO TSB	; thirteen bit subtract
-	STO (.+5)	; save ac
+	STO TSBS%%	; save ac
 	RCL \1		; value to subtract
 	CLL CMA IAC	; two's coomplement
-	TAD (.+2)	; add saved val
+	TAD TSBS%%	; add saved val
 	SKP
-	0
-	ENDM
+TSBS%%:	0
+		ENDM
 
 ; EOF

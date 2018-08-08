@@ -22,6 +22,7 @@
 #define ORG	'*'		/* Set address of generated code */
 #define DOT	'.'		/* value of current pc */
 #define PRM	'\\'	/* Macro param lead in */
+#define MNO	'%'		/* Macro no in labels */
 #define EOA	'$'		/* Terminate assembly */
 
 #define DOT	'.'
@@ -62,6 +63,8 @@
 
 static void po_next_page(void);
 static void po_text(void);
+static void po_dubl(void);
+static void po_fltg(void);
 static void po_macro(void);
 static void po_mend(void);
 static void po_file_incl(void);
@@ -89,6 +92,7 @@ typedef union symval_t {
 typedef struct symtab_t {
   char symbol[SYMLEN+1];	/* name of symbol */
   SYMTYPE type;				/* type of symbol */
+  int refcnt;				/* reference counter */
   SYMVAL val;				/* value of symbol */
 } SYMTAB;
 
@@ -100,6 +104,8 @@ typedef struct pseudo_t {
 PSEUDO pseudos[] = {
   "PAGE",	po_next_page,	/* advance location counter to next page */
   "TEXT",	po_text,	    /* deposit SIXBIT text in memory */
+  "DUBL",	po_dubl,		/* deposit 24 bit balue in memory, big endian */
+  "FLTG",	po_fltg,		/* deposit 36 bit ffp8 float, 12 bit exponent and 24 bit big endian mantissa */
   "MACRO",	po_macro,		/* start macro definition */
   "ENDM",	po_mend,		/* end of macro definition */
   "FILE",	po_file_incl,	/* include file */
@@ -108,7 +114,7 @@ PSEUDO pseudos[] = {
 
 /* prototypes */
 
-static void symscan( FILE *symfile );
+static void symscan( char *line, FILE *symfile );
 static int assemble( char *line, FILE *lstfile, WORD8 *assembly );
   
 #endif

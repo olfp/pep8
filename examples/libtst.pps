@@ -15,6 +15,11 @@ c:	0
 start:	rcl a
 	tsb b
 	sto c
+		
+again:	rcl a
+	tsb b
+	sto c
+
 	hlt
 
 ; eof

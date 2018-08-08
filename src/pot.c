@@ -1,4 +1,5 @@
 /*
+/*
  * pot - pep8 opcode translator
  * 
  * (c) olf 07/05
@@ -24,6 +25,8 @@ int		memtop;			/* highest touched mem location */
 
 SYMTAB  *symtab;		/* symbol table */
 SYMTAB  *symptr;		/* current symbol */
+SYMTAB	*curmac;		/* currently invoked  macro symbol */
+
 int		symsiz = SYMSIZ;/* size of symbol table */
 
 int		verbose = FALSE;/* more or less output */
@@ -43,8 +46,8 @@ int		macrohead = 0;	/* true if MACRO line */
 
 MACDEF	*macroptr = NULL; /* assembly active macro line */
 
-MACDEF *macline = NULL;	/* pointer to current macro line */
-WORD8 macpara[MAXPARA]; /* mac invocation params, preassembled */
+MACDEF 	*macline = NULL;  /* pointer to current macro line */
+WORD8 	macpara[MAXPARA]; /* mac invocation params, preassembled */
 
 FILE *infile;			/* active input file */
 char *inpath;			/* path to input file */
@@ -68,6 +71,17 @@ usage(char *name)
 	exit(EXIT_FAILURE);
 }
 
+char *strucpy(char *dst, char *src) {
+
+	char *res = dst;
+	for( ; *src; src++, dst++ ) {
+		*dst = toupper(*src);
+	}
+	*dst = '\0';
+	
+	return res;
+}
+
 static void 
 symtab_insert(char *sym, SYMVAL val, SYMTYPE type) 
 {
@@ -88,6 +102,7 @@ symtab_insert(char *sym, SYMVAL val, SYMTYPE type)
 	}
 
 	symptr->type = type;
+	symptr->refcnt = 0;
 	strncpy(symptr->symbol, sym, SYMLEN);			
 	(symptr->symbol)[SYMLEN] = '\0';
 	symptr->val = val;
@@ -96,8 +111,8 @@ symtab_insert(char *sym, SYMVAL val, SYMTYPE type)
 static void
 symtab_next()
 {
-			symptr++;
-			*(symptr->symbol) = '\0';	/* mark end of table */
+	symptr++;
+	*(symptr->symbol) = '\0';	/* mark end of table */
 }
 
 static void 
@@ -133,6 +148,18 @@ static void
 po_text()
 {
 	textmode = 0xff;
+}
+
+static void 
+po_dubl()
+{
+	/* ni */
+}
+
+static void 
+po_fltg()
+{
+	/* ni */
 }
 
 static void 
@@ -209,19 +236,36 @@ pseudoop(char *tok)
 	return (*(pop->pseudo) != '\0');
 }
 
+static void
+macnify(char *tok)
+{
+	char *first, *last, *fmt;
+	int len;
+	
+	first = strchr(tok, MNO);
+	last = strrchr(tok, MNO);
+	len = last - first + 1;
+	fmt = strdup(tok);
+	sprintf(fmt + (first - tok), "%%0%dd", len);
+	sprintf(tok, fmt, curmac->refcnt);
+	strncpy(oline + (tok - uline), tok, strlen(tok));
+	free(fmt);
+}
+
 static void 
-symscan(FILE * symfile)
+symscan(char *line, FILE * symfile)
 {
 
 	char	*tok, *nxt;
+	char 	lbuf[BUFLEN];
 	int		flag;
 	int		lblfld = TRUE;
-	int		cnt = 0;
+	int		i, cnt = 0;
 	unsigned ibuf;
 	SYMTAB  *symtmp;
 	SYMVAL	symbuf;
 	
-	tok = strtok(uline, DELIMS);
+	tok = strtok(line, DELIMS);
 
 	while (tok != NULL) {
 		nxt = tok + strlen(tok) + 1;
@@ -249,18 +293,22 @@ symscan(FILE * symfile)
 			}
 			break;	/* done with this line */
 		}
-		if (lblfld && (strchr(LBLCHR, tok[strlen(tok) - 1]) || strchr(tok, EQU))) {
+		if (lblfld && !macromode && (strchr(LBLCHR, tok[strlen(tok) - 1]) || strchr(tok, EQU))) {
 
 			/* process labels and assignments */
 
 			flag = (strchr(LBLCHR, tok[strlen(tok) - 1]) != NULL);
 			tok[strlen(tok) - 1] = '\0';	/* eleminate the label * delimiter */
+			if(strchr(tok, MNO)) { /* label has a macro no placeholder (%+) */
+				macnify(tok);
+			}
 
 			if (flag) {
 				symbuf.location = pc8;
 			} else {
 				assemble(nxt, NULL, &symbuf.location);
 			}
+
 			symtab_insert(tok, symbuf, addr);			
 
 			if (symfile)
@@ -305,9 +353,14 @@ symscan(FILE * symfile)
 				/* check for macro invocation */ 
 				for (symtmp = symtab; *(symtmp->symbol) != '\0'; symtmp++) {
 					if (!strcmp(tok, symtmp->symbol) && (symtmp->type = macro)) {
+						curmac = symtmp;
+						symtmp->refcnt++;
 						macroptr = symtmp->val.macdef;
 						while(macroptr) {
-							pc8++;
+							/* pc8++; */
+							strcpy(oline, macroptr->line);
+							strucpy(uline, oline);
+							symscan(uline, symfile);
 							macroptr = macroptr->next;
 						} 
 						lblfld = TRUE;	
@@ -326,7 +379,7 @@ symscan(FILE * symfile)
 }
 
 static int 
-valueof(char *tok, unsigned int *val)
+valueof(char *tok, char *line, unsigned int *val)
 {
 
 	OPCODE    *code;
@@ -363,6 +416,9 @@ valueof(char *tok, unsigned int *val)
 		}
 		if (*(code->mnemonic) == '\0') {	/* no mnemonic */
 			/* must be a symbol or macro*/
+			if(strchr(tok, MNO)) { /* symbol has a macro no placeholder (%+) */
+				macnify(tok);
+			}
 			for (symptr = symtab; *(symptr->symbol) != '\0'; symptr++) {
 				if (!strcmp(tok, symptr->symbol)) {
 					if(symptr->type == addr) {
@@ -372,6 +428,7 @@ valueof(char *tok, unsigned int *val)
 						type = TISMAC;
 						*val = 0;
 						macroptr = symptr->val.macdef;
+						symptr->refcnt++;
 					} else {
 						type = TISBAD;
 					}
@@ -434,7 +491,9 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 		if (lblfld && strchr(LBLCHR, tok[strlen(tok) - 1])) {
 
 			/* process labels */
-
+			if(strchr(tok, MNO)) { 	/* symbol has a macro no placeholder (%+) */
+				macnify(tok);		/* apply ref num for listing */
+			}
 		} else {
 
 			if (pseudoop(tok)) {	/* process pseudo ops */
@@ -497,7 +556,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 						}
 						opchar = *next;
 						*next++ = '\0';
-						valueof(tok, &newval);
+						valueof(tok, line, &newval);
 						switch (prevop) {
 						case '*':
 							val *= newval;
@@ -521,7 +580,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 					type = TISVAL;
 				}
 			} else {
-				type = valueof(tok, &val);
+				type = valueof(tok, line, &val);
 			}
 
 			if (type == TMNEMO) {	/* its an opcode */
@@ -724,11 +783,9 @@ main(int argc, char *argv[])
 	memtop = pc8 = 0;	/* start at loc zero by default */
 
 	while (run && nextline(oline, BUFLEN)) {
-		for (i = 0; i <= strlen(oline); i++) {
-			uline[i] = toupper(oline[i]);
-		}
+		strucpy(uline, oline);
 		lineno++;
-		symscan(symfile);
+		symscan(uline, symfile);
 		if (macromode && !macrohead) {
 			macroline(oline);
 		}
@@ -743,9 +800,10 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}	
 	
-	/*
 	for(symptr = symtab; *(symptr->symbol); symptr++) {
 		if(symptr->type == macro) {
+				symptr->refcnt = 0;
+		/*
 			MACDEF *def;
 			printf("MACRO: %s\n", symptr->symbol);
 			def = symptr->val.macdef;
@@ -756,9 +814,9 @@ main(int argc, char *argv[])
 			printf("ENDM: %s\n", symptr->symbol);
 		} else {
 			printf("SYMBOL: %s - %o\n", symptr->symbol, symptr->val.location);							
+		*/
 		}
 	}
-	*/
 	
 	if(verbose)
 		printf("INFO: Found %ld symbols and macro definitions.\n", (symptr - symtab));
@@ -795,9 +853,7 @@ main(int argc, char *argv[])
 	run = TRUE;
 
 	while (run && nextline(oline, BUFLEN)) {
-		for (i = 0; i <= strlen(oline); i++) {
-			uline[i] = toupper(oline[i]);
-		}
+		strucpy(uline, oline);
 		lineno++;
 		if (assemble(uline, lstfile, NULL)) {
 			if (pc8 > memtop)
