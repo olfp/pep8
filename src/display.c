@@ -27,6 +27,7 @@ void display() {
       printf( "%s", text[pc8] );
     } else {
       printf( "no source available for current address!\n" );
+	  printf("Maxtxt %d, PC8: %d: %s\n", maxtxt, pc8, text[pc8]);
     }
   }
 

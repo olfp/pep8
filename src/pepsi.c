@@ -12,12 +12,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef GNURL
 #include <readline/readline.h>
 #endif
 
+#include "strutil.h"
 #include "util.h"
 #include "chario.h"
 #include "octal.h"
@@ -248,82 +250,80 @@ int main( int argc, char *argv[] ) {
     }
 
     if( usesource ) {
-      maxtxt = len; /*  - 1; */
+		maxtxt = len; /*  - 1; */
 
-      /* open source file */
+		/* open source file */
       
-      if( (srcfile = fopen( srcname, "r" )) == NULL ) {
-		fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
-		exit(EXIT_FAILURE);
-      }
+		if( (srcfile = fopen( srcname, "r" )) == NULL ) {
+			fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
+			exit(EXIT_FAILURE);
+		}
 
-      text = (char **) malloc( maxtxt * sizeof(char **));
+		text = (char **) malloc( maxtxt * sizeof(char **));
         
-      for( i = 0; i < maxtxt; i++ )
-	text[i] = NULL;			/* make sure no junk is in there */
+		for( i = 0; i < maxtxt; i++ )
+			text[i] = NULL;		/* make sure no junk is in there */
     
-      i = -1;				/* current location */
+		i = -1;				/* current location */
 
-      /* read source lines */
+		/* read source lines */
 
-      while( fgets( linebuf, BUFLEN, srcfile )) {
-        for (i = 0; i <= strlen(linebuf); i++) {
-        	linebuf[i] = toupper(linebuf[i]);
-        }
+		while( fgets( linebuf, BUFLEN, srcfile )) {
+			upstr(linebuf);
 
-	sscanf( linebuf, "%o:", (unsigned *)&addr );
-	txt = last + SRCOFF;
-	if( addr != i ) {
-	  if(i < 0) 				/* first line, zero loc */
-	    i = 0;
-	  text[i] = malloc( strlen(txt) + 1 );
-	  strcpy( text[i], txt );
-	  i = addr;
-	}
-	txt = strcpy( lblbuf, linebuf) + SRCOFF;
-	if( strchr(COMM, *txt) )
-	  *txt = '\0';				/* whole line comment */
-	else
-	  txt = strtok( txt, COMM );		/* strip of comment */
-	lbl = txt = unspace(txt);		/* strip of whitespace */
-	while( txt && *txt && !strchr(LBLCHR, *txt) && !strchr(TOKDEL, *txt)) {
-	  txt++;
-        }
-	if( txt && *txt && strchr(LBLCHR, *txt)) {
-	  *txt = '\0'; 				/* strip of LBLCHR */
-	  newsym = (SYMBOL *) malloc( sizeof(SYMBOL));
-	  newsym->location = addr;
-	  strcpy(newsym->symbol, lbl);
-	  newsym->next = NULL;
-	  if( symbols == NULL ) {
-	    symbols = lastsym = newsym;
-	  } else {
-	    lastsym->next = newsym;
-	    lastsym = newsym;
-	  }
-	}
-	strcpy( last, linebuf );
-      }
+			sscanf( linebuf, "%o:", (unsigned *)&addr );
+			txt = last + SRCOFF;
+			if( addr != i ) {
+				if(i < 0) 				/* first line, zero loc */
+					i = 0;
+				text[i] = malloc( strlen(txt) + 1 );
+				strcpy( text[i], txt );
+				i = addr;
+			}
+			txt = strcpy( lblbuf, linebuf) + SRCOFF;
+			if( strchr(COMM, *txt) )
+				*txt = '\0';				/* whole line comment */
+			else
+				txt = strtok( txt, COMM );		/* strip of comment */
+			lbl = txt = unspace(txt);		/* strip of whitespace */
+			while( txt && *txt && !strchr(LBLCHR, *txt) && !strchr(TOKDEL, *txt)) {
+				txt++;
+			}
+			if( txt && *txt && strchr(LBLCHR, *txt)) {
+				*txt = '\0'; 				/* strip of LBLCHR */
+				newsym = (SYMBOL *) malloc( sizeof(SYMBOL));
+				newsym->location = addr;
+				strcpy(newsym->symbol, lbl);
+				newsym->next = NULL;
+				if( symbols == NULL ) {
+					symbols = lastsym = newsym;
+				} else {
+					lastsym->next = newsym;
+					lastsym = newsym;
+				}
+			}
+			strcpy( last, linebuf );  
+		}
 
-      text[i] = malloc( strlen(last + SRCOFF) + 1 );
-      strcpy( text[i], last + SRCOFF );
-      
-      fclose( srcfile );
+		text[i] = malloc( strlen(last + SRCOFF) + 1 );
+		strcpy( text[i], last + SRCOFF );
+	  
+		fclose( srcfile );
     }
 
     /* open input file */
 
     if( (infile = fopen( inname, "r" )) == NULL ) {
-      fprintf( stderr, "%s: File %s not found.\n", argv[0], inname );
-      exit(EXIT_FAILURE);
+		fprintf( stderr, "%s: File %s not found.\n", argv[0], inname );
+		exit(EXIT_FAILURE);
     }
 
     for( addr = 0, i = 0; i < len; i += 2, addr += 2 ) {
 
-      fread( oc, sizeof(unsigned char), 3, infile );
+		fread( oc, sizeof(unsigned char), 3, infile );
       
-      mem8[addr]   = (oc[0] << 4) | (oc[1] >> 4);
-      mem8[addr+1] = ((oc[1] & MASK4) << 8) | oc[2];
+		mem8[addr]   = (oc[0] << 4) | (oc[1] >> 4);
+		mem8[addr+1] = ((oc[1] & MASK4) << 8) | oc[2];
     }
   
     fclose( infile );

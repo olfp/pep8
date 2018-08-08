@@ -38,7 +38,7 @@ CLIBS =
 
 ASMOBJS = pot.o
 SIMOBJS = pepsi.o display.o execute.o interact.o operate.o chario.o util.o
-COMOBJS = octal.o
+COMOBJS = octal.o strutil.o
 
 all:	do-it-all
 

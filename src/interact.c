@@ -17,6 +17,7 @@
 #include "global.h"
 #include "octal.h"
 #include "display.h"
+#include "strutil.h"
 #include "util.h"
 
 #include "interact.h"

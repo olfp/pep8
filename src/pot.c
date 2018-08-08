@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <getopt.h>
 
+#include "strutil.h"
 #include "octal.h"
 #include "pot.h"
 
@@ -69,17 +70,6 @@ usage(char *name)
 	fprintf(stderr, "  s - write symbols to a .psy file\n");
 	fprintf(stderr, "  S - set size of symbol to <n> (default: %d)\n", SYMSIZ);
 	exit(EXIT_FAILURE);
-}
-
-char *strucpy(char *dst, char *src) {
-
-	char *res = dst;
-	for( ; *src; src++, dst++ ) {
-		*dst = toupper(*src);
-	}
-	*dst = '\0';
-	
-	return res;
 }
 
 static void 
