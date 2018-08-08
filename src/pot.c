@@ -1,12 +1,11 @@
 /*
-/*
  * pot - pep8 opcode translator
  * 
  * (c) olf 07/05
  * 
  * takes .pps file to produce an .pmi image file to be loaded into pepsi(1)
  * 
- * missing features: 2) more pseudos: FILE (include), DUBL (24 bit int), FLTG (36 Bit floating point)
+ * missing features: 1) more pseudos: DUBL (24 bit int), FLTG (36 Bit floating point)
  */
 
 #include <stdio.h>
@@ -48,13 +47,13 @@ int		macrohead = 0;	/* true if MACRO line */
 MACDEF	*macroptr = NULL; /* assembly active macro line */
 
 MACDEF 	*macline = NULL;  /* pointer to current macro line */
-WORD8 	macpara[MAXPARA]; /* mac invocation params, preassembled */
+MACPARA macpara[MAXPARA]; /* mac invocation params */
 
 FILE *infile;			/* active input file */
 char *inpath;			/* path to input file */
 FILE *files[MAXNEST];	/* input file stack for includes */
 int filetop = 0;		/* stack ptr for file stack */
-char oline[BUFLEN];		/* current input line case preserved */
+char oline[BUFLEN+SYMSIZ-2];		/* current input line case preserved extra space */
 char uline[BUFLEN];		/* current input line upper cased */
 
 extern int	optind;
@@ -369,12 +368,13 @@ symscan(char *line, FILE * symfile)
 }
 
 static int 
-valueof(char *tok, char *line, unsigned int *val)
+valueof(char *tok, char *line, unsigned *val)
 {
 
 	OPCODE    *code;
 	SYMTAB    *symptr;
-	int		  num, type = TERROR;
+	char			*first, *last, *pos, *name;
+	int		  	len, off, num, type = TERROR;
 
 	if (isdigit(*tok) || (strchr("+-", *tok) && isdigit(*(tok + 1)))) {
 		/* its a number! */
@@ -385,12 +385,34 @@ valueof(char *tok, char *line, unsigned int *val)
 			type = TISBAD;
 		}
 	} else if( *tok == PRM ) {
+		pos = tok;
 		num = *(++tok) - '1';
 		if((num > 9) || *(++tok)) {
 			type = TERROR;
 		} else {
 			type = TISPRM;
-			*val = macpara[num];
+			*val = macpara[num].val;
+			/* for listing, replace "\x" with param name/value in orig line */
+			first = oline + (pos - uline);
+			last = oline + strlen(oline);
+			name = macpara[num].name;
+			len = strlen(name);
+	 		if(len > 1) {
+				off = len - 2; /* -2 is ref len "\x" */
+				for(pos = first + 2; isblank(*pos) && off; pos++) {
+					off--;
+				}	 		
+				if(off) {
+					for(pos = last; pos >= first; pos--) {
+						*(pos+off) = *pos;
+					}
+				}
+				memcpy(first, name, len);
+			} else {
+				/* name is one char long */
+				*first = *name;
+				*(first+1) = ' ';
+			}
 		}
 	} else if( *tok == DOT ) {
 		type = TISVAL;
@@ -449,8 +471,6 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	char        *close, *next;
 	char		prevop   , opchar;
 	
-	//printf("LINE: %s", line);
-
 	tok = strtok(line, DELIMS);
 
 	while (tok != NULL) {
@@ -600,7 +620,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 				mac = TRUE;
 				strcat(errstr, "M");
 				for(parapos = 0; parapos < MAXPARA; parapos++) {
-					macpara[parapos] = UNUSED;
+					macpara[parapos].val = UNUSED;
 				}
 				parapos = 0;
 			}
@@ -616,7 +636,9 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 			}
 		}
 		if(mac && (type != TISMAC)) {
-			macpara[parapos++] = loc;
+			macpara[parapos].val = loc;
+			macpara[parapos].name = strdup(tok);
+			parapos++;
 			loc = 0;
 		}
 

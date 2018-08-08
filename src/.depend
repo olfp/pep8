@@ -2,11 +2,11 @@ chario.o: chario.c global.h types8.h chario.h
 display.o: display.c global.h types8.h decode.h util.h
 execute.o: execute.c global.h types8.h decode.h execute.h pepsi.h
 interact.o: interact.c global.h types8.h octal.h display.h strutil.h \
- util.h interact.h
+  util.h interact.h
 octal.o: octal.c types8.h
 operate.o: operate.c global.h types8.h chario.h operate.h
 pepsi.o: pepsi.c strutil.h util.h global.h types8.h chario.h octal.h \
- pepsi.h
+  pepsi.h
 pot.o: pot.c strutil.h octal.h pot.h types8.h codes8.h
 strutil.o: strutil.c
 util.o: util.c octal.h global.h types8.h strutil.h

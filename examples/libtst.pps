@@ -10,6 +10,8 @@ a:	42
 b:	13
 c:	0
 
+ssix=	66
+
 	page
 
 start:	rcl a
@@ -20,7 +22,7 @@ again:	rcl a
 	tsb b
 	sto c
 	
-	_MOVI 66 a
+	_MOVI ssix a
 	_MOVI 33 b
 	_ADD  a b c
 	_ADDI c 42 a

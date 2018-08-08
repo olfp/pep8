@@ -76,6 +76,11 @@ typedef struct macdef_t {
 	struct macdef_t	*next;	/* pointer to next line */
 } MACDEF;
 
+typedef struct macpara_t {
+	char 	*name;			/* name or value in invocation */
+	WORD8	val;			/* preassembled value */
+} MACPARA;	
+
 /* symbol types */
 
 typedef enum symtype_t {addr, macro} SYMTYPE;
