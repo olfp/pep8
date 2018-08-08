@@ -49,6 +49,8 @@ MACDEF	*macroptr = NULL; /* assembly active macro line */
 MACDEF 	*macline = NULL;  /* pointer to current macro line */
 MACPARA macpara[MAXPARA]; /* mac invocation params */
 
+WORD8	zmemptr = ZMEMMAX; /* next free zero page constant addr */
+
 FILE *infile;			/* active input file */
 char *inpath;			/* path to input file */
 FILE *files[MAXNEST];	/* input file stack for includes */
@@ -140,6 +142,26 @@ po_text()
 }
 
 static void 
+po_zmem()
+{
+	SYMVAL symbuf;
+	char *name, *tok;
+	int type;
+	unsigned val;
+
+	name = strtok(NULL, DELIMS);
+	tok = strtok(NULL, DELIMS);
+	
+	if(pass == 2 && !macromode) {
+		type = valueof(tok, uline, &val); 
+
+		symbuf.location = zmemptr;
+		symtab_insert(name, symbuf, addr);		
+		mem8[zmemptr++] = val;	
+	}
+}
+
+static void 
 po_dubl()
 {
 	/* ni */
@@ -161,7 +183,6 @@ po_macro()
 		name = strtok(NULL, DELIMS);
 		symbuf.macdef = NULL;
 		symtab_insert(name, symbuf, macro);		
-		macromode = TRUE;
 		macrohead = TRUE;					
 	}
 	macromode = TRUE;
@@ -393,7 +414,7 @@ valueof(char *tok, char *line, unsigned *val)
 			type = TISPRM;
 			*val = macpara[num].val;
 			/* for listing, replace "\x" with param name/value in orig line */
-			first = oline + (pos - uline);
+			first = oline + (pos - line);
 			last = oline + strlen(oline);
 			name = macpara[num].name;
 			len = strlen(name);

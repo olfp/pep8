@@ -59,10 +59,13 @@
 
 #define MAXNEST	10		/* file include deepth */
 
+#define ZMEMMAX 127		/* last word in zero page */
+
 /* pseudo operations */
 
 static void po_next_page(void);
 static void po_text(void);
+static void po_zmem(void);
 static void po_dubl(void);
 static void po_fltg(void);
 static void po_macro(void);
@@ -109,6 +112,7 @@ typedef struct pseudo_t {
 PSEUDO pseudos[] = {
   "PAGE",	po_next_page,	/* advance location counter to next page */
   "TEXT",	po_text,	    /* deposit SIXBIT text in memory */
+  "ZMEM",	po_zmem,	    /* allocate zero page constant */
   "DUBL",	po_dubl,		/* deposit 24 bit balue in memory, big endian */
   "FLTG",	po_fltg,		/* deposit 36 bit ffp8 float, 12 bit exponent and 24 bit big endian mantissa */
   "MACRO",	po_macro,		/* start macro definition */
@@ -119,6 +123,7 @@ PSEUDO pseudos[] = {
 
 /* prototypes */
 
+static int valueof(char *tok, char *line, unsigned *val);
 static void symscan( char *line, FILE *symfile );
 static int assemble( char *line, FILE *lstfile, WORD8 *assembly );
   
