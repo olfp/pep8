@@ -16,6 +16,8 @@
 TSBS%%:	0
 	ENDM
 	
+; TAC Macros	
+	
 	MACRO _MOV	; TAC: MOV a b
 	RAL \1
 	STO \2
@@ -23,8 +25,8 @@ TSBS%%:	0
 	
 	MACRO _MOVI	; TAC: mov #a b
 	SKP
-IMMV%%:	\1
-	RCL IMMV%%
+	\1
+	RCL (.-1)
 	STO \2
 	ENDM
 	
