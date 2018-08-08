@@ -123,6 +123,7 @@ PSEUDO pseudos[] = {
 
 /* prototypes */
 
+static void macnify(char *tok);
 static int valueof(char *tok, char *line, unsigned *val);
 static void symscan( char *line, FILE *symfile );
 static int assemble( char *line, FILE *lstfile, WORD8 *assembly );

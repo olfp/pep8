@@ -26,9 +26,9 @@ TSBS%%:	0
 	MACRO _MOVI	; TAC: mov #a b
 ;	SKP
 ;	\1
-	ZMEM z1 \1
+	ZMEM TMI%% \1
 ;	RCL (.-1)
-	RCL z1
+	RCL TMI%%
 	STO \2
 	ENDM
 	
@@ -39,10 +39,12 @@ TSBS%%:	0
 	ENDM
 
 	MACRO _ADDI	; TAC: ADD s1 #s2 d
-	SKP
-IMAD%%:	\2
+;	SKP
+;IMAD%%:	\2
+	ZMEM TAI%% \2
 	RCL \1
-	TAD IMAD%%
+;	TAD IMAD%%
+	TAD TAI%%
 	STO \3
 	ENDM
 ; EOF

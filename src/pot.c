@@ -148,16 +148,28 @@ po_zmem()
 	char *name, *tok;
 	int type;
 	unsigned val;
+	WORD8 ptr;
 
 	name = strtok(NULL, DELIMS);
 	tok = strtok(NULL, DELIMS);
 	
-	if(pass == 2 && !macromode) {
+	if(pass == 2 && !macromode) {		
 		type = valueof(tok, uline, &val); 
 
-		symbuf.location = zmemptr;
+		for(ptr = ZMEMMAX; ptr > zmemptr; ptr--) {
+			if(mem8[ptr] == val) {
+				break;
+			}
+		}
+		if(ptr == zmemptr) {
+			mem8[zmemptr--] = val;	
+		}
+		symbuf.location = ptr;
+			if(strchr(name, MNO)) { /* symbol has a macro ref placeholder (%+) */
+				macnify(name);
+			}
+
 		symtab_insert(name, symbuf, addr);		
-		mem8[zmemptr++] = val;	
 	}
 }
 
@@ -670,6 +682,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 
 	if (lstfile && !cnt)
 		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, oline);
+		
 
 	if (assembly)		/* return generated bits if requested */
 		*assembly = loc;
@@ -899,6 +912,11 @@ main(int argc, char *argv[])
 		printf("INFO: Allocated %d words in memory.\n", memtop);
 
 	if (lstout) {
+		/* need better way to list the zmem locs */
+		while(++zmemptr <= ZMEMMAX) {	
+			fprintf(lstfile, "%04o: %-5s %04o\t%s", zmemptr, "", mem8[zmemptr], "\n");
+		}
+
 		fputc('\n', lstfile);
 		fclose(lstfile);
 	}

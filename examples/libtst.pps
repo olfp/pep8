@@ -25,6 +25,11 @@ again:	rcl a
 	_MOVI ssix a
 	_MOVI 33 b
 	_ADD  a b c
+
+	_MOVI ssix a
+	_MOVI 33 b
+	_ADD  a b c
+
 	_ADDI c 42 a
 
 	hlt
