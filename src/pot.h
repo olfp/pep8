@@ -31,13 +31,15 @@
 #define SRC	".pps"
 #define DST	".pmi"
 #define LST	".pls"
+#define LTT	".plt"
 #define SYM	".psy"
 
 #define DELIMS	" \t\n"		/* whitespace characters */
 
 #define BUFLEN	129		/* max. line length */
+#define OLILEN	BUFLEN+SYMLEN-2 /* max line + inserted symbol - macro param */
 
-#define SYMSIZ	4096		/* default size of symbol table */
+#define SYMSIZ	4096	/* default size of symbol table */
 
 #define PLEN	10		/* maximum length of a pseudo mnemonic */
 
@@ -126,7 +128,7 @@ PSEUDO pseudos[] = {
 static void macnify(char *tok);
 static int valueof(char *tok, char *line, unsigned *val);
 static void symscan( char *line, FILE *symfile );
-static int assemble( char *line, FILE *lstfile, WORD8 *assembly );
+static int assemble( char *line, FILE *lstfile, FILE*tmpfile, WORD8 *assembly );
   
 #endif
 

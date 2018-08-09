@@ -55,7 +55,7 @@ FILE *infile;			/* active input file */
 char *inpath;			/* path to input file */
 FILE *files[MAXNEST];	/* input file stack for includes */
 int filetop = 0;		/* stack ptr for file stack */
-char oline[BUFLEN+SYMSIZ-2];		/* current input line case preserved extra space */
+char oline[OLILEN];		/* current input line case preserved */
 char uline[BUFLEN];		/* current input line upper cased */
 
 extern int	optind;
@@ -328,7 +328,7 @@ symscan(char *line, FILE * symfile)
 			if (flag) {
 				symbuf.location = pc8;
 			} else {
-				assemble(nxt, NULL, &symbuf.location);
+				assemble(nxt, NULL, NULL, &symbuf.location);
 			}
 
 			symtab_insert(tok, symbuf, addr);			
@@ -487,8 +487,13 @@ valueof(char *tok, char *line, unsigned *val)
 	return type;
 }
 
+static FILE*
+lstotmp(FILE *lst, FILE* tmp) {
+	return (pc8 > ZMEMMAX) ? tmp : lst;
+}
+
 static int 
-assemble(char *line, FILE * lstfile, WORD8 * assembly)
+assemble(char *line, FILE *lstfile, FILE *tmpfile, WORD8 * assembly)
 {
 
 	char        *tok;
@@ -549,13 +554,13 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 					if (*tok) {
 						textmode = *tok++;
 						len = strrchr(tok, textmode) - tok;
-						fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, len, oline);
+						fprintf(lstotmp(lstfile, tmpfile), "%04o: %-5s %04o\t%s", pc8, errstr, len, oline);
 						mem8[pc8++] = len;
 						cnt++;
 						while (*tok && (*tok != textmode)) {
 							val6 = ((*tok - 32) << 6) | (*(tok + 1) - 32);
 							if (lstfile)
-								fprintf(lstfile, "%04o:       %04o\n", pc8, val6);
+								fprintf(lstotmp(lstfile, tmpfile), "%04o:       %04o\n", pc8, val6);
 							mem8[pc8++] = val6;
 							cnt++;
 							tok++;
@@ -681,7 +686,7 @@ assemble(char *line, FILE * lstfile, WORD8 * assembly)
 	loc &= MASK12;
 
 	if (lstfile && !cnt)
-		fprintf(lstfile, "%04o: %-5s %04o\t%s", pc8, errstr, loc, oline);
+		fprintf(lstotmp(lstfile, tmpfile), "%04o: %-5s %04o\t%s", pc8, errstr, loc, oline);
 		
 
 	if (assembly)		/* return generated bits if requested */
@@ -716,8 +721,8 @@ int
 main(int argc, char *argv[])
 {
 
-	FILE    *outfile, *lstfile, *symfile;
-	char    *inname, *outname, *lstname, *symname;
+	FILE    *outfile, *lstfile, *tmpfile, *symfile;
+	char    *inname, *outname, *lstname, *tmpname, *symname;
 	char	*lastsep, *tmpline;
 	char    *prog, *file;
 	char	optch;
@@ -791,6 +796,9 @@ main(int argc, char *argv[])
 		lstname = (char *)malloc(len);
 		strcpy(lstname, inname);
 		strcpy(strrchr(lstname, DOT), LST);
+		tmpname = (char *)malloc(len);
+		strcpy(tmpname, inname);
+		strcpy(strrchr(tmpname, DOT), LTT);
 		if(verbose)
 			printf("INFO: Listing file: %s\n", lstname);
 	}
@@ -866,7 +874,7 @@ main(int argc, char *argv[])
 	}
 	
 	if(verbose)
-		printf("INFO: Found %ld symbols and macro definitions.\n", (symptr - symtab));
+		printf("INFO: Found %ld symbols and macro definitions on %d lines.\n", (symptr - symtab), lineno);
 	
 	
 	/* Pass 1 done */
@@ -893,6 +901,10 @@ main(int argc, char *argv[])
 			fprintf(stderr, "%s: Error opening list file %s.\n", argv[0], lstname);
 			exit(EXIT_FAILURE);
 		}
+		if ((tmpfile = fopen(tmpname, "w")) == NULL) {
+			fprintf(stderr, "%s: Error opening listing temp file %s.\n", argv[0], lstname);
+			exit(EXIT_FAILURE);
+		}
 	} else {
 		lstfile = NULL;	/* to preven output in assemble() */
 	}
@@ -902,7 +914,8 @@ main(int argc, char *argv[])
 	while (run && nextline(oline, BUFLEN)) {
 		strucpy(uline, oline);
 		lineno++;
-		if (assemble(uline, lstfile, NULL)) {
+		/* write post zero page listing in tmp file, to insert the zmem list later */
+		if (assemble(uline, lstfile, tmpfile, NULL)) {
 			if (pc8 > memtop)
 				memtop = pc8;	/* keep track of user mem */
 		}
@@ -912,10 +925,20 @@ main(int argc, char *argv[])
 		printf("INFO: Allocated %d words in memory.\n", memtop);
 
 	if (lstout) {
-		/* need better way to list the zmem locs */
+		/* add zmem lst to lstfile */
 		while(++zmemptr <= ZMEMMAX) {	
 			fprintf(lstfile, "%04o: %-5s %04o\t%s", zmemptr, "", mem8[zmemptr], "\n");
 		}
+		
+		
+		/* append tmp file to lst file */
+		
+		freopen(NULL, "r", tmpfile);
+		while(fgets(oline, OLILEN, tmpfile)) {
+			fputs(oline, lstfile);
+		}
+		fclose(tmpfile);
+		unlink(tmpname);
 
 		fputc('\n', lstfile);
 		fclose(lstfile);
