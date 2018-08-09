@@ -23,8 +23,8 @@ again:	rcl a
 	tsb b
 	sto c
 	
-	_MOVI ssix a
-	_MOVI 33 b
+	_MOVI_ ssix a
+	_MOVI_ 33 b
 	_ADD  a b c
 
 	_MOVI ssix a
@@ -32,6 +32,8 @@ again:	rcl a
 	_ADD  a b c
 
 	_ADDI c 42 a
+	_ADDI c 66 a
+	_ADDI_ c 66 a
 
 	hlt
 

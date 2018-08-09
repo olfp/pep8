@@ -44,12 +44,13 @@ int		textmode = 0;	/* assemble nums/sysm or text/sixbit */
 int		macromode = 0;	/* true if defining macro */
 int		macrohead = 0;	/* true if MACRO line */
 
-MACDEF	*macroptr = NULL; /* assembly active macro line */
+STRLST	*macroptr = NULL; /* assembly active macro line */
 
-MACDEF 	*macline = NULL;  /* pointer to current macro line */
+STRLST 	*macline = NULL;  /* pointer to current macro line */
 MACPARA macpara[MAXPARA]; /* mac invocation params */
 
-WORD8	zmemptr = ZMEMMAX; /* next free zero page constant addr */
+WORD8	zmemptr = ZMEMMAX;		/* next free zero page constant addr */
+STRLST *zlabel[ZMEMMAX+1];	/* labels defined by zmem */
 
 FILE *infile;			/* active input file */
 char *inpath;			/* path to input file */
@@ -109,10 +110,10 @@ symtab_next()
 static void 
 macroline(char *line)
 {
-	MACDEF *def;
+	STRLST *def;
 	
-	def = (MACDEF *)malloc(sizeof(MACDEF));
-	def->line = strdup(line);
+	def = (STRLST *)malloc(sizeof(STRLST));
+	def->str = strdup(line);
 	def->next = NULL;
 	
 	if(macline) {
@@ -149,6 +150,7 @@ po_zmem()
 	int type;
 	unsigned val;
 	WORD8 ptr;
+	STRLST *zlbl;
 
 	name = strtok(NULL, DELIMS);
 	tok = strtok(NULL, DELIMS);
@@ -161,13 +163,18 @@ po_zmem()
 				break;
 			}
 		}
+		symbuf.location = ptr;
+
+		if(strchr(name, MNO)) { /* symbol has a macro ref placeholder (%+) */
+			macnify(name);
+		}
+		zlbl = (STRLST *)malloc(sizeof(STRLST));
+		zlbl->str = strdup(name);
+		zlbl->next = zlabel[ptr];
+		zlabel[ptr] = zlbl;
 		if(ptr == zmemptr) {
 			mem8[zmemptr--] = val;	
 		}
-		symbuf.location = ptr;
-			if(strchr(name, MNO)) { /* symbol has a macro ref placeholder (%+) */
-				macnify(name);
-			}
 
 		symtab_insert(name, symbuf, addr);		
 	}
@@ -380,7 +387,7 @@ symscan(char *line, FILE * symfile)
 						macroptr = symtmp->val.macdef;
 						while(macroptr) {
 							/* pc8++; */
-							strcpy(oline, macroptr->line);
+							strcpy(oline, macroptr->str);
 							strucpy(uline, oline);
 							symscan(uline, symfile);
 							macroptr = macroptr->next;
@@ -702,7 +709,7 @@ static char *nextline(char *buf, int len) {
 	char * line;
 	
 	if(macroptr) {
-		strncpy(buf, macroptr->line, len);
+		strncpy(buf, macroptr->str, len);
 		macroptr = macroptr->next;
 		return buf;
 	} else {
@@ -722,12 +729,14 @@ main(int argc, char *argv[])
 {
 
 	FILE    *outfile, *lstfile, *tmpfile, *symfile;
-	char    *inname, *outname, *lstname, *tmpname, *symname;
-	char	*lastsep, *tmpline;
+	char    *inname, *outname, *lstname, *tmpname, *symname, *tmptmpl;
+	char		*lastsep, *tmpline;
 	char    *prog, *file;
-	char	optch;
-	int		i, j, f, l, len;
-	unsigned char	oc[3];
+	char		optch;
+	STRLST 	*zlbl;
+	WORD8 	loc;
+	int			i, j, f, l, len;
+	unsigned oc[3];
 
 	prog = argv[0];
 	if (!(prog = strrchr(prog, '/'))) {
@@ -796,9 +805,8 @@ main(int argc, char *argv[])
 		lstname = (char *)malloc(len);
 		strcpy(lstname, inname);
 		strcpy(strrchr(lstname, DOT), LST);
-		tmpname = (char *)malloc(len);
-		strcpy(tmpname, inname);
-		strcpy(strrchr(tmpname, DOT), LTT);
+		tmptmpl = strdup(TMPNAMT);
+		tmpname = mktemp(tmptmpl);
 		if(verbose)
 			printf("INFO: Listing file: %s\n", lstname);
 	}
@@ -816,6 +824,10 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	files[0] = infile; /* push base file to bottom of include stack */
+	
+	for(i = 0; i < ZMEMMAX; i++) {
+		zlabel[i] = NULL;
+	}
 	
 	pass++;
 	if(verbose)
@@ -859,7 +871,7 @@ main(int argc, char *argv[])
 		if(symptr->type == macro) {
 				symptr->refcnt = 0;
 		/*
-			MACDEF *def;
+			STRLST *def;
 			printf("MACRO: %s\n", symptr->symbol);
 			def = symptr->val.macdef;
 			while(def) {
@@ -901,7 +913,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "%s: Error opening list file %s.\n", argv[0], lstname);
 			exit(EXIT_FAILURE);
 		}
-		if ((tmpfile = fopen(tmpname, "w")) == NULL) {
+		if ((tmpfile = fopen(tmpname, "w+")) == NULL) {
 			fprintf(stderr, "%s: Error opening listing temp file %s.\n", argv[0], lstname);
 			exit(EXIT_FAILURE);
 		}
@@ -927,9 +939,14 @@ main(int argc, char *argv[])
 	if (lstout) {
 		/* add zmem lst to lstfile */
 		while(++zmemptr <= ZMEMMAX) {	
-			fprintf(lstfile, "%04o: %-5s %04o\t%s", zmemptr, "", mem8[zmemptr], "\n");
-		}
-		
+			tmpline = oline;
+			zlbl = zlabel[zmemptr];
+			while(zlbl) { 
+				loc = zlbl->next ? 0 : mem8[zmemptr];
+				fprintf(lstfile, "%04o: %-5s %04o\t%s:\t%04o\n", zmemptr, "", loc, zlbl->str, mem8[zmemptr]);
+				zlbl = zlbl->next;
+			}
+		}		
 		
 		/* append tmp file to lst file */
 		

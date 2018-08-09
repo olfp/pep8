@@ -31,8 +31,9 @@
 #define SRC	".pps"
 #define DST	".pmi"
 #define LST	".pls"
-#define LTT	".plt"
 #define SYM	".psy"
+
+#define TMPNAMT "/tmp/potXXXXXX"
 
 #define DELIMS	" \t\n"		/* whitespace characters */
 
@@ -76,10 +77,10 @@ static void po_file_incl(void);
 
 /* macros */
 
-typedef struct macdef_t {
-	char 			*line;	/* macro source line */
-	struct macdef_t	*next;	/* pointer to next line */
-} MACDEF;
+typedef struct strlst_t {
+	char 			*str;	
+	struct strlst_t	*next;	
+} STRLST;
 
 typedef struct macpara_t {
 	char 	*name;			/* name or value in invocation */
@@ -94,7 +95,7 @@ typedef enum symtype_t {addr, macro} SYMTYPE;
 
 typedef union symval_t {
   WORD8 	location;		/* associated address */
-  MACDEF	*macdef;		/* pointer to macro definition */
+  STRLST	*macdef;		/* pointer to macro definition */
 } SYMVAL;
 
 /* symbol table element */
