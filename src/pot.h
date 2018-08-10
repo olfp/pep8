@@ -89,7 +89,8 @@ typedef struct macpara_t {
 
 /* symbol types */
 
-typedef enum symtype_t {addr, macro} SYMTYPE;
+typedef enum symtype_t {addr, macro, litr} SYMTYPE;
+static char symflag[] = "AML";
 
 /* symbol value */
 
@@ -128,7 +129,7 @@ PSEUDO pseudos[] = {
 
 static void macnify(char *tok);
 static int valueof(char *tok, char *line, unsigned *val);
-static void symscan( char *line, FILE *symfile );
+static void symscan( char *line);
 static int assemble( char *line, FILE *lstfile, FILE*tmpfile, WORD8 *assembly );
   
 #endif

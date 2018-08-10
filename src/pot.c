@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <getopt.h>
@@ -77,26 +78,32 @@ usage(char *name)
 static void 
 symtab_insert(char *sym, SYMVAL val, SYMTYPE type) 
 {
-	SYMTAB         *tmpsym;
+	SYMTAB *symtmp;
 
 	if (strlen(sym) > SYMLEN) {
 		fprintf(stderr, "%s: symbol too long. Truncated.\n", sym);
 		sym[SYMLEN] = '\0';
 	}
-	/* check if symbol already exists */
 
-	for (tmpsym = symtab; tmpsym != symptr; tmpsym++) {
-		if (!strcmp(tmpsym->symbol, sym)) {
+	/* check if symbol already exists */
+	for (symtmp = symtab; symtmp != symptr; symtmp++) {
+		if (!strcmp(symtmp->symbol, sym)) {
 			fprintf(stderr, "Duplicate symbol %s.\n", sym);
 			errcnt++;
 			break;
 		}
 	}
+	
+	/* check symbol tabe overflow */
+	if (symptr >= symtab + symsiz) {
+		fprintf(stderr, "Fatal: symbol table overflow, line %05d!\n", lineno);
+		exit(EXIT_FAILURE);
+	}
 
+	/* insert symbol */
 	symptr->type = type;
 	symptr->refcnt = 0;
-	strncpy(symptr->symbol, sym, SYMLEN);			
-	(symptr->symbol)[SYMLEN] = '\0';
+	strcpy(symptr->symbol, sym);			
 	symptr->val = val;
 }
 
@@ -177,6 +184,7 @@ po_zmem()
 		}
 
 		symtab_insert(name, symbuf, addr);		
+		symtab_next();
 	}
 }
 
@@ -268,21 +276,20 @@ pseudoop(char *tok)
 static void
 macnify(char *tok)
 {
-	char *first, *last, *fmt;
+	char *first, *last, fmt[SYMLEN];;
 	int len;
 	
 	first = strchr(tok, MNO);
 	last = strrchr(tok, MNO);
 	len = last - first + 1;
-	fmt = strdup(tok);
+	strcpy(fmt, tok);
 	sprintf(fmt + (first - tok), "%%0%dd", len);
 	sprintf(tok, fmt, curmac->refcnt);
 	strncpy(oline + (tok - uline), tok, strlen(tok));
-	free(fmt);
 }
 
 static void 
-symscan(char *line, FILE * symfile)
+symscan(char *line)
 {
 
 	char	*tok, *nxt;
@@ -338,16 +345,7 @@ symscan(char *line, FILE * symfile)
 				assemble(nxt, NULL, NULL, &symbuf.location);
 			}
 
-			symtab_insert(tok, symbuf, addr);			
-
-			if (symfile)
-				fprintf(symfile, "%s\t:\t%04o\n", symptr->symbol, symptr->val.location);
-
-			if (symptr >= symtab + symsiz) {
-				fprintf(stderr, "Fatal: symbol table overflow, line %05d!\n", lineno);
-				exit(EXIT_FAILURE);
-			}
-			
+			symtab_insert(tok, symbuf, flag ? addr : litr);			
 			symtab_next();
 
 			if (!flag)	/* value symbol */
@@ -380,7 +378,7 @@ symscan(char *line, FILE * symfile)
 				lblfld = FALSE;	/* none found, no more labels now */
 				
 				/* check for macro invocation */ 
-				for (symtmp = symtab; *(symtmp->symbol) != '\0'; symtmp++) {
+				for (symtmp = symtab; symtmp < symptr; symtmp++) {
 					if (!strcmp(tok, symtmp->symbol) && (symtmp->type = macro)) {
 						curmac = symtmp;
 						symtmp->refcnt++;
@@ -389,7 +387,7 @@ symscan(char *line, FILE * symfile)
 							/* pc8++; */
 							strcpy(oline, macroptr->str);
 							strucpy(uline, oline);
-							symscan(uline, symfile);
+							symscan(uline);
 							macroptr = macroptr->next;
 						} 
 						lblfld = TRUE;	
@@ -412,7 +410,7 @@ valueof(char *tok, char *line, unsigned *val)
 {
 
 	OPCODE    *code;
-	SYMTAB    *symptr;
+	SYMTAB    *symtmp;
 	char			*first, *last, *pos, *name;
 	int		  	len, off, num, type = TERROR;
 
@@ -471,17 +469,17 @@ valueof(char *tok, char *line, unsigned *val)
 			if(strchr(tok, MNO)) { /* symbol has a macro ref placeholder (%+) */
 				macnify(tok);
 			}
-			for (symptr = symtab; *(symptr->symbol) != '\0'; symptr++) {
-				if (!strcmp(tok, symptr->symbol)) {
-					if(symptr->type == addr) {
+			for (symtmp = symtab; symtmp < symptr; symtmp++) {
+				if (!strcmp(tok, symtmp->symbol)) {
+					symtmp->refcnt++;
+					if((symtmp->type == addr) || (symtmp->type == litr)) {
 						type = TISVAL;
-						*val = symptr->val.location;
-					} else if(symptr->type == macro) {
+						*val = symtmp->val.location;
+					} else if(symtmp->type == macro) {
 						type = TISMAC;
 						*val = 0;
-						curmac = symptr;
-						macroptr = symptr->val.macdef;
-						symptr->refcnt++;
+						curmac = symtmp;
+						macroptr = symtmp->val.macdef;
 					} else {
 						type = TISBAD;
 					}
@@ -699,8 +697,9 @@ assemble(char *line, FILE *lstfile, FILE *tmpfile, WORD8 * assembly)
 	if (assembly)		/* return generated bits if requested */
 		*assembly = loc;
 
-	if (!lblfld && !cnt && !mac && !assembly)	/* did code, no textmode, no sympass */
+	if (!lblfld && !cnt && !mac && !assembly)	{/* did code, no textmode, no sympass */
 		mem8[pc8++] = loc;
+	}
 
 	return (!lblfld);	/* return true if code was generated */
 }
@@ -734,9 +733,10 @@ main(int argc, char *argv[])
 	char    *prog, *file;
 	char		optch;
 	STRLST 	*zlbl;
+	SYMTAB	*symtmp;
 	WORD8 	loc;
-	int			i, j, f, l, len;
-	unsigned oc[3];
+	int			i, j, f, l, len, tmpfd;
+	unsigned char oc[3];
 
 	prog = argv[0];
 	if (!(prog = strrchr(prog, '/'))) {
@@ -805,8 +805,6 @@ main(int argc, char *argv[])
 		lstname = (char *)malloc(len);
 		strcpy(lstname, inname);
 		strcpy(strrchr(lstname, DOT), LST);
-		tmptmpl = strdup(TMPNAMT);
-		tmpname = mktemp(tmptmpl);
 		if(verbose)
 			printf("INFO: Listing file: %s\n", lstname);
 	}
@@ -833,57 +831,48 @@ main(int argc, char *argv[])
 	if(verbose)
 		printf("INFO: First pass, scanning symbols...\n");
 	
-	/* build symbol table */
+	/* make symbol table */
 
 	symptr = symtab = (SYMTAB *) malloc(symsiz * sizeof(SYMTAB));
 	*(symptr->symbol) = '\0';	/* mark end of table */
-
-	if (symout) {
-		if ((symfile = fopen(symname, "w")) == NULL) {
-			fprintf(stderr, "%s: Error opening symbol file %s.\n", argv[0], symname);
-			exit(EXIT_FAILURE);
-		}
-	} else {
-		symfile = NULL;	/* to prevent output in symscan() */
-	}
 
 	memtop = pc8 = 0;	/* start at loc zero by default */
 
 	while (run && nextline(oline, BUFLEN)) {
 		strucpy(uline, oline);
 		lineno++;
-		symscan(uline, symfile);
+		symscan(uline);
 		if (macromode && !macrohead) {
 			macroline(oline);
 		}
 		macrohead = FALSE;
 	}
 
-	if (symout)
-		fclose(symfile);
-
 	if (errcnt > 0) {
 		fprintf(stderr, "%d error(s) after pass 1. Abort.\n", errcnt);
 		exit(EXIT_FAILURE);
 	}	
 	
-	for(symptr = symtab; *(symptr->symbol); symptr++) {
-		if(symptr->type == macro) {
-				symptr->refcnt = 0;
-		/*
+	for(symtmp = symtab; symtmp < symptr; symtmp++) {
+		symtmp->refcnt = 0;
+	}
+	
+	/*
+	for(symtmp = symtab; symtmp < symptr; symtmp++) {
+		if(symtmp->type == macro) {
 			STRLST *def;
-			printf("MACRO: %s\n", symptr->symbol);
-			def = symptr->val.macdef;
+			printf("MACRO: %s\n", symtmp->symbol);
+			def = symtmp->val.macdef;
 			while(def) {
-				printf("%s", def->line);
+				printf("%s", def->str);
 				def = def->next;
 			}
-			printf("ENDM: %s\n", symptr->symbol);
+			printf("ENDM: %s\n", symtmp->symbol);
 		} else {
-			printf("SYMBOL: %s - %o\n", symptr->symbol, symptr->val.location);							
-		*/
+			printf("SYMBOL: %s - %o\n", symtmp->symbol, symtmp->val.location);							
 		}
 	}
+	*/
 	
 	if(verbose)
 		printf("INFO: Found %ld symbols and macro definitions on %d lines.\n", (symptr - symtab), lineno);
@@ -906,20 +895,22 @@ main(int argc, char *argv[])
 	rewind(infile);
 	lineno = 0;
 
-	/* do the assembly */
-
 	if (lstout) {
 		if ((lstfile = fopen(lstname, "w")) == NULL) {
 			fprintf(stderr, "%s: Error opening list file %s.\n", argv[0], lstname);
 			exit(EXIT_FAILURE);
 		}
-		if ((tmpfile = fopen(tmpname, "w+")) == NULL) {
-			fprintf(stderr, "%s: Error opening listing temp file %s.\n", argv[0], lstname);
+		tmptmpl = strdup(TMPNAMT);
+		if ((tmpfd = mkstemp(tmptmpl)) && (tmpfile = fdopen(tmpfd, "w+")) == NULL) {
+			fprintf(stderr, "%s: Error opening listing temp file %s.\n", argv[0], tmptmpl);
 			exit(EXIT_FAILURE);
 		}
+		unlink(tmptmpl); /* unlink-on-close */
 	} else {
 		lstfile = NULL;	/* to preven output in assemble() */
 	}
+
+	/* do the assembly */
 
 	run = TRUE;
 
@@ -935,14 +926,31 @@ main(int argc, char *argv[])
 
 	if(verbose)
 		printf("INFO: Allocated %d words in memory.\n", memtop);
-
-	if (lstout) {
+	
+	/*
+	for(symtmp = symtab; symtmp < symptr; symtmp++) {
+		if(symtmp->type == macro) {
+			STRLST *def;
+			printf("MACRO: %s\n", symtmp->symbol);
+			def = symtmp->val.macdef;
+			while(def) {
+				printf("%s", def->str);
+				def = def->next;
+			}
+			printf("ENDM: %s\n", symtmp->symbol);
+		} else {
+			printf("SYMBOL: %s: %o REF %d\n", symtmp->symbol, symtmp->val.location, symtmp->refcnt);							
+		}
+	}
+	*/
+	
+	if (lstfile) {
 		/* add zmem lst to lstfile */
 		while(++zmemptr <= ZMEMMAX) {	
 			tmpline = oline;
 			zlbl = zlabel[zmemptr];
 			while(zlbl) { 
-				loc = zlbl->next ? 0 : mem8[zmemptr];
+				loc = (zlbl->next ? 0 : mem8[zmemptr]);
 				fprintf(lstfile, "%04o: %-5s %04o\t%s:\t%04o\n", zmemptr, "", loc, zlbl->str, mem8[zmemptr]);
 				zlbl = zlbl->next;
 			}
@@ -955,13 +963,31 @@ main(int argc, char *argv[])
 			fputs(oline, lstfile);
 		}
 		fclose(tmpfile);
-		unlink(tmpname);
 
 		fputc('\n', lstfile);
 		fclose(lstfile);
 	}
+	
+	/* done with input, close */
 	fclose(infile);
 
+	/* write symbols to symfile */
+	if(symout) {
+		if ((symfile = fopen(symname, "w")) == NULL) {
+			fprintf(stderr, "%s: Error opening symbol file %s.\n", argv[0], symname);
+			exit(EXIT_FAILURE);
+		}
+		qsort(symtab, symptr - symtab, sizeof(SYMTAB), (__compar_fn_t)strcmp); /* work because symbol name is first in struct */
+		for (symtmp = symtab; symtmp != symptr; symtmp++) {		
+			fprintf(symfile, "%s\t:\t %c ", symtmp->symbol, symflag[symtmp->type]);
+			if(symtmp->type != macro) {
+				fprintf(symfile, "%04o", symtmp->val.location);
+			}
+			fprintf(symfile, "\n");
+			}
+		fclose(symfile);
+	}
+		
 	if (memtop == 0) {
 		fprintf(stderr, "%s: Error. Input file generates no code.\n", argv[0]);
 		exit(EXIT_FAILURE);
@@ -974,6 +1000,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: Error opening output file %s.\n", argv[0], outname);
 		exit(EXIT_FAILURE);
 	}
+
 	for (i = 0; i < memtop; i += 2) {
 		l = i & MASK12;
 		oc[0] = mem8[l] >> 4;
@@ -982,7 +1009,6 @@ main(int argc, char *argv[])
 
 		fwrite(oc, sizeof(unsigned char), 3, outfile);
 	}
-
 	fclose(outfile);
 
 	if(verbose)
