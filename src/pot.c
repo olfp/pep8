@@ -977,7 +977,8 @@ main(int argc, char *argv[])
 			fprintf(stderr, "%s: Error opening symbol file %s.\n", argv[0], symname);
 			exit(EXIT_FAILURE);
 		}
-		qsort(symtab, symptr - symtab, sizeof(SYMTAB), (__compar_fn_t)strcmp); /* work because symbol name is first in struct */
+		//qsort(symtab, symptr - symtab, sizeof(SYMTAB), (__compar_fn_t)strcmp); /* work because symbol name is first in struct */
+		qsort(symtab, symptr - symtab, sizeof(SYMTAB), strcmp); /* work because symbol name is first in struct */
 		for (symtmp = symtab; symtmp != symptr; symtmp++) {		
 			fprintf(symfile, "%s\t:\t %c ", symtmp->symbol, symflag[symtmp->type]);
 			if(symtmp->type != macro) {

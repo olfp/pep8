@@ -1,0 +1,31 @@
+;
+; scope test 0
+;
+
+SCO=	2
+;SSX=	DGA SCO
+;SSY=	DPA SCO
+:SIP=	DUS SCO
+
+LOOP:	RCL	X1
+	DGA 	SCO
+	RCL	Y1
+	DPA	SCO
+W1:	SRO 	SCO
+	JMP	W1
+	DUS 	SCO
+
+	RCL	X2
+	DGA 	SCO
+	RCL	Y2
+	DPA	SCO
+W2:	SRO 	SCO
+	JMP	W2
+	DUS 	SCO
+
+	JMP	LOOP
+	
+X1:	12
+Y1:	12
+X2:	24
+Y2:	24		

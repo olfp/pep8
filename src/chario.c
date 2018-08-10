@@ -37,6 +37,9 @@
 #define TTYDEF_HOST	"localhost"
 #define TTYDEF_PORT	4200
 
+#define SCODEF_HOST	"localhost"
+#define SCODEF_PORT	4321
+
 typedef struct devdesc_t {
   char *desc;				/* text description */
 
@@ -55,11 +58,16 @@ typedef struct devdesc_t {
 
 static int port_base;
 
-static int csd = -1;			/* client socket desc. */
-static char in_ch = -1;			/* input char buffer */
-static char out_ch = -1;		/* input char buffer */
+static int csd = -1;				/* tty client socket desc. */
+static char in_ch = -1;			/* tty input char buffer */
+static char out_ch = -1;		/* tty input char buffer */
 
 static FILE *ppt_file;			/* file actiong as paper tape */
+
+static int ssd = -1;				/* scope client socket desc. */
+static char out_sx = -1;		/* scope out x buffer */
+static char out_sy = -1;		/* scope out y buffer */
+static char out_si = -1;		/* scope intensify */
 
 void *tty_write_sock(void *arg) {
 
@@ -205,6 +213,111 @@ int ppt_getc(WORD8 *acp) {
   return 0;
 }
 
+void *sco_write_sock(void *arg) {
+  int rv, port;
+  char *params, *host, *portstr;
+  struct sockaddr_in caddr;
+  struct hostent *hp;
+  struct in_addr ip;
+  static char sbuf[24];
+
+  params = (char *)arg;
+  host = (char *)strtok(params, DEVDEL);
+  if(host) {
+    portstr = (char *)strtok(NULL, DEVDEL);
+    if(portstr) {
+      port = atoi(portstr);
+    } else {
+      port = SCODEF_PORT;
+    }
+  } else {
+    host = SCODEF_HOST;
+    port = SCODEF_PORT;
+  }
+
+  hp = gethostbyname(host);
+  memcpy(&ip, *(hp->h_addr_list), sizeof(struct in_addr));
+  memset(&caddr, 0, sizeof(struct sockaddr_in));
+  caddr.sin_family = AF_INET;
+  caddr.sin_addr = ip;
+  caddr.sin_port = htons(port);
+  printf("SCO WRITER");
+
+  while(1) {
+    if((ssd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {;
+      perror("ERROR: Cannot open scope socket:");
+      exit(1);
+    } else {
+      if(connect(ssd, (struct sockaddr *)&caddr, sizeof(struct sockaddr_in)) < 0) {
+				perror("ERROR: Scope socket connect failed");
+				exit(1);
+      } else {
+    		if((ssd > 0) && (out_si > 0)) {
+    			printf("SENDSCOPE: %d,%d\n", out_sx, out_sy);
+    			sprintf(sbuf, "%d,%d\n", out_sx, out_sy);
+      		if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
+	  				if(errno != EINTR) {
+	    				perror("ERROR: Scope client socket write");
+	    				close(ssd);
+	    				pthread_exit(NULL);
+	  				} else {
+	    				/* signal */
+	  				}
+      		}
+      		out_si = -1;
+    		}
+    		usleep(3);			
+    	}
+    }
+  }
+}
+
+void sco_init(int dev, char *devdesc) {
+
+  pthread_t tid;
+  pthread_attr_t tattr;
+  int flags;
+  char ebuf[255];
+  struct sockaddr_in addr;
+
+  pthread_attr_init(&tattr);
+  pthread_attr_setscope(&tattr, PTHREAD_SCOPE_SYSTEM);
+  if(pthread_create(&tid, &tattr, sco_write_sock, (void *)devdesc)) {
+    perror("ERROR: Cannot create tty write thread:");
+  }
+}
+
+int sco_rdyout(WORD8 *acp) {
+printf("SCO RDYOUT\n");
+
+  return (out_si < 0);
+}
+
+int sco_putx(WORD8 *acp) {
+printf("SCO PUTX\n");
+
+  out_sx = (*acp & M7BIT);	/* 7 Bit ASCII */
+
+  return 0;
+}
+
+int sco_puty(WORD8 *acp) {
+printf("SCO PUTY\n");
+
+  out_sy = (*acp & M7BIT);	/* 7 Bit ASCII */
+
+  return 0;
+}
+
+int sco_puti(WORD8 *acp) {
+printf("SCO INTENSIFY\n");
+
+  out_si = (*acp & M7BIT);	/* 7 Bit ASCII */
+
+  return 0;
+}
+
+
 static DEVDESC devices[MAXDEV] = {
   {
     "Teletype",
@@ -232,6 +345,19 @@ static DEVDESC devices[MAXDEV] = {
     0,
     0,
   },
+  {
+    "Scope",
+    sco_init,
+    0,
+    0,
+    sco_rdyout,
+    sco_putx,
+    sco_puty,
+    sco_puti,
+    0,
+    0,
+    0,
+  },
 };
 
 void chario_init(int iobase, char *devdesc[]) {
@@ -242,11 +368,11 @@ void chario_init(int iobase, char *devdesc[]) {
   for(i = 0; i < MAXDEV; i++) {
     if(devdesc[i]) {
       if(devices[i].dev_init) {
-	printf("Initializing device %d, %s:", i, devices[i].desc);
-	devices[i].dev_init(i, devdesc[i]);
-	printf(" ok.\n");
+				printf("Initializing device %d, %s:", i, devices[i].desc);
+				devices[i].dev_init(i, devdesc[i]);
+				printf(" ok.\n");
       } else {
-	fprintf(stderr, "WARNING: Unknown device: %d\n", i);
+				fprintf(stderr, "WARNING: Unknown device: %d\n", i);
       }
     }
   }
