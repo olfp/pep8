@@ -20,6 +20,7 @@ public class Scope extends JPanel implements Runnable {
   private Color bgColor = new Color( 0x50, 0x50, 0x50 );
   private Color fgColor = new Color( 0xfe , 0xb3 , 0x08 );
   private static int phosfade = 1000;
+  private static int offset = 256;
   
   public Scope() {
 	  
@@ -93,8 +94,8 @@ public class Scope extends JPanel implements Runnable {
                 System.out.println("Q: " + displaylist.size() + "; COODS: " + text);
                 if(text != null) {
 					String[] coord = text.split(",");
-					int x = Integer.parseInt(coord[0]);
-					int y = Integer.parseInt(coord[1]);
+					int x = Integer.parseInt(coord[0]) + offset;
+					int y = offset - Integer.parseInt(coord[1]);
 					TimePoint p = new TimePoint(x,y, phosfade);
 					if(!displaylist.contains(p)) {
 						displaylist.add(p);

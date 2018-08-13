@@ -21,6 +21,7 @@
 
 #include "global.h"
 #include "chario.h"
+#include "types8.h"
 
 #define IOP_RDYIN	0
 #define IOP_RDYOUT	1
@@ -30,9 +31,6 @@
 #define IOP_STATUS	5
 #define IOP_SENSE	6
 #define IOP_RESET	7
-
-#define M7BIT		0177
-#define M6BIT		0077
 
 #define TTYDEF_HOST	"localhost"
 #define TTYDEF_PORT	4200
@@ -190,7 +188,7 @@ int tty_getc(WORD8 *acp) {
 
 int tty_putc(WORD8 *acp) {
 
-  out_ch = (*acp & M7BIT);	/* 7 Bit ASCII */
+  out_ch = (*acp & MASK7);	/* 7 Bit ASCII */
 
   return 0;
 }
@@ -298,7 +296,7 @@ int sco_rdyout(WORD8 *acp) {
 int sco_putx(WORD8 *acp) {
 
 	rdydly = 20;
-  out_sx = (*acp & M7BIT);	/* 7 Bit ASCII */
+  out_sx = (*acp & MASK9);	/*  512 pix */
 
   return 0;
 }
@@ -306,14 +304,14 @@ int sco_putx(WORD8 *acp) {
 int sco_puty(WORD8 *acp) {
 
 	rdydly = 20;
-  out_sy = (*acp & M7BIT);	/* 7 Bit ASCII */
+  out_sy = (*acp & MASK9);	
 
   return 0;
 }
 
 int sco_puti(WORD8 *acp) {
 
-  out_si = (*acp & M7BIT);	/* 7 Bit ASCII */
+  out_si = *acp;
 
   return 0;
 }
