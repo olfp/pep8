@@ -265,6 +265,7 @@ void *sco_write_sock(void *arg) {
 							}
 						}
 						out_si = -1;
+						rdydly = -1;
 					}
 					usleep(1);
 					rdydly--;
@@ -291,12 +292,12 @@ void sco_init(int dev, char *devdesc) {
 
 int sco_rdyout(WORD8 *acp) {
 
-  return (!rdydly);
+  return (rdydly < 0);
 }
 
 int sco_putx(WORD8 *acp) {
 
-	rdydly += 20;
+	rdydly = 20;
   out_sx = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
@@ -304,7 +305,7 @@ int sco_putx(WORD8 *acp) {
 
 int sco_puty(WORD8 *acp) {
 
-	rdydly += 20;
+	rdydly = 20;
   out_sy = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
@@ -312,7 +313,6 @@ int sco_puty(WORD8 *acp) {
 
 int sco_puti(WORD8 *acp) {
 
-	rdydly += 1;
   out_si = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
