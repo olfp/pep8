@@ -4,6 +4,8 @@
     process OPR instructions
 */
 
+#include <stdio.h>
+
 #include "global.h"
 #include "chario.h"
 #include "operate.h"

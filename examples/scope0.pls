@@ -2,26 +2,26 @@
 0000:       0000	; scope test 0
 0000:       0000	;
 0000:       0000	
-0000:       0000	SCO=	2
+0000:       0000	SCO=	(2*2)
 0000:       0000	;SSX=	DGA SCO
 0000:       0000	;SSY=	DPA SCO
 0000:       0000	:SIP=	DUS SCO
 0000:       0000	
 0000:       0017	LOOP:	RCL	X1
-0001:       7503		DGA 	SCO
+0001:       7505		DGA 	SCO
 0002:       0020		RCL	Y1
-0003:       7543		DPA	SCO
-0004:       7443	W1:	SRO 	SCO
+0003:       7545		DPA	SCO
+0004:       7445	W1:	SRO 	SCO
 0005:       5004		JMP	W1
-0006:       7603		DUS 	SCO
+0006:       7605		DUS 	SCO
 0007:       0000	
 0007:       0021		RCL	X2
-0010:       7503		DGA 	SCO
+0010:       7505		DGA 	SCO
 0011:       0022		RCL	Y2
-0012:       7543		DPA	SCO
-0013:       7443	W2:	SRO 	SCO
+0012:       7545		DPA	SCO
+0013:       7445	W2:	SRO 	SCO
 0014:       5013		JMP	W2
-0015:       7603		DUS 	SCO
+0015:       7605		DUS 	SCO
 0016:       0000	
 0016:       5000		JMP	LOOP
 0017:       0000		

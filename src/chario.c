@@ -65,9 +65,10 @@ static char out_ch = -1;		/* tty input char buffer */
 static FILE *ppt_file;			/* file actiong as paper tape */
 
 static int ssd = -1;				/* scope client socket desc. */
-static char out_sx = -1;		/* scope out x buffer */
-static char out_sy = -1;		/* scope out y buffer */
-static char out_si = -1;		/* scope intensify */
+static WORD8 out_sx = -1;		/* scope out x buffer */
+static WORD8 out_sy = -1;		/* scope out y buffer */
+static WORD8 out_si = -1;		/* scope intensify */
+static WORD8 out_sr = -1;		/* scopr ready */
 
 void *tty_write_sock(void *arg) {
 
@@ -115,27 +116,26 @@ void *tty_read_sock(void *arg) {
       perror("ERROR: Cannot open tty socket:");
       exit(1);
     } else {
-      if(connect(csd, 
-		 (struct sockaddr *)&caddr, sizeof(struct sockaddr_in)) < 0) {
-	perror("ERROR: TTY socket connect failed");
-	exit(1);
+      if(connect(csd, (struct sockaddr *)&caddr, sizeof(struct sockaddr_in)) < 0) {
+				perror("ERROR: TTY socket connect failed");
+				exit(1);
       } else {
-	while((rv = read(csd, &in_ch, 1)) > 0) {
-	  /* loop */
-	}
-	if(rv < 0) {
-	  if(errno != EINTR) {
-	    perror("ERROR: Client socket read");
-	    close(csd);
-	    pthread_exit(NULL);
-	  } else {
-	    /* signal */
-	  }
-	} else {
-	  /* server close */
-	  close(csd);
-	  pthread_exit(NULL);
-	}
+				while((rv = read(csd, &in_ch, 1)) > 0) {
+					/* loop */
+				}
+				if(rv < 0) {
+					if(errno != EINTR) {
+						perror("ERROR: Client socket read");
+						close(csd);
+						pthread_exit(NULL);
+					} else {
+						/* signal */
+					}
+				} else {
+					/* server close */
+					close(csd);
+					pthread_exit(NULL);
+				}
       }
     }
   }
@@ -219,7 +219,9 @@ void *sco_write_sock(void *arg) {
   struct sockaddr_in caddr;
   struct hostent *hp;
   struct in_addr ip;
-  static char sbuf[24];
+  char sbuf[24];
+	WORD8 posx, posy;
+
 
   params = (char *)arg;
   host = (char *)strtok(params, DEVDEL);
@@ -241,7 +243,6 @@ void *sco_write_sock(void *arg) {
   caddr.sin_family = AF_INET;
   caddr.sin_addr = ip;
   caddr.sin_port = htons(port);
-  printf("SCO WRITER");
 
   while(1) {
     if((ssd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {;
@@ -252,21 +253,37 @@ void *sco_write_sock(void *arg) {
 				perror("ERROR: Scope socket connect failed");
 				exit(1);
       } else {
-    		if((ssd > 0) && (out_si > 0)) {
-    			printf("SENDSCOPE: %d,%d\n", out_sx, out_sy);
-    			sprintf(sbuf, "%d,%d\n", out_sx, out_sy);
-      		if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
-	  				if(errno != EINTR) {
-	    				perror("ERROR: Scope client socket write");
-	    				close(ssd);
-	    				pthread_exit(NULL);
-	  				} else {
-	    				/* signal */
-	  				}
-      		}
-      		out_si = -1;
-    		}
-    		usleep(3);			
+				while(1) {
+					if((ssd > 0) && (out_sx > 0)) {
+						posx = out_sx;
+						usleep(20);
+						out_sx = -1;
+						out_sr = -1;
+					}
+					if((ssd > 0) && (out_sy > 0)) {
+						posy = out_sy;
+						usleep(20);
+						out_sy = -1;
+						out_sr = -1;
+					}
+					if((ssd > 0) && (out_si > 0)) {
+						sprintf(sbuf, "%d,%d\n", out_sx, out_sy);
+						/**/
+						if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
+							if(errno != EINTR) {
+								perror("ERROR: Scope client socket write");
+								close(ssd);
+								pthread_exit(NULL);
+							} else {
+								// signal
+							}
+						}
+						/**/
+						usleep(1);
+						out_si = -1;
+						out_sr = -1;
+					}
+				}
     	}
     }
   }
@@ -288,30 +305,29 @@ void sco_init(int dev, char *devdesc) {
 }
 
 int sco_rdyout(WORD8 *acp) {
-printf("SCO RDYOUT\n");
 
-  return (out_si < 0);
+  return (out_sr < 0);
 }
 
 int sco_putx(WORD8 *acp) {
-printf("SCO PUTX\n");
 
+	out_sr = 0;
   out_sx = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
 }
 
 int sco_puty(WORD8 *acp) {
-printf("SCO PUTY\n");
 
+	out_sr = 0;
   out_sy = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
 }
 
 int sco_puti(WORD8 *acp) {
-printf("SCO INTENSIFY\n");
 
+	out_sr = 0;
   out_si = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
@@ -393,7 +409,7 @@ int chario(int iop, int device, WORD8 *acp) {
   int skip = 0;
   int (*func)(WORD8 *);
   DEVDESC devdesc = devices[device];
-
+	
   switch(iop) {
   case IOP_RDYIN:
     func = devdesc.dev_rdyin;
