@@ -68,7 +68,7 @@ static int ssd = -1;				/* scope client socket desc. */
 static WORD8 out_sx = -1;		/* scope out x buffer */
 static WORD8 out_sy = -1;		/* scope out y buffer */
 static WORD8 out_si = -1;		/* scope intensify */
-static WORD8 out_sr = -1;		/* scopr ready */
+static int rdydly = 0;			/* ready delay in microsecs */
 
 void *tty_write_sock(void *arg) {
 
@@ -220,7 +220,6 @@ void *sco_write_sock(void *arg) {
   struct hostent *hp;
   struct in_addr ip;
   char sbuf[24];
-	WORD8 posx, posy;
 
 
   params = (char *)arg;
@@ -254,21 +253,8 @@ void *sco_write_sock(void *arg) {
 				exit(1);
       } else {
 				while(1) {
-					if((ssd > 0) && (out_sx > 0)) {
-						posx = out_sx;
-						usleep(20);
-						out_sx = -1;
-						out_sr = -1;
-					}
-					if((ssd > 0) && (out_sy > 0)) {
-						posy = out_sy;
-						usleep(20);
-						out_sy = -1;
-						out_sr = -1;
-					}
-					if((ssd > 0) && (out_si > 0)) {
+					if((ssd > 0) && !rdydly && (out_si > 0)) {
 						sprintf(sbuf, "%d,%d\n", out_sx, out_sy);
-						/**/
 						if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
 							if(errno != EINTR) {
 								perror("ERROR: Scope client socket write");
@@ -278,11 +264,10 @@ void *sco_write_sock(void *arg) {
 								// signal
 							}
 						}
-						/**/
-						usleep(1);
 						out_si = -1;
-						out_sr = -1;
 					}
+					usleep(1);
+					rdydly--;
 				}
     	}
     }
@@ -306,12 +291,12 @@ void sco_init(int dev, char *devdesc) {
 
 int sco_rdyout(WORD8 *acp) {
 
-  return (out_sr < 0);
+  return (!rdydly);
 }
 
 int sco_putx(WORD8 *acp) {
 
-	out_sr = 0;
+	rdydly += 20;
   out_sx = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
@@ -319,7 +304,7 @@ int sco_putx(WORD8 *acp) {
 
 int sco_puty(WORD8 *acp) {
 
-	out_sr = 0;
+	rdydly += 20;
   out_sy = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;
@@ -327,7 +312,7 @@ int sco_puty(WORD8 *acp) {
 
 int sco_puti(WORD8 *acp) {
 
-	out_sr = 0;
+	rdydly += 1;
   out_si = (*acp & M7BIT);	/* 7 Bit ASCII */
 
   return 0;

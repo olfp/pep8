@@ -54,7 +54,7 @@ public class Scope extends JPanel implements Runnable {
 	  while (runner == thisThread) {
 		repaint();	
         try {
-            Thread.sleep(10);
+            Thread.sleep(1);
        } catch (InterruptedException e) { }		  
 	  }
 	  
@@ -80,7 +80,7 @@ public class Scope extends JPanel implements Runnable {
             Socket socket = serverSocket.accept();
             System.out.println("New client connected");
 			
-	    InputStream input = socket.getInputStream();
+			InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
  
             OutputStream output = socket.getOutputStream();
@@ -89,20 +89,20 @@ public class Scope extends JPanel implements Runnable {
  
             String text;
  
-            do {
-            	//writer.print("Scope> ");
-		//writer.flush();
-                text = reader.readLine();
-                System.out.println("COODS: " + text);
+            while((text = reader.readLine()) != null) {
+                System.out.println("Q: " + displaylist.size() + "; COODS: " + text);
                 if(text != null) {
-			String[] coord = text.split(",");
-			int x = Integer.parseInt(coord[0]);
-			int y = Integer.parseInt(coord[1]);
-			displaylist.add(new TimePoint(x,y, phosfade));
-		}
-            } while (true);
+					String[] coord = text.split(",");
+					int x = Integer.parseInt(coord[0]);
+					int y = Integer.parseInt(coord[1]);
+					TimePoint p = new TimePoint(x,y, phosfade);
+					if(!displaylist.contains(p)) {
+						displaylist.add(p);
+					}
+				}
+            }
 			
-            //socket.close();
+            socket.close();
         }
  
     } catch (IOException ex) {
