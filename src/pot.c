@@ -380,7 +380,6 @@ symscan(char *line)
 				/* check for macro invocation */ 
 				for (symtmp = symtab; symtmp < symptr; symtmp++) {
 					if (!strcmp(tok, symtmp->symbol) && (symtmp->type == macro)) {
-						/**/printf("SYMSCN MACRO: %s\n", tok);
 						curmac = symtmp;
 						symtmp->refcnt++;
 						macroptr = symtmp->val.macdef;
@@ -979,7 +978,7 @@ main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 		//qsort(symtab, symptr - symtab, sizeof(SYMTAB), (__compar_fn_t)strcmp); /* work because symbol name is first in struct */
-		qsort(symtab, symptr - symtab, sizeof(SYMTAB), strcmp); /* work because symbol name is first in struct */
+		qsort(symtab, symptr - symtab, sizeof(SYMTAB), (int(*)(const void*, const void*))&strcmp); /* work because symbol name is first in struct */
 		for (symtmp = symtab; symtmp != symptr; symtmp++) {		
 			fprintf(symfile, "%s\t:\t %c ", symtmp->symbol, symflag[symtmp->type]);
 			if(symtmp->type != macro) {
