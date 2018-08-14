@@ -379,7 +379,8 @@ symscan(char *line)
 				
 				/* check for macro invocation */ 
 				for (symtmp = symtab; symtmp < symptr; symtmp++) {
-					if (!strcmp(tok, symtmp->symbol) && (symtmp->type = macro)) {
+					if (!strcmp(tok, symtmp->symbol) && (symtmp->type == macro)) {
+						/**/printf("SYMSCN MACRO: %s\n", tok);
 						curmac = symtmp;
 						symtmp->refcnt++;
 						macroptr = symtmp->val.macdef;

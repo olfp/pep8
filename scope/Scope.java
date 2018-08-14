@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.EventQueue;
 import java.awt.event.*;
 import java.util.*;
 
@@ -64,13 +65,20 @@ public class Scope extends JPanel implements Runnable {
   public static void main(String[] args) {
 	int port = (args.length < 1) ? 4321 : Integer.parseInt(args[0]);
 
-    Scope points = new Scope();
-    JFrame frame = new JFrame("Scope");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.add(points);
-    frame.setSize(512, 512);
-    frame.setLocationRelativeTo(null);
-    frame.setVisible(true);
+    EventQueue.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {	
+			Scope points = new Scope();
+			JFrame frame = new JFrame("Scope");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.add(points);
+			frame.pack();
+			frame.setSize(512, 512);
+			frame.setLocationRelativeTo(null);
+			frame.setVisible(true);
+		}
+	});
 
 	
     try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -91,7 +99,7 @@ public class Scope extends JPanel implements Runnable {
             String text;
  
             while((text = reader.readLine()) != null) {
-                System.out.println("Q: " + displaylist.size() + "; COODS: " + text);
+                //System.out.println("Q: " + displaylist.size() + "; COODS: " + text);
                 if(text != null) {
 					String[] coord = text.split(",");
 					int x = Integer.parseInt(coord[0]) + offset;
