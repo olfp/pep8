@@ -1,0 +1,45 @@
+;
+; scope test 0
+;
+
+SCO=	(2*2)
+;SSX=	DGA SCO
+;SSY=	DPA SCO
+;SIP=	DUS SCO
+
+START:	RCL	CT0
+	STO 	CNT
+	RCL	X0
+	STO	X1
+	RCL	Y0
+	STO 	Y1
+
+LOOP:	RCL	X1
+	;SSX		
+	DGA 	SCO
+	IAC
+	STO	X1
+	RCL	Y1
+	;SSY		
+	DPA	SCO
+	IAC
+	STO	Y1
+		
+W1:	SRO 	SCO
+	JMP	W1
+	;SIP		
+	DUS 	SCO
+	
+	RCL	CNT
+	IAC
+	SNA
+	JMP 	START
+	STO	CNT
+	JMP	LOOP
+	
+X0:	0
+Y0:	0
+X1:	0
+Y1:	0
+CT0:	7700
+CNT:	0
