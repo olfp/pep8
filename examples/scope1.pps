@@ -37,9 +37,9 @@ W1:	SRO 	SCO
 	STO	CNT
 	JMP	LOOP
 	
-X0:	0
-Y0:	0
+X0:	(-377)
+Y0:	(-377)
 X1:	0
 Y1:	0
-CT0:	7700
+CT0:	7000
 CNT:	0

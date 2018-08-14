@@ -63,9 +63,9 @@ static char out_ch = -1;		/* tty input char buffer */
 static FILE *ppt_file;			/* file actiong as paper tape */
 
 static int ssd = -1;				/* scope client socket desc. */
-static WORD8 out_sx = -1;		/* scope out x buffer */
-static WORD8 out_sy = -1;		/* scope out y buffer */
-static WORD8 out_si = -1;		/* scope intensify */
+static int out_sx = -1;		/* scope out x buffer */
+static int out_sy = -1;		/* scope out y buffer */
+static int out_si = -1;		/* scope intensify */
 static int rdydly = 0;			/* ready delay in microsecs */
 
 void *tty_write_sock(void *arg) {
@@ -218,6 +218,7 @@ void *sco_write_sock(void *arg) {
   struct hostent *hp;
   struct in_addr ip;
   char sbuf[24];
+	int posx, posy;
 
 
   params = (char *)arg;
@@ -252,7 +253,18 @@ void *sco_write_sock(void *arg) {
       } else {
 				while(1) {
 					if((ssd > 0) && !rdydly && (out_si > 0)) {
-						sprintf(sbuf, "%d,%d\n", out_sx, out_sy);
+						if(out_sx & BIT9) {
+							posx = SGNOFF - ((~out_sx & MASK8) + 1);
+						} else {
+							posx = SGNOFF + out_sx;
+						}
+						if(out_sy & BIT9) {
+							posy = SGNOFF + ((~out_sy & MASK8) + 1);
+						} else {
+							posy = SGNOFF - out_sy;
+						}
+
+						sprintf(sbuf, "%d,%d\n", posx, posy);
 						if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
 							if(errno != EINTR) {
 								perror("ERROR: Scope client socket write");
@@ -295,7 +307,7 @@ int sco_rdyout(WORD8 *acp) {
 
 int sco_putx(WORD8 *acp) {
 
-	rdydly = 20;
+	rdydly = 2;
   out_sx = (*acp & MASK9);	/*  512 pix */
 
   return 0;
@@ -303,7 +315,7 @@ int sco_putx(WORD8 *acp) {
 
 int sco_puty(WORD8 *acp) {
 
-	rdydly = 20;
+	rdydly = 2;
   out_sy = (*acp & MASK9);	
 
   return 0;
