@@ -10,7 +10,7 @@
 /* group bits */
 
 #define OPRGRP1 00400			/* Group 1 vs. 2/3 bit for OPR */
-#define OPRGRP2 00001			/* Group 2 / 3 bit for OPR */
+#define OPRGRP2 00200			/* Group 2 / 3 bit for OPR */
 
 /* group 1 */
 
@@ -28,39 +28,39 @@
 
 /* group 2 */
 
-#define LOGGRP  00010			/* AND(1) or OR(0) group of bits */
-#define CONDS	00160			/* Condition bits for skip */
+#define LOGGRP  00004			/* AND(1) or OR(0) group of bits */
+#define CONDS	00240			/* Condition bits for skip */
 
 /* OR group */
 
-#define SMA	00100			/* skip on AC < 0 */
-#define SZA	00040			/* skip on AC == 0 */
-#define SNL	00020			/* skip on Link bit set */
+#define SMA	00040			/* skip on AC < 0 */
+#define SZA	00020			/* skip on AC == 0 */
+#define SNL	00010			/* skip on Link bit set */
 
-#define SPA	00100			/* skip on AC > 0 */
-#define SNA	00040			/* skip on AC */
-#define SZL	00020			/* skip on link bit clear */
+#define SPA	00040			/* skip on AC > 0 */
+#define SNA	00020			/* skip on AC */
+#define SZL	00010			/* skip on link bit clear */
 
-#define SKP	00010			/* skip always */
+#define SKP	00004			/* skip always */
 /* 00200 belongs to CLA (see group 1 */
-#define OSR	00004			/* or switches with AC */
-#define HLT	00002			/* halt */
+#define OSR	00002			/* or switches with AC */
+#define HLT	00001			/* halt */
 
 /* group 3 */
 
-#define IOPSHF	5			/* shift left five for iop */
-#define DEVSHF	1			/* shift left one for devno */
+#define IOPSHF	4			/* shift left five for iop */
+#define DEVSHF	0			/* shift left one for devno */
 
-#define IOPMSK	00340			/* i/o opcode mask */
-#define DEVMSK	00036			/* i/o device mask */
+#define IOPMSK	00160			/* i/o opcode mask */
+#define DEVMSK	00017			/* i/o device mask */
 
-#define SRI	00401			/* skip on ready for input */
-#define SRO	00441			/* skip on read for output */
-#define DGA	00501			/* dev get val to AC */
-#define DPA	00541			/* dev put val in AC */
-#define DUS	00601			/* select dev unit */
-#define DGS	00641			/* dev get status word */
-#define DSM	00701			/* dev set sense mask */
-#define RSD	00741			/* dev reset */
+#define SRI	00600			/* skip on ready for input */
+#define SRO	00620			/* skip on read for output */
+#define DGA	00640			/* dev get val to AC */
+#define DPA	00660			/* dev put val in AC */
+#define DUS	00700			/* select dev unit */
+#define DGS	00720			/* dev get status word */
+#define DSM	00740			/* dev set sense mask */
+#define RSD	00760			/* dev reset */
 
 #endif

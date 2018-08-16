@@ -33,7 +33,7 @@ OPCODE opcodes[] = {
   "JMS", 06000,			/* Subroutine transfer */
   "OPR", 07000,			/* Microcoded operation */
 
-  /* Auxiliary instructions */
+  /* Auxiliary instructions, Group 1, Bit 4 = 0 */
 
   "NOP", 07000,			/* Do nothing */
 
@@ -48,28 +48,30 @@ OPCODE opcodes[] = {
   "RAR", 07010,			/* Rotate <L,AC> right */
   "RAL", 07004,			/* Rotate <L,AC> left */
 
-  "SMA", 07500,			/* Skip on AC < 0 */
-  "SZA", 07440,			/* Skip on AC == 0 */
-  "SNL", 07420,			/* Skip on Link Bit set */
+  /* Auxiliary instructions, Group 2, Bits 4 = 1 & 5 = 0 */
 
-  "SKP", 07410,			/* Skip */
+  "SMA", 07440,			/* Skip on AC < 0 */
+  "SZA", 07430,			/* Skip on AC == 0 */
+  "SNL", 07410,			/* Skip on Link Bit set */
 
-  "SPA", 07510,			/* Skip on AC >= 0 */
-  "SNA", 07450,			/* Skip on AC != 0 */
-  "SZL", 07430,			/* Skip on Link Bit not set */
+  "SKP", 07404,			/* Skip */
 
-  "HLT", 07402,			/* Halt */
+  "SPA", 07444,			/* Skip on AC >= 0 */
+  "SNA", 07424,			/* Skip on AC != 0 */
+  "SZL", 07414,			/* Skip on Link Bit not set */
 
-  /* dev i/o opcodes */
+  "HLT", 07401,			/* Halt */
 
-  "SRI", 07401,			/* Skip on ready for input */
-  "SRO", 07441,			/* Skip on ready for output */
-  "DGA", 07501,			/* Device get value to AC */
-  "DPA", 07541,			/* Device put value from AC */
-  "DUS", 07601,			/* Device unit select from AC */
-  "DGS", 07641,			/* Device get status to AC */
-  "DSM", 07701,			/* Device set sense mask from AC */
-  "RSD", 07741,			/* Reset device */
+  /* Auxiliary instructions, Group 3 (I/O), Bits 4+5 = 1 */
+
+  "SRI", 07600,			/* Skip on ready for input */
+  "SRO", 07620,			/* Skip on ready for output */
+  "DGA", 07640,			/* Device get value to AC */
+  "DPA", 07660,			/* Device put value from AC */
+  "DUS", 07700,			/* Device unit select from AC */
+  "DGS", 07720,			/* Device get status to AC */
+  "DSM", 07740,			/* Device set sense mask from AC */
+  "RSD", 07760,			/* Reset device */
 
   /* end of opcodes */
 
