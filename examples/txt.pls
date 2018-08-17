@@ -1,5 +1,5 @@
 0000:       0000	;
-0000:       0000	; TEXT PSEODOOP TEXT
+0000:       0000	; text pseodoop text
 0000:       0000	;
 0000:       0000	
 0000:       0000	TTY=	(0*2)
@@ -33,11 +33,11 @@
 0030:       6044		JMS	CHOUT
 0031:       0063		RCL	ALF
 0032:       6044		JMS	CHOUT
-0033:       7402		HLT	
+0033:       7401		HLT	
 0034:       0000	
 0034:       7000	CHKLEN:	NOP
 0035:       0053		RCL	FOO
-0036:       7450		SNA
+0036:       7424		SNA
 0037:       5025		JMP	FINIS
 0040:       7041		CMA IAC
 0041:       7040		CMA
@@ -45,15 +45,15 @@
 0043:       5434		JMP I	CHKLEN
 0044:       0000	
 0044:       7000	CHOUT:	NOP
-0045:       7441	WAIT:	SRO	TTY
+0045:       7620	WAIT:	SRO	TTY
 0046:       5045		JMP	WAIT
-0047:       7541		DPA	TTY
+0047:       7660		DPA	TTY
 0050:       5444		JMP I	CHOUT
 0051:       0000	
 0051:       0040	AOFF:	40
 0052:       0077	MSK6:	77
 0053:       0000	
-0053:       0014	FOO:	TEXT	/HELLO WORLD!/
+0053:       0014	FOO:	TEXT	/Hello World!/
 0054:       5045
 0055:       5454
 0056:       5700

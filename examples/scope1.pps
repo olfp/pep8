@@ -2,7 +2,7 @@
 ; scope test 0
 ;
 
-SCO=	(2*2)
+SCO=	2
 ;SSX=	DGA SCO
 ;SSY=	DPA SCO
 ;SIP=	DUS SCO

@@ -2,7 +2,7 @@
 ; text pseodoop text
 ;
 
-TTY=	(0*2)
+TTY=	0
 SAR=	CLL RAR
 
 LOOP:	JMS	CHKLEN

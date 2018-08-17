@@ -29,7 +29,7 @@
 /* group 2 */
 
 #define LOGGRP  00004			/* AND(1) or OR(0) group of bits */
-#define CONDS	00240			/* Condition bits for skip */
+#define CONDS	00070			/* Condition bits for skip */
 
 /* OR group */
 

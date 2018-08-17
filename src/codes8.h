@@ -51,7 +51,7 @@ OPCODE opcodes[] = {
   /* Auxiliary instructions, Group 2, Bits 4 = 1 & 5 = 0 */
 
   "SMA", 07440,			/* Skip on AC < 0 */
-  "SZA", 07430,			/* Skip on AC == 0 */
+  "SZA", 07420,			/* Skip on AC == 0 */
   "SNL", 07410,			/* Skip on Link Bit set */
 
   "SKP", 07404,			/* Skip */
@@ -62,7 +62,7 @@ OPCODE opcodes[] = {
 
   "HLT", 07401,			/* Halt */
 
-  /* Auxiliary instructions, Group 3 (I/O), Bits 4+5 = 1 */
+  /* Auxiliary instructions, Group 3 (I/O), Bits 4+5 = 1, 8-11 dev */
 
   "SRI", 07600,			/* Skip on ready for input */
   "SRO", 07620,			/* Skip on ready for output */

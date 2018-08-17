@@ -19,7 +19,7 @@ void decodeopr( WORD8 opcode ) {
       iop = (opcode & IOPMSK) >> IOPSHF;
       dev = (opcode & DEVMSK) >> DEVSHF;
       if(chario(iop, dev, &ac8)) {
-	pc8++;				/* skip */
+				pc8++;				/* skip */
       }
     } else {				/* its a Group 2 instruction */
       if( opcode & CONDS ) {		/* is it a conditional skip? */

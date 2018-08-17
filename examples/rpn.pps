@@ -16,7 +16,7 @@ SAR=	CLL RAR			; shift ac right
 CIAL=	CLL CMA IAC		; 2's complement, link clear
 PRINT=	JMS I	PUTSV		; print following counted str
 
-TTY=	(0*2)			; TTY is device zero
+TTY=	0			; TTY is device zero
 
 LINEP:	LINBUF			; pointer to line buffer
 CHARP:	LINBUF			; pointer to current char
