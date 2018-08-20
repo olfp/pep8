@@ -1,6 +1,8 @@
-RESET	:	0000
-A	:	0002
-B	:	0003
-C	:	0004
-START	:	0200
-END	:	0205
+A	:	 A 0002
+B	:	 A 0003
+C	:	 A 0004
+CAA	:	 M 
+END	:	 A 0205
+JML	:	 M 
+RESET	:	 A 0000
+START	:	 A 0200

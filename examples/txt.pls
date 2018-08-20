@@ -2,7 +2,7 @@
 0000:       0000	; text pseodoop text
 0000:       0000	;
 0000:       0000	
-0000:       0000	TTY=	(0*2)
+0000:       0000	TTY=	0
 0000:       0000	SAR=	CLL RAR
 0000:       0000	
 0000:       6034	LOOP:	JMS	CHKLEN

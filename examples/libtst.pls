@@ -88,7 +88,7 @@
 0202:       0003		RCL B 		; value to subtract
 0203:       7141		CLL CMA IAC	; two's coomplement
 0204:       4206		TAD TSBS01	; add saved val
-0205:       7410		SKP
+0205:       7404		SKP
 0206:       0000	TSBS01:	0
 0207:       1004		sto c
 0210:       0000			
@@ -98,17 +98,17 @@
 0212:       0003		RCL B 		; value to subtract
 0213:       7141		CLL CMA IAC	; two's coomplement
 0214:       4216		TAD TSBS02	; add saved val
-0215:       7410		SKP
+0215:       7404		SKP
 0216:       0000	TSBS02:	0
 0217:       1004		sto c
 0220:       0000		
 0220: M     0000		_MOVI_ ssix a
-0220:       7410		SKP
+0220:       7404		SKP
 0221:       0066		SSIX
 0222:       0221		RCL (.-1)
 0223:       1002		STO A 
 0224: M     0000		_MOVI_ 33 b
-0224:       7410		SKP
+0224:       7404		SKP
 0225:       0033		33
 0226:       0225		RCL (.-1)
 0227:       1003		STO B 
@@ -141,13 +141,13 @@
 0246:       4177		TAD TAI02
 0247:       1002		STO A 
 0250: M     0000		_ADDI_ c 66 a
-0250:       7410		SKP
+0250:       7404		SKP
 0251:       0066	IMAD01:	66
 0252:       0004		RCL C 
 0253:       4251		TAD IMAD01
 0254:       1002		STO A 
 0255:       0000	
-0255:       7402		hlt
+0255:       7401		hlt
 0256:       0000	
 0256:       0000	; eof
 

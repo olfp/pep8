@@ -1,52 +1,52 @@
 0000:       0000	;
-0000:       0000	; BINäRE SUCHE
+0000:       0000	; binäre suche
 0000:       0000	;
 0000:       0000	
-0000:       0042	FIND:	42
+0000:       0042	find:	42
 0001:       0000	
-0001:       0242	FIRST:	TAB
-0002:       0265	LAST:	ETAB
-0003:       7777	MID:	-1
+0001:       0242	first:	tab
+0002:       0265	last:	etab
+0003:       7777	mid:	-1
 0004:       0000	
-0200:       0000		PAGE
+0200:       0000		page
 0200:       0000	
-0200:       0001	START:	RCL	FIRST		; ERSTER TAB. WERT
-0201:       7100		CLL 			; LINK 0
-0202:       4002		TAD 	LAST		; LETZTER + ERSTER
-0203:       7110		CLL RAR			; LINK 0, RECHTS ROTIEREN
-0204:       1003		STO 	MID		; MID = (LAST + FIRST)/2
-0205:       0403		RCL I	MID		; WERT AN MID HOLEN
-0206:       7141		CLL CMA IAC		; LINK 0, 2ER KOMPLEMENT
-0207:       4000		TAD 	FIND		; MIT SUCHWERT VERGLEICHEN
-0210:       7450		SNA			; NICHT NULL?
-0211:       5231		JMP	FOUND		; DOCH! FERTIG
-0212:       7500		SMA			; KLEINER NULL?
-0213:       5221		JMP	RIGHT		; NEIN! RECHTE HäLFTE
-0214:       7300	LEFT:	CLL CLA
-0215:       7040		CMA			; AKKU -1
-0216:       4003		TAD	MID		; PLUS MITTE
-0217:       1002		STO	LAST		; NEUES ENDE = MID - 1
-0220:       5224		JMP	CONT		
-0221:       0003	RIGHT:	RCL	MID		; MITTE HOLEN
-0222:       7001		IAC			; EINS WEITER IST
-0223:       1001		STO 	FIRST		; NEUER ANFANG
-0224:       0001	CONT:	RCL	FIRST		; ANFANG HOLEN
-0225:       7141		CLL CMA IAC		; LINK 0, 2ER KOMPLEMENT
-0226:       4002		TAD 	LAST		; MIT ENDE VERGLEICHEN
-0227:       7500		SMA			; ANFANG == ENDE?
-0230:       5200		JMP	START		; NEIN! NäCHSTE RUNDE
-0231:       0403	FOUND:	RCL I	MID		; MID ZEIGT AUF WERT
-0232:       7141		CLL CMA IAC		; LINK 0, 2ER KOMPLEMENT
-0233:       4000		TAD 	FIND		; MIT SUCHWERT VERGLEICHEN
-0234:       7440		SZA			; NULL WENN GEFUNDEN
-0235:       5237		JMP	NOTFND		; NICHT GEFUNDEN
-0236:       5241		JMP	FINIS		; UND GUT
-0237:       7200	NOTFND:	CLA			; NULL FüR NICHT GEFUNDEN
-0240:       1003		STO 	MID		; IN MID SPEICHERN
-0241:       7402	FINIS:	HLT			; UND ENDE
+0200:       0001	start:	rcl	first		; erster tab. wert
+0201:       7100		cll 			; link 0
+0202:       4002		tad 	last		; letzter + erster
+0203:       7110		cll rar			; link 0, rechts rotieren
+0204:       1003		sto 	mid		; mid = (last + first)/2
+0205:       0403		rcl i	mid		; wert an mid holen
+0206:       7141		cll cma iac		; link 0, 2er komplement
+0207:       4000		tad 	find		; mit suchwert vergleichen
+0210:       7424		sna			; nicht null?
+0211:       5231		jmp	found		; doch! fertig
+0212:       7440		sma			; kleiner null?
+0213:       5221		jmp	right		; nein! rechte hälfte
+0214:       7300	left:	cll cla
+0215:       7040		cma			; akku -1
+0216:       4003		tad	mid		; plus mitte
+0217:       1002		sto	last		; neues ende = mid - 1
+0220:       5224		jmp	cont		
+0221:       0003	right:	rcl	mid		; mitte holen
+0222:       7001		iac			; eins weiter ist
+0223:       1001		sto 	first		; neuer anfang
+0224:       0001	cont:	rcl	first		; anfang holen
+0225:       7141		cll cma iac		; link 0, 2er komplement
+0226:       4002		tad 	last		; mit ende vergleichen
+0227:       7440		sma			; anfang == ende?
+0230:       5200		jmp	start		; nein! nächste runde
+0231:       0403	found:	rcl i	mid		; mid zeigt auf wert
+0232:       7141		cll cma iac		; link 0, 2er komplement
+0233:       4000		tad 	find		; mit suchwert vergleichen
+0234:       7420		sza			; null wenn gefunden
+0235:       5237		jmp	notfnd		; nicht gefunden
+0236:       5241		jmp	finis		; und gut
+0237:       7200	notfnd:	cla			; null für nicht gefunden
+0240:       1003		sto 	mid		; in mid speichern
+0241:       7401	finis:	hlt			; und ende
 0242:       0000	
 0242:       0000	
-0242:       0020	TAB:	0020
+0242:       0020	tab:	0020
 0243:       0021		0021
 0244:       0036		0036
 0245:       0042		0042
@@ -65,4 +65,4 @@
 0262:       0532		0532
 0263:       0546		0546
 0264:       0703		0703
-0265:       0706	ETAB:	0706
+0265:       0706	etab:	0706

@@ -1,24 +1,24 @@
 0000:       0000	;
-0000:       0000	; SUBTRACT DOUBLE WORDS
+0000:       0000	; subtract double words
 0000:       0000	;
 0000:       0000	
-0000:       0765	MINEND:	0765			; MINUEND:	7654321 (OCT)
+0000:       0765	minend:	0765			; Minuend:	7654321 (oct)
 0001:       4321		4321
-0002:       0123	SUBEND:	0123			; SUBTRAHEND:	1234567 (OCT)
+0002:       0123	subend:	0123			; Subtrahend:	1234567 (oct)
 0003:       4567		4567	
-0004:       0000	DIFFER:	0			; DIFFERENZ:	6417532 (OCT)
+0004:       0000	differ:	0			; Differenz:	6417532 (oct)
 0005:       0000		0
 0006:       0000	
-0200:       0000		PAGE
+0200:       0000		page
 0200:       0000	
-0200:       0003	START:	RCL	(SUBEND+1)	; SUBTRAHEND, NIEDRIGES WORT
-0201:       7141		CLL CMA IAC		; LINK LEER, 2ER KOMPLEMENT
-0202:       4001		TAD	(MINEND+1)	; MINUEND, NIEDRIGES WORT
-0203:       1005		STO	(DIFFER+1)	; ERGEBNIS, NIEDRIGER WERT
-0204:       0002		RCL	SUBEND		; SUBTRAHEND, HOHES WORT
-0205:       7040		CMA			; 1ER KOMPLEMENT BILDEN
-0206:       4000		TAD	MINEND		; MINUEND, HOHES WORT + LINK
-0207:       1004		STO 	DIFFER		; ERGEBNIS, HOHES WORT
-0210:       7402		HLT
+0200:       0003	start:	rcl	(subend+1)	; subtrahend, niedriges wort
+0201:       7141		cll cma iac		; link leer, 2er komplement
+0202:       4001		tad	(minend+1)	; minuend, niedriges wort
+0203:       1005		sto	(differ+1)	; ergebnis, niedriger wert
+0204:       0002		rcl	subend		; subtrahend, hohes wort
+0205:       7040		cma			; 1er komplement bilden
+0206:       4000		tad	minend		; minuend, hohes wort + link
+0207:       1004		sto 	differ		; ergebnis, hohes wort
+0210:       7401		hlt
 0211:       0000	
 

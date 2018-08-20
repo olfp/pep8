@@ -69,12 +69,12 @@ public class Scope extends JPanel implements Runnable {
 
         @Override
         public void run() {	
-			Scope points = new Scope();
+			Scope scope = new Scope();
 			JFrame frame = new JFrame("Scope");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.add(points);
+			frame.add(scope);
+			scope.setPreferredSize(new Dimension (512, 512));
 			frame.pack();
-			frame.setSize(512, 512);
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);
 		}
@@ -99,7 +99,7 @@ public class Scope extends JPanel implements Runnable {
             String text;
  
             while((text = reader.readLine()) != null) {
-                //System.out.println("Q: " + displaylist.size() + "; COODS: " + text);
+                //System.out.println("Q: " + displaylist.size() + "; COORDS: " + text);
                 if(text != null) {
 					String[] coord = text.split(",");
 					int x = Integer.parseInt(coord[0]);

@@ -1,9 +1,9 @@
 0000:       0000	;
-0000:       0000	; SUBROUTINE TEST PGM
+0000:       0000	; subroutine test pgm
 0000:       0000	;
 0000:       7200	MAIN:	CLA
 0001:       6003		JMS	SUB1
-0002:       7402		HLT
+0002:       7401		HLT
 0003:       0000	
 0003:       7000	SUB1:	NOP
 0004:       7040		CMA
