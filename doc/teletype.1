@@ -1,5 +1,5 @@
 .do hla de
-.do hpf hyphen.de
+.do hpf hyphen.den
 .TH TELETYPE 1 "2005-08-10" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
 .SH NAME
 teletype \- Simulation eines Fernschreibers
@@ -10,21 +10,21 @@ teletype \- Simulation eines Fernschreibers
 Das
 .BR teletype 
 Kommando realisiert einen TCP/IP Server. Verbindet sich ein Prozess mit
-der Server, werden alle über die Verbindung empfangenen Zeichen 
-ausgegeben, während alle über die Tastatur eingegeben 
-Zeichen über die Verbindung gesendet werden.
+der Server, werden alle Ã¼ber die Verbindung empfangenen Zeichen 
+ausgegeben, wÃ¤hrend alle Ã¼ber die Tastatur eingegeben 
+Zeichen Ã¼ber die Verbindung gesendet werden.
 .LP
 Wird der Port nicht explizit angegeben, wartet der Server auf Port 4200
 auf Verbindungen.
 .SH KONTROLLMODUS
-Der Server verfügt über einen Kontrollmodus, der aktiviert
-wird, wenn über die Tastatur das Sonderbehandlungs-Zeichen 
+Der Server verfÃ¼gt Ã¼ber einen Kontrollmodus, der aktiviert
+wird, wenn Ã¼ber die Tastatur das Sonderbehandlungs-Zeichen 
 .RI ( Escape-Char ),
 ^]
 .RI ( Steuerung-] )
-empfangen wird. Im Kontrollmodus kann der Zustand des Servers über
-Kommandos beeinflußt werden. Folgende Kommandos stehen zur 
-Verfügung:
+empfangen wird. Im Kontrollmodus kann der Zustand des Servers Ã¼ber
+Kommandos beeinfluÃŸt werden. Folgende Kommandos stehen zur 
+VerfÃ¼gung:
 .TP
 .B quit
 Beendet den Server.

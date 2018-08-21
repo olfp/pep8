@@ -1,5 +1,5 @@
 .do hla de
-.do hpf hyphen.de
+.do hpf hyphen.den
 .TH POT 1 "2005-07-12" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
 .SH NAME
 pot \- Pep-8 Opcode Translator
@@ -10,20 +10,20 @@ pot \- Pep-8 Opcode Translator
 .SH BESCHREIBUNG
 Das 
 .BR pot
-Kommando überführt eine Textdatei mit pep-8 Befehlen (wie in 
+Kommando Ã¼berfÃ¼hrt eine Textdatei mit pep-8 Befehlen (wie in
 .BR pep8 (7) 
 und 
 .BR pot (5)
 beschrieben) in ein Speicherabbild, das mit dem
 .BR pepsi (1)
-Emulator geladen und ausgeführt werden kann. Von der Eingabedatei wird
+Emulator geladen und ausgefÃ¼hrt werden kann. Von der Eingabedatei wird
 angenommen, das ihr Name die Endung
 .B .pps
 .RI ( "pep program source" )
 aufweist. Ist dies nicht der Fall,
-wird der angegebene Dateiname entsprechend ergänzt.
+wird der angegebene Dateiname entsprechend ergÃ¤nzt.
 Die Ausgabdatei, in die das Speicherabbild geschrieben wird,
-hat den gleichen Namen, nur daß die Endung durch
+hat den gleichen Namen, nur daÃŸ die Endung durch
 .B .pmi
 .RI ( "pep memory image" ) 
 ersetzt wird.
@@ -31,7 +31,7 @@ ersetzt wird.
 .TP
 .I \-l
 Es wird ein Programmlisting erzeugt, das die erzeugten Befehle, Fehlermeldungen
-und den Quelltext enthält. Es wird in eine Datei mit der Endung
+und den Quelltext enthÃ¤lt. Es wird in eine Datei mit der Endung
 .B .pls
 (pot listing) geschrieben.
 .TP
@@ -41,17 +41,17 @@ Die Symboltabelle wird in einer Datei gespeichert, die die Endung
 (pot symbols).
 .TP
 .I \-S<n>
-Stellt die Größe der Symboltabelle auf 
+Stellt die GrÃ¶ÃŸe der Symboltabelle auf 
 .B <n>
-Einträge ein. Standard sind 4096 Einträge.
+EintrÃ¤ge ein. Standard sind 4096 EintrÃ¤ge.
 .SH FEHLERMELDUNGEN
 .SS Warnungen
 Eine Warung signalisiert eine Inkonsistenz, die aber die Verarbeitung 
 nicht behindert.
 .TP
 .I "Symbol too long"
-Die maximale Länge eines Symbols ist sechs Zeichen. Weitere Zeichen
-werden vernachlässigt.
+Die maximale LÃ¤nge eines Symbols ist sechs Zeichen. Weitere Zeichen
+werden vernachlÃ¤ssigt.
 .SS "Nicht-kritische Fehler"
 Wenn ein nicht-kritischer Fehler auftritt wird eine entsprechende Meldung 
 ausgegeben. In der Programmliste wird in der aktuellen Zeile in
@@ -84,7 +84,7 @@ gekennzeichnet.
 .TP
 .I "Duplicate symbol"
 Ein Symbol wurde mindestens zwei mal definiert. Tritt meist auf, wenn die
-Maximallänge von sechs Zeichen für Symbole nicht beachtetet wird. Dies wird
+MaximallÃ¤nge von sechs Zeichen fÃ¼r Symbole nicht beachtetet wird. Dies wird
 mit einem 
 .B D
 gekennzeichnet.
@@ -95,11 +95,11 @@ ausgegeben und die Verarbeitung bricht ab.
 .I "Page out of range"
 Eine
 .B PAGE
-Direktive würde zu einer illegalen Seitenreferenz (also größer 31)
-geführt haben.
+Direktive wÃ¼rde zu einer illegalen Seitenreferenz (also grÃ¶ÃŸer 31)
+gefÃ¼hrt haben.
 .TP
 .I "Symbol table overflow"
-Es wurden mehr Symbole definiert als die Symboltabelle Einträge hat.
+Es wurden mehr Symbole definiert als die Symboltabelle EintrÃ¤ge hat.
 .SH SIEHE AUCH
 .BR pot (5),
 .BR pepsi (1),

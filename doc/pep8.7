@@ -1,5 +1,5 @@
 .do hla de
-.do hpf hyphen.de
+.do hpf hyphen.den
 .TH PEP8 7 "2005-07-11" "pep\-8 Projekt" "pep\-8 Projekt Handbuch" \" -*- nroff -*-
 .SH NAME
 pep-8 \- Beschreibung der pep-8 Architektur
@@ -127,118 +127,147 @@ Befehl wird hier der vollständige 12\-Bit Befehlscode als Oktalzahl angegeben.
 .I "Befehle die den internen Zustand ändern"
 .PP
 Diese Befehle können in einem Befehlswort kombiniert werden.
-Bei diesen Befehlen ist Bit 4 auf null.
+Bei diesen Befehlen ist Bit 3 auf null. Den Bits 4 bis 11 ist jeweils eine Operation zugeordnet.
+Ist keines dieser Bits gesetzt, wird auch keine Operation ausgeführt 
+.RI ( "No Operation" ). 
+Die Operationen werden schrittweise abgearbeitet, beginnend mit Bit 4 bis Bit 11 
+fortschreitend. So haben die verschiedenen Bitkombinationen eine definierte Bedeutung (CLA CMA löscht erst den 
+Akkumulator und invertiert ihn dann).
 .TP
 .BR NOP " (No Operation, 7000)"
 Nichtstun. Kann mit keinem anderen Befehl kombiniert werden.
 .TP
-.BR CLL " (Clear Link Bit, 7100)"
-Verbindungsbit auf Null setzen.
-.TP
-.BR STL " (Set Link Bit, 7120)"
-Verbindungsbit auf Eins setzen.
-.TP
-.BR CML " (Complement Link, 7020)"
-Verbindungsbit invertieren.
-.TP
 .BR CLA " (Clear accumulator, 7200)"
 Akkumulator auf Null setzen.
 .TP
-.BR STA " (Set accumulator, 7240)"
-Alle Bits des Akkumulators auf Eins setzen.
+.BR CLL " (Clear Link Bit, 7100)"
+Verbindungsbit auf Null setzen.
 .TP
 .BR CMA " (Complement accumulator, 7040)"
 Einerkomplement des Akkumulators bilden und dort ablegen.
 .TP
-.BR IAC " (Increment accumulator, 7001)"
-Akkumulator um eins erhöhen.
+.BR CML " (Complement Link, 7020)"
+Verbindungsbit invertieren.
+.TP
+.BR RAR " (Rotate right Link and accumulator, 7010)"
+Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach rechts rotieren.
 .TP
 .BR RAL " (Rotate left Link and accumulator, 7004)"
 Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach links rotieren.
 .TP
-.BR RAR " (Rotate right Link and accumulator, 7010)"
-Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach rechts rotieren.
+.BR BSW " (Byte Swap, 7002)"
+Die linke (Bits 0 bis 5) und die rechte (Bits 6-11) Hälfte des Akkumulators vertauschen.
+.TP
+.BR IAC " (Increment accumulator, 7001)"
+Akkumulator um eins erhöhen.
 .PP
-Die sicherlich wichtigste Befehlskombination dient der Subtraktion. 
+Kombinationen aus Befehlen denen Mnemonische Abkürzungen zugeordnet sind:
+.TP
+.BR STA " (Set accumulator, 7240, CLA CMA)"
+Alle Bits des Akkumulators auf Eins setzen.
+.TP
+.BR STL " (Set Link Bit, 7120, CLL CML)"
+Verbindungsbit auf Eins setzen.
+.TP
+.BR CIA " (Complement and increment accumulator, 7041, CMA IAC)"
+Bildet das Zweierkomplement des Akkumulators.
+.PP
+Befehlskomnination ermöglicht kompakte Subtraktion, die ja keinen eigenen Befehl hat.
 Man läd den Subtrahenden in den Akkumulator und wendet den kombinierten
 Befehl
-.B "CLL CMA IAC" 
-(7141) an, der das Link-Bit löscht und das Zweierkomplement bildet. 
+.B "CMA IAC" 
+bzw. 
+.B "CIA"
+(7041) an, der das Zweierkomplement bildet.
 Anschließend wird mit
 .B TAD
-der Minuend addiert und die Differenz steht im Akkumulator.
+der Minuend addiert und die Differenz steht im Akkumulator. Wenn nötig kann
+im ersten Schritt zusätzlich noch das Verbindungsbit gelöscht werden (CLL) womit sich dann
+das Bitmuster 7141 (
+.B "CLL CMA IAC"
+) ergibt.
 .PP
 .I "Befehle die den Programmfluß verändern"
 .PP
-Bei diesen Befehlen ist Bit 4 gesetzt und Bit 11 auf null.
+Bei diesen Befehlen ist Bit 3 gesetzt und Bit 4 auf null.
 Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
 Befehle zum gleichen Kombinationstyp gehören. 
-Die Sprungbedingungen 
-werden oder-verknüpft, wenn Bit 8 des Befehlswortes null ist
+Die Sprungbedingungen entsprechend den Bits 6 bis 8
+werden oder-verknüpft, wenn Bit 9 des Befehlswortes null ist
 .RI ( Oder-Typ ).
-Ist Bit 8 eins, werden sie und-verknüft
-.RI ( Und-Typ ).
+Ist Bit 9 eins, wird die Bedingung invertiert, d.h. der Sprung wird nicht genommen, wenn 
+eine der durch Bit 6 bis 8 selektierten Bedingungen wahr ist. Dadurch ergeben sich drei neue 
+Sprungbedingungen, die und-verknüft werden, um zu bestimmen ob der Sprung genommen wird
+.RI ( Und-Typ ). 
+Ist keines der Bedingungsbits 6 bis 8 gesetzt wird niemals gesprungen
+.RI ( "Skip never" ),
+effektiv ein (zweites) NOP. Wird ohne eine Bedingung auszuwählen, die Bedeutung 
+mit Bit 9 invertiert, wird immer gesprungen 
+.RI ( "Skip always" ).
+Ist Bit 11 gesetzt wird der Prozessor angehalten. Bit 5 ist ungenutzt.
 .TP
-.BR HLT " (Halt the program, 7402)"
+.BR SKN " (Skip never, no operation, 7400)"
+Nicht springen - nichtstun.
+.TP
+.BR HLT " (Halt the program, 7401)"
 Das Programm anhalten.
 .TP
-.BR SNL " (Skip on non-zero Link, 7420, Oder-Typ)"
+.BR SKP " (Skip always, 7404)"
+Den Programmzähler erhöhen. (ohne Bedingung)
+.TP
+.BR SNL " (Skip on non-zero Link, 7410, Oder-Typ)"
 Wenn das Verbindungsbit nicht null ist, den Programmzähler erhöhen.
 .TP
-.BR SZA " (Skip on zero accumulator, 7440, Oder-Typ)"
+.BR SZA " (Skip on zero accumulator, 7420, Oder-Typ)"
 Wenn der Akkumulator null ist, den Programmzähler erhöhen.
 .TP
-.BR SMA " (Skip on minus accumulator, 7500, Oder-Typ)"
+.BR SMA " (Skip on minus accumulator, 7440, Oder-Typ)"
 Bei negativem Akkumulator den Programmzähler erhöhen.
 .TP
-.BR SKP " (Skip always, 7410, Und-Typ)"
-Den Programmzähler erhöhen (Und-Typ).
-.TP
-.BR SZL " (Skip on zero Link, 7430, Und-Typ)"
+.BR SZL " (Skip on zero Link, 7414, Und-Typ)"
 Wenn das Verbindungsbit null ist, den Programmzähler erhöhen.
 .TP
-.BR SNA " (Skip on non-zero accumulator, 7450, Und-Typ)"
+.BR SNA " (Skip on non-zero accumulator, 7424, Und-Typ)"
 Wenn der Akkumulator nicht null ist, den Programmzähler erhöhen.
 .TP
-.BR SPA " (Skip on plus accumulator, 7510, Und-Typ)"
+.BR SPA " (Skip on plus accumulator, 7444, Und-Typ)"
 Bei positivem Akkumulator den Programmzähler erhöhen.
 .PP
 .I "Befehle zum Ansprechen von Ein-/Ausgabegeräten"
 .PP
-Mit diesen Befehlen können Ein-/Ausgabegeräte gesteuert werden.
-Der pep-8 Prozessor unterstützt bis zu 16 Geräte
-Jedes Gerät besitzt eine oder mehrere Untereinheiten mit je einem 
-Ein- und/oder Ausgabekanal.
-Bei diesen Befehlen sind Bit 4 und Bit 11 gesetzt.
-Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 7-10 kodiert,
-entsprechend muss die Gerätenummer eine Stelle nach rechts geschoben werden (verdoppeln)
-bevor sie mit dem Befehlswort verodert wird. Beispiel: Lesen von Gerät 3: 
-.BR " DGA (3*2)" 
+Mit diesen Befehlen werden Ein-/Ausgabegeräte angesteuert.
+Der pep-8 Prozessor unterstützt bis zu 16 Geräte die 
+mehrere Untereinheiten unterstützen können.
+Bei diesen Befehlen sind Bit 3 und Bit 4 gesetzt.
+Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 8 bis 11 kodiert.
+Die angegeben Mnemonischen Abkürzungen gelten für 
+zeichenorientierte Geräte. Andere Geräte können die Bits 5 bis 7 
+unter Umständen anders verwenden.
 Diese Befehle können nicht kombiniert werden.
 .TP
-.BR SRI " (Skip on ready for input, 7401)"
+.BR SRI " (Skip on ready for input, 7460)"
 Den Programmzähler erhöhen wenn der Eingabekanal bereit ist.
 .TP
-.BR SRO " (Skip on ready for output, 7441)"
+.BR SRO " (Skip on ready for output, 7462)"
 Den Programmzähler erhöhen wenn der Ausgabekanal bereit ist.
 .TP
-.BR DGA " (Device get word to accumulator, 7501)"
+.BR DGA " (Device get word to accumulator, 7564)"
 Den  Akkumulator mit dem aktuellen Wert des Eingabekanals laden.
 .TP
-.BR DPA " (Device put word from accumulator, 7541)"
+.BR DPA " (Device put word from accumulator, 7566)"
 Den Wert des Akkumulators in den Ausgabekanal schreiben.
 .TP
-.BR DUS " (Device unit select, 7601)"
+.BR DUS " (Device unit select, 7670)"
 Untereinheit gemäß dem Wert im Akkumulator auswählen.
 .TP
-.BR DGS " (Device get status word, 7641)"
+.BR DGS " (Device get status word, 7672)"
 Statuswort des Geräts bzw. der Untereinheit im Akkumulator speichern.
 .TP
-.BR DSM " (Device sense mask, 7701)"
+.BR DSM " (Device sense mask, 7774)"
 Den Wert des Akkumulators als Meldungsauswahlmaske an das Gerät 
 übergeben.
 .TP
-.BR RSD " (Reset device, 7741)"
+.BR RSD " (Reset device, 7776)"
 Das Gerät zurücksetzen und Untereinheit null auswählen.
 .PP
 .SH GERÄTE
@@ -258,7 +287,15 @@ Dem Gerät wird beim Freischalten eine Datei zugewiesen aus der  Einzelzeichen g
 werden können. Am Dateiende geht das Grät in den nicht-bereit Zustand. Der Papertape 
 Reader unterstützt die Befehle 
 .BR SRI " und " DGA .
+.PP
+.I X/Y-Point Plotter (Scope), Gerät 2
+.PP
+Diese Gerät simuliert ein Oszilloskop dessen X- und Y-Eingänge über zwei AD-Wandler angesteuert werden. 
+Programmgesteuert kann - nach der Ansteuerung der korrekten Koordinaten - der Elektronenstrahl kurz verstärkt 
+werden und so ein Punkt im (lang nachleuchtenden) Phosphor des Bildschirms erzeugt werden.
 .SH SIEHE AUCH
 .BR pot (1),
 .BR pot (5),
 .BR pepsi (1)
+.BR teletype (1)
+.BR scope (1)

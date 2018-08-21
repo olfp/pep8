@@ -10,7 +10,7 @@ endif
 
 #MANPRE=cat
 #ifeq ($(detected_OS),Darwin)  # Mac OS X
-MANPRE=iconv -f utf8 -t latin1
+#MANPRE=iconv -f utf8 -t latin1
 #endif
 
 PAPER=a4
@@ -22,9 +22,7 @@ PS=pot.1.ps pot.5.ps pepsi.1.ps pep8.7.ps sixbit.7.ps teletype.1.ps
 PDF=pot.1.pdf pot.5.pdf pepsi.1.pdf pep8.7.pdf sixbit.7.pdf teletype.1.pdf
 
 %.pdf: %
-	$(MANPRE) $< |  groff -t -T pdf -dpaper=$(PAPER) -man > $@
-
-# pstopdf $@
+	groff -k -t -T pdf -dpaper=$(PAPER) -man $< > $@
 
 all: $(PDF)
 

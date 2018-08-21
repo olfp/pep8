@@ -33,7 +33,7 @@ OPCODE opcodes[] = {
   "JMS", 06000,			/* Subroutine transfer */
   "OPR", 07000,			/* Microcoded operation */
 
-  /* Auxiliary instructions, Group 1, Bit 4 = 0 */
+  /* Auxiliary instructions, Group 1, Bit 3 = 0 */
 
   "NOP", 07000,			/* Do nothing */
 
@@ -47,14 +47,20 @@ OPCODE opcodes[] = {
 
   "RAR", 07010,			/* Rotate <L,AC> right */
   "RAL", 07004,			/* Rotate <L,AC> left */
+  
+  "STA", 07240,			/* Set AC to one */
+  "STL", 07120,			/* Set Link Bit */
+  "CIA", 07041,			/* 2's complement AC */
 
-  /* Auxiliary instructions, Group 2, Bits 4 = 1 & 5 = 0 */
+  /* Auxiliary instructions, Group 2, Bits 3 = 1 & 5 = 0 */
+
+  "SKN", 07400,			/* Skip never */
 
   "SMA", 07440,			/* Skip on AC < 0 */
   "SZA", 07420,			/* Skip on AC == 0 */
   "SNL", 07410,			/* Skip on Link Bit set */
 
-  "SKP", 07404,			/* Skip */
+  "SKP", 07404,			/* Skip (always) */
 
   "SPA", 07444,			/* Skip on AC >= 0 */
   "SNA", 07424,			/* Skip on AC != 0 */
@@ -62,7 +68,7 @@ OPCODE opcodes[] = {
 
   "HLT", 07401,			/* Halt */
 
-  /* Auxiliary instructions, Group 3 (I/O), Bits 4+5 = 1, 8-11 dev */
+  /* Auxiliary instructions, Group 3 (I/O), Bits 3&4 = 1, 8-11 dev */
 
   "SRI", 07600,			/* Skip on ready for input */
   "SRO", 07620,			/* Skip on ready for output */
