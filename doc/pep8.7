@@ -21,15 +21,16 @@ können nicht adressiert werden.
 Die Bits eines Wortes werden von null bis elf durchnummeriert, wobei Bit null das
 signifikateste Bit ist:
 .PP
+.in +.4i
+.ll -.4i
 .TS
-center tab(&) ;
-| c | c | c | c | c | c | c | c | c | c | c | c |
-| c | c | c | c | c | c | c | c | c | c | c | c |
-| c | c | c | c | c | c | c | c | c | c | c | c | .
-_&_&_&_&_&_&_&_&_&_&_&_
+expand tab(&) allbox;
+ce ce ce ce ce ce ce ce ce ce ce ce .
  0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
-_&_&_&_&_&_&_&_&_&_&_&_
 .TE
+.in -.4i
+.ll +.4i
+
 .SH ADRESSIERUNGSARTEN
 Bei allen Befehlen, die einen Hauptspeicheroperanden haben, wird dessen
 Adresse in Bit fünf bis elf codiert. Der Speicher ist logisch in Seiten
@@ -41,8 +42,25 @@ Ist es null, wird relativ zur Seite null adressert, sonst relativ zur
 laufenden Seite.
 Wird das Indirekt\-Bit gesetzt, das sich in Bit 3
 befindet, so wird der Operand als 12\-Bit Zeiger auf ein Speicherwort
-betrachtet, auf das sich der Befehl dann bezieht.
+betrachtet, auf das sich der Befehl dann bezieht. In den Bits 0 bis 2 wird
+der Befehl kodiert.
+.PP
+.in +.4i
+.ll -.4i
+.TS
+expand tab(&) ;
+ce ce ce ce ce ce ce ce ce ce ce ce 
+| ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
+ B0& B1& B2& I& ZP& A0& A1& A2& A3& A4& A5& A6
+_&_&_&_&_&_&_&_&_&_&_&_
+ 0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+.TE
+.in -.4i
+.ll +.4i
+
 Das ergibt die folgenden Adressierungsarten:
+.PP
 .PP
 .TS
 center tab(&) ;
@@ -56,6 +74,7 @@ Indirekt & 1 & 1 & 12 Bit & Im gesamten Speicher, Zeiger in der aktuellen Seite
 Indirekt Zero Page & 1 & 0 & 12 Bit & Im gesamten Speicher, Zeiger in der nullten Seite
 _&_&_&_&_
 .TE
+
 .PP
 Die effektive Adresse für jeden Befehl mit einem Hauptspeicheroperanden
 berrechnet sich aus der Adresse im Befehl (7 Bit, A0-7) und der effektiven Seite 
@@ -63,17 +82,20 @@ berrechnet sich aus der Adresse im Befehl (7 Bit, A0-7) und der effektiven Seite
 Die effektive Seite ist Null wenn das Zero\-Page\-Bit null ist, und entspricht 
 sonst den fünf signifikatesten Bits des Programmzählers. 
 .PP
+.in +.4i
+.ll -.4i
 .TS
-center tab(&) ;
-| c | c | c | c | c | c | c | c | c | c | c | c |
-| c | c | c | c | c | c | c | c | c | c | c | c |
-| c | c | c | c | c | c | c | c | c | c | c | c |
-cccccccccccc.
+expand tab(&) ;
+ce ce ce ce ce ce ce ce ce ce ce ce 
+| ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
+P0&P1&P2&P3&P4&A0&A1&A2&A3&A4&A5&A6
 _&_&_&_&_&_&_&_&_&_&_&_
 0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
 _&_&_&_&_&_&_&_&_&_&_&_
-P0&P1&P2&P3&P4&A0&A1&A2&A3&A4&A5&A6
 .TE
+.in -.4i
+.ll +.4i
+
 .PP
 Ist das Indirekt\-Bit
 gesetzt wird dieser Wert noch dereferenziert, d.h. der Inhalt des durch ihn 
@@ -128,11 +150,32 @@ Befehl wird hier der vollständige 12\-Bit Befehlscode als Oktalzahl angegeben.
 .PP
 Diese Befehle können in einem Befehlswort kombiniert werden.
 Bei diesen Befehlen ist Bit 3 auf null. Den Bits 4 bis 11 ist jeweils eine Operation zugeordnet.
+.PP
+.in +.4i
+.ll -.4i
+.TS
+expand tab(&) ;
+ce ce ce ce ce ce ce ce ce ce ce ce 
+ce ce ce ce le s le s le s le s 
+ce ce ce ce ce le s le s le s le 
+ce ce ce ce ce ce ce ce ce ce ce ce 
+| ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
+&&&&&&&&&&&
+&&&&CLA&CMA&RAR&DAC
+1&1&1&0&&CLL&CML&RAL&IAC
+_&_&_&_&_&_&_&_&_&_&_&_
+0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+.TE
+.in -.4i
+.ll +.4i
+
+.PP
 Ist keines dieser Bits gesetzt, wird auch keine Operation ausgeführt 
 .RI ( "No Operation" ). 
 Die Operationen werden schrittweise abgearbeitet, beginnend mit Bit 4 bis Bit 11 
-fortschreitend. So haben die verschiedenen Bitkombinationen eine definierte Bedeutung (CLA CMA löscht erst den 
-Akkumulator und invertiert ihn dann).
+fortschreitend. So haben die verschiedenen Bitkombinationen eine definierte Bedeutung 
+(CLA CMA löscht erst den Akkumulator und invertiert ihn dann).
 .TP
 .BR NOP " (No Operation, 7000)"
 Nichtstun. Kann mit keinem anderen Befehl kombiniert werden.
@@ -205,6 +248,27 @@ effektiv ein (zweites) NOP. Wird ohne eine Bedingung auszuwählen, die Bedeutung
 mit Bit 9 invertiert, wird immer gesprungen 
 .RI ( "Skip always" ).
 Ist Bit 11 gesetzt wird der Prozessor angehalten. Bit 5 ist ungenutzt.
+.PP
+.in +.4i
+.ll -.4i
+.TS
+expand tab(&) ;
+ce ce ce ce ce ce ce ce ce ce ce ce 
+ce ce ce ce le s le s le s le s 
+ce ce ce ce ce le s le s le s le 
+ce ce ce ce ce ce ce ce ce ce ce ce 
+| ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
+&&&&&&&&&&&
+&&&&&SMA&SNL&N/U
+1&1&1&1&0&N/U&SZA&NEG&HLT
+_&_&_&_&_&_&_&_&_&_&_&_
+0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+.TE
+.in -.4i
+.ll +.4i
+
+.PP
 .TP
 .BR SKN " (Skip never, no operation, 7400)"
 Nicht springen - nichtstun.
@@ -240,34 +304,49 @@ Der pep-8 Prozessor unterstützt bis zu 16 Geräte die
 mehrere Untereinheiten unterstützen können.
 Bei diesen Befehlen sind Bit 3 und Bit 4 gesetzt.
 Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 8 bis 11 kodiert.
+.PP
+.in +.4i
+.ll -.4i
+.TS
+expand tab(&) ;
+ce ce ce ce ce ce ce ce ce ce ce ce 
+| ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
+ 1 & 1 & 1 & 1 & 1 & I0& I1& I2& D0& D1& D2& D3
+_&_&_&_&_&_&_&_&_&_&_&_
+ 0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
+_&_&_&_&_&_&_&_&_&_&_&_
+.TE
+.in -.4i
+.ll +.4i
+
 Die angegeben Mnemonischen Abkürzungen gelten für 
 zeichenorientierte Geräte. Andere Geräte können die Bits 5 bis 7 
 unter Umständen anders verwenden.
 Diese Befehle können nicht kombiniert werden.
 .TP
-.BR SRI " (Skip on ready for input, 7460)"
+.BR SRI " (Skip on ready for input, 7600)"
 Den Programmzähler erhöhen wenn der Eingabekanal bereit ist.
 .TP
-.BR SRO " (Skip on ready for output, 7462)"
+.BR SRO " (Skip on ready for output, 7620)"
 Den Programmzähler erhöhen wenn der Ausgabekanal bereit ist.
 .TP
-.BR DGA " (Device get word to accumulator, 7564)"
+.BR DGA " (Device get word to accumulator, 7640)"
 Den  Akkumulator mit dem aktuellen Wert des Eingabekanals laden.
 .TP
-.BR DPA " (Device put word from accumulator, 7566)"
+.BR DPA " (Device put word from accumulator, 7660)"
 Den Wert des Akkumulators in den Ausgabekanal schreiben.
 .TP
-.BR DUS " (Device unit select, 7670)"
+.BR DUS " (Device unit select, 7700)"
 Untereinheit gemäß dem Wert im Akkumulator auswählen.
 .TP
-.BR DGS " (Device get status word, 7672)"
+.BR DGS " (Device get status word, 7720)"
 Statuswort des Geräts bzw. der Untereinheit im Akkumulator speichern.
 .TP
-.BR DSM " (Device sense mask, 7774)"
+.BR DSM " (Device sense mask, 7740)"
 Den Wert des Akkumulators als Meldungsauswahlmaske an das Gerät 
 übergeben.
 .TP
-.BR RSD " (Reset device, 7776)"
+.BR RSD " (Reset device, 7760)"
 Das Gerät zurücksetzen und Untereinheit null auswählen.
 .PP
 .SH GERÄTE

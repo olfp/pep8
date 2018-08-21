@@ -1,13 +1,13 @@
 .do hla de
-.do hpf hyphen.de
+.do hpf hyphen.den
 .TH POT 5 "2005-08-10" "pep-8 Projekt" "pep-8 Projekt Handbuch" \" -*- nroff -*-
 .SH NAME
 pot \- Format der Quelldateien
-für den
+fÃ¼r den
 .BR pot (1)
 Assembler.
 .SH BESCHREIBUNG
-Dieses Dokument erläutert das Format der Quelldateien, die der
+Dieses Dokument erlÃ¤utert das Format der Quelldateien, die der
 .BR pot (1)
 Assembler verarbeiten kann.
 .SH ZEILENFORMAT
@@ -24,13 +24,13 @@ Wenn eine Zeile zumindest einen
 .I Befehl
 oder eine
 .I Oktalzahl
-enthält, wird ein Speicherwert generiert und der Speicherzeiger erhöht. 
+enthÃ¤lt, wird ein Speicherwert generiert und der Speicherzeiger erhÃ¶ht. 
 .PP
-Der Speicherzeiger verweist dabei auf die Speicherzelle, in die der nächste
+Der Speicherzeiger verweist dabei auf die Speicherzelle, in die der nÃ¤chste
 Wert abgelegt werden soll. Zu Beginn verweist der Speicherzeiger auf die
 Speicherzelle mit der Adresse null.
 .PP
-Der Speicherzeiger kann über zwei verschiedene Pseudobefehle manipuliert 
+Der Speicherzeiger kann Ã¼ber zwei verschiedene Pseudobefehle manipuliert 
 werden:
 .TP
 .BI "*" " <nnnn>"
@@ -38,12 +38,12 @@ Setzt den Speicherzeiger auf den oktalen Wert
 .IR <nnnn> .
 .TP
 .B PAGE
-Setzt den Speicherzeiger auf den Anfang der nächsten Speicherseite.
+Setzt den Speicherzeiger auf den Anfang der nÃ¤chsten Speicherseite.
 Eine Speicherseite besteht aus 128 Worten.
 .SH SYMBOLE
 .I Symbole
-stehen am Anfang einer Zeile. Damit ein Symbol korrekt erkannt wird, dürfen
-vor ihm höchstens Leer- und Tabulatorzeichen stehen.
+stehen am Anfang einer Zeile. Damit ein Symbol korrekt erkannt wird, dÃ¼rfen
+vor ihm hÃ¶chstens Leer- und Tabulatorzeichen stehen.
 .I "Adressymbole"
 enden mit einem
 .B :
@@ -53,7 +53,7 @@ weden mit
 .B =
 abgeschlossen. Ihr Wert wird bestimmt, indem der Rest der Zeile ausgewertet
 und das Ergebnis dem Symbol zugewiesen wird. Der Speicherzeiger wird dabei
-nicht erhöht.
+nicht erhÃ¶ht.
 .PP
 Wenn ein Symbol nicht durch
 .B :
@@ -66,18 +66,18 @@ Eine Anweisung besteht aus einem oder mehr
 .IR Befehlen , " Symbolen"
 und/oder
 .IR Oktalzahlen .
-Zusätzlich können Symbole und Oktalzahlen mit arithmetischen Operationen
+ZusÃ¤tzlich kÃ¶nnen Symbole und Oktalzahlen mit arithmetischen Operationen
 .RB "(" + , \ - ")"
-zu Ausdrücken zusammengefasst werden. Der Ausdruck muß dazu in runde Klammern
+zu AusdrÃ¼cken zusammengefasst werden. Der Ausdruck muÃŸ dazu in runde Klammern
 .B "( )"
-gesetzt werden. Ausdrücke werden berechnet und durch ihren Wert ersetzt. 
+gesetzt werden. AusdrÃ¼cke werden berechnet und durch ihren Wert ersetzt. 
 Die Befehle (Siehe
 .BR pep8 (7))
 und Symbole werden durch ihre Werte ersetzt. 
 Die sich ergebende Menge von Oktalzahlen
-wird oder-verküpft um ein einzelnes Anweisungswort zu erhalten.
+wird oder-verkÃ¼pft um ein einzelnes Anweisungswort zu erhalten.
 .PP
-Die Adressierung der Zero\-Page wird automatisch erkannt und berücksichtigt.
+Die Adressierung der Zero\-Page wird automatisch erkannt und berÃ¼cksichtigt.
 Sie bedarf keines speziellen Symbols. Indirekte Adressierung wird durch das
 spezielle Symbol
 .B I
@@ -90,11 +90,11 @@ kann Text als gepackte
 Zeichen im Speicher abgelegt werden. Das erste Zeichen nach dem
 .B TEXT
 Befehl wird als Trennzeiche aufgefasst und darf im Text nicht vorkommen.
-Dieses Zeichen beendet den abzulegenden Text. Zunächst wird ein
+Dieses Zeichen beendet den abzulegenden Text. ZunÃ¤chst wird ein
 Wort mit der Anzahl der Zeichen im Text abgelegt, dann die Zeichen, je
 zwei pro Wort. Das erste Zeichen wird in
 den Bit 0-5 der ersten Wortes abgelegt, das zweite in Bit 6-11 der ersten
-Wortes. Dann wird das zweite Wort gefüllt usw.
+Wortes. Dann wird das zweite Wort gefÃ¼llt usw.
 .TP
 .I Beispiel:
 .TS
@@ -102,7 +102,7 @@ l l l l .
 	TEXT	/HELLO WORLD!/	; Begruessung
 .TE
 .LP
-Beinhaltet zwölf Zeichen und erzeugt damit sieben Worte im Speicher.
+Beinhaltet zwÃ¶lf Zeichen und erzeugt damit sieben Worte im Speicher.
 .SH KOMMENTARE
 .I Kommentare
 werden durch
@@ -123,16 +123,16 @@ CLLA=	CLA CLL		; Wertsymbol zuweisen
 	JMP I	VEC	; Erzeugt indirekten Sprung
 VEC:	START		; zum Programmstart
 
-RESULT:	0		; Platz für das Ergebnis
+RESULT:	0		; Platz fÃ¼r das Ergebnis
 
 TAB:	1		; Die 
 	3		; ersten
 	5		; sechs
 	7		; Primzahlen.
-	13		; Natürlich
+	13		; NatÃ¼rlich
 ENDT:	15		; oktal.
 
-TLEN:	(ENDT-TAB+1)		; Länge der Tabelle
+TLEN:	(ENDT-TAB+1)		; LÃ¤nge der Tabelle
 
 TPTR:	TAB		; Zeiger zum Anfang
 TEND:	ENDT		; und Ende der Tabelle
@@ -141,8 +141,8 @@ TEND:	ENDT		; und Ende der Tabelle
 			; einer neuen Speicherseite
 
 START:	RCL	RESULT	; Zwischenergebiss holen
-	CLL		; Link löschen
-	TAD I	TPTR	; Nächsten Wert addieren
+	CLL		; Link lÃ¶schen
+	TAD I	TPTR	; NÃ¤chsten Wert addieren
 	STO	RESULT	; Neues Zwischenergebniss
 	RCL	TPTR	; Zeiger holen
 	CLL CMA IAC		; Zum Vergleichen subtrahieren
@@ -150,13 +150,13 @@ START:	RCL	RESULT	; Zwischenergebiss holen
 	SNA		; Nicht gleich? Weitermachen
 	JMP	FINISH	; Sonst fertig
 	RCL	TPTR	; Zeiger holen
-	IAC		; erhöhen
-	STO	TPTR	; und zurückspeichern
-	JMP	START	; Nächster Wert
+	IAC		; erhÃ¶hen
+	STO	TPTR	; und zurÃ¼ckspeichern
+	JMP	START	; NÃ¤chster Wert
 FINISH:	HLT
 .TE
 .PP
-Nach dem Ausführen diese Programms steht in der Speicherzelle 
+Nach dem AusfÃ¼hren diese Programms steht in der Speicherzelle 
 .I 0002 
 (Result) der Wert
 .IR 0050 .

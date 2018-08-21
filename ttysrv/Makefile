@@ -23,7 +23,7 @@ $(TTY): $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TTY) $(OBJS) $(LIBS)
 
 clean:
-	rm $(OBJS) $(TTY)
+	rm -f $(OBJS) $(TTY)
 
 install:
 	install -m 755 $(TTY) $(BINDIR)
