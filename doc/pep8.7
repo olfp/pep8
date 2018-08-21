@@ -155,11 +155,11 @@ Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach rechts rotieren.
 .BR RAL " (Rotate left Link and accumulator, 7004)"
 Den 13\-Bit Wert Verbindungsbit-Akkumulator (L+AC) nach links rotieren.
 .TP
-.BR BSW " (Byte Swap, 7002)"
-Die linke (Bits 0 bis 5) und die rechte (Bits 6-11) Hälfte des Akkumulators vertauschen.
+.BR DAC " (Decrement accumulator, 7002)"
+Akkumulator um eins vermindern, Verbindungsbit wird bei Unterlauf invertiert.
 .TP
 .BR IAC " (Increment accumulator, 7001)"
-Akkumulator um eins erhöhen.
+Akkumulator um eins erhöhen, Verbindungbit wird bei Überlauf invertiert.
 .PP
 Kombinationen aus Befehlen denen Mnemonische Abkürzungen zugeordnet sind:
 .TP

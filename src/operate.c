@@ -61,6 +61,15 @@ void decodeopr( WORD8 opcode ) {
       ac8 = ~ac8 & MASK12;		/* complement AC */
     if( opcode & CML )
       link8 = link8 ? 0 : 1;            /* complement L */
+    if( opcode & RAR ) {
+      ac8 |= link8 << 12;	        /* old link is 13th bit */
+      link8 = ac8 & 1;		        /* new link bit is LSB of accu*/
+      ac8 = ac8 >> 1;		        /* shift new ac in place */
+    } if( opcode & RAL ) {
+      ac8 = (ac8 << 1) | link8;	        /* shift accu left, put link in LSB */
+      link8 = (ac8 & LMASK) ? 1 : 0;    /* set link according to 13th bit */
+      ac8 &= MASK12;		        /* reset accu to 12 bits */
+    }
     if( opcode & DAC )  {
       ac8--;                            /* decrement <L,AC> */
       if( ac8 < 0 )
@@ -72,15 +81,6 @@ void decodeopr( WORD8 opcode ) {
       if( ac8 > MASK12 )
         link8 = ~link8;
       ac8 &= MASK12;
-    }
-    if( opcode & RAR ) {
-      ac8 |= link8 << 12;	        /* old link is 13th bit */
-      link8 = ac8 & 1;		        /* new link bit is LSB of accu*/
-      ac8 = ac8 >> 1;		        /* shift new ac in place */
-    } if( opcode & RAL ) {
-      ac8 = (ac8 << 1) | link8;	        /* shift accu left, put link in LSB */
-      link8 = (ac8 & LMASK) ? 1 : 0;    /* set link according to 13th bit */
-      ac8 &= MASK12;		        /* reset accu to 12 bits */
     }
   }
 }

@@ -43,6 +43,7 @@ OPCODE opcodes[] = {
   "STL", 07120,			/* Set (Clear & Complement) Link */
   "CMA", 07040,			/* Complement AC */
   "CML", 07020,			/* Complement Link Bit */
+  "DAC", 07002,			/* Decrement <L,AC> */
   "IAC", 07001,			/* Increment <L,AC> */
 
   "RAR", 07010,			/* Rotate <L,AC> right */
