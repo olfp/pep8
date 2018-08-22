@@ -14,9 +14,6 @@
 
 /* group 1 */
 
-#define PHASE1	00340			/* CLA, CLL, CMA, CML */
-#define PHASE2	00017			/* RAL, RAR, IAC */
-
 #define CLA	00200			/* clear AC */
 #define CLL	00100			/* clear link bit */
 #define CMA	00040			/* complement AC */
@@ -28,23 +25,13 @@
 
 /* group 2 */
 
-#define LOGGRP  00004			/* AND(1) or OR(0) group of bits */
+#define LOGGRP  00100			/* AND(1) or OR(0) group of bits */
 #define CONDS	00070			/* Condition bits for skip */
-
-/* OR group */
+#define DSPMSK  00007			/* if non-null, neg. displacement */
 
 #define SMA	00040			/* skip on AC < 0 */
 #define SZA	00020			/* skip on AC == 0 */
 #define SNL	00010			/* skip on Link bit set */
-
-#define SPA	00040			/* skip on AC > 0 */
-#define SNA	00020			/* skip on AC */
-#define SZL	00010			/* skip on link bit clear */
-
-#define SKP	00004			/* skip always */
-/* 00200 belongs to CLA (see group 1 */
-#define OSR	00002			/* or switches with AC */
-#define HLT	00001			/* halt */
 
 /* group 3 */
 
@@ -62,5 +49,7 @@
 #define DGS	00720			/* dev get status word */
 #define DSM	00740			/* dev set sense mask */
 #define RSD	00760			/* dev reset */
+
+#define CPUDEV	00017			/* virtual cpu control device */
 
 #endif

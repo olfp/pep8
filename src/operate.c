@@ -12,47 +12,44 @@
 
 void decodeopr( WORD8 opcode ) {
 
-  int flag, iop, dev;
+  int flag, disp, iop, dev;
 
   if( opcode & OPRGRP1 ) {		/* bit is 1 for Group 2 & 3 */
     if( opcode & OPRGRP2 ) {		/* bit set for Group 3 */
       iop = (opcode & IOPMSK) >> IOPSHF;
       dev = (opcode & DEVMSK) >> DEVSHF;
-      if(chario(iop, dev, &ac8)) {
-				pc8++;				/* skip */
-      }
-    } else {				/* its a Group 2 instruction */
-      if( opcode & CONDS ) {		/* is it a conditional skip? */
-	if( opcode & LOGGRP ) {		/* AND group */
-	  flag = TRUE;
-	  if( opcode & SPA )
-	    flag = flag && !(ac8 & SIGNBIT); /* AC >= 0 (MSB clr)?*/
-	  if( opcode & SNA )
-	    flag = flag && ac8;         /* AC != 0 */
-	  if( opcode & SZL )
-	    flag = flag && !link8;      /* is the link bit clear? */
-	} else {			/* OR group */
-	  flag = FALSE;
-	  if( opcode & SMA )
-	    flag = flag || (ac8 & SIGNBIT); /* is Ac < 0 (MSB set) ? */
-	  if( opcode & SZA )
-	    flag = flag || !ac8;        /* is AC == 0 ? */
-	  if( opcode & SNL )
-	    flag = flag || link8;       /* is the link bit set? */
+      if(dev == CPUDEV) {		/* virtual cpu device */
+	if(opcode & RSD) {			/* dev reset -> halt */
+	  running = FALSE;		/* stop CPU */
+	  pc8--;                        /* make pc8 point to HLT instr. */
 	}
-	if( flag )			/* shall we skip? */
-	  pc8++;
-      } else if( opcode & SKP )
-	pc8++;				/* unconditional skip */
-
-      if( opcode & CLA )
-	ac8 = 0;			/* clear AC */
-      if( opcode & HLT ) {
-	running = FALSE;		/* stop CPU */
-	pc8--;                          /* make pc8 point to HLT instr. */
+      } else {
+	if(chario(iop, dev, &ac8)) {
+	  pc8++;			/* skip */
+	}
+      }
+    } else {				/* its a group 2 instruction */
+      if( opcode & CONDS ) {		/* is it a conditional skip? */
+	flag = FALSE;			/* Default: OR Group */
+	if( opcode & SMA )
+	  flag = flag || (ac8 & SIGNBIT); /* is Ac < 0 (MSB set) ? */
+	if( opcode & SZA )
+	  flag = flag || !ac8;        	/* is AC == 0 ? */
+	if( opcode & SNL )
+	  flag = flag || link8;         /* is the link bit set? */
+	if( opcode & LOGGRP ) 		/* AND group */
+	  flag = !flag;			/* Don't skip if any OR Bit set */
+	  
+	if( flag ) {			/* shall we skip? */
+	  disp = (opcode & DSPMSK);	/* displacement */
+	  if(disp)
+	    pc8 -= (disp + 1);		/* branch back */
+	  else 
+	    pc8++;			/* skip next */
+	}
       }
     }
-  } else {				/* its s group 1 instruction */
+  } else {				/* its a group 1 instruction */
     if( opcode & CLA )
       ac8 = 0;				/* clear AC */
     if( opcode & CLL )

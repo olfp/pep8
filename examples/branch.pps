@@ -1,0 +1,24 @@
+;
+; pep8 - opcode tests
+;
+	JMP I	VEC	; Erzeugt indirekten Sprung
+VEC:	START		; zum Programmstart
+
+CNT:	42
+PTR:	BUF
+
+	PAGE
+
+START:	RCL	CNT
+LOOP:	STO I	PTR
+	CLA IAC
+	TAD	PTR
+	STO	PTR
+	RCL	CNT
+	DAC
+	STO	CNT
+	BPA	<LOOP
+
+END:	HLT
+
+BUF:	0

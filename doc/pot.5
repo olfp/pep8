@@ -15,7 +15,9 @@ Eine
 .BR pot (1)
 Quelldatei besteht aus Zeilen, von denen jede
 .IR Symbole ,
-.IR Befehle ,
+.IR Befehle
+(und
+.IR Pseudobefehle ),
 .IR Oktalzahlen
 und
 .I Kommentare
@@ -59,7 +61,8 @@ Wenn ein Symbol nicht durch
 .B :
 oder
 .B =
-terminiert wird, so gilt es als referenziert und wird duch seinen Wert
+terminiert wird, so wird angenommen das es referenziert wird
+und wird duch seinen Wert
 ersetzt.
 .SH ANWEISUNGEN
 Eine Anweisung besteht aus einem oder mehr 
@@ -70,7 +73,13 @@ Zusätzlich können Symbole und Oktalzahlen mit arithmetischen Operationen
 .RB "(" + , \ - ")"
 zu Ausdrücken zusammengefasst werden. Der Ausdruck muß dazu in runde Klammern
 .B "( )"
-gesetzt werden. Ausdrücke werden berechnet und durch ihren Wert ersetzt. 
+gesetzt werden. Ausdrücke werden berechnet und durch ihren Wert ersetzt.
+Der aktuelle Wert des Speicherzeigers kann über das Symbol
+.B .
+(Punkt) in die Berechnung einbezogen werden (z.B.
+.B JMP I (.+1)
+).
+.PP
 Die Befehle (Siehe
 .BR pep8 (7))
 und Symbole werden durch ihre Werte ersetzt. 
@@ -82,14 +91,30 @@ Sie bedarf keines speziellen Symbols. Indirekte Adressierung wird durch das
 spezielle Symbol
 .B I
 angezeigt.
-.SH TEXT
+.SH KOMMENTARE
+.I Kommentare
+werden durch
+.B ; 
+eingeleitet und erstrecken sich bis zum Ende der Eingabezeile.
+.SH PSEUDOBEFEHLE
+Zusätzlich zur Manipulation des Speicherzeigers mit
+.BR *
+und
+.BR PAGE
+kennt
+.BR pot (1)
+weitere Pseudobefehle zur Erzeugung spezieller Speicherwerte, zum
+Einbinden von Quelldateien und für die Definition von Makros.
+.SS TEXT
+.PP
 Mit dem Pseudobefehl 
 .B TEXT
-kann Text als gepackte
-.BR sixbit(7)
+kann Text in Form von gepackten
+.BR sixbit (7)
 Zeichen im Speicher abgelegt werden. Das erste Zeichen nach dem
 .B TEXT
-Befehl wird als Trennzeiche aufgefasst und darf im Text nicht vorkommen.
+Befehl, das kein Leerschritt oder Tabulator ist,
+wird als Trennzeichen aufgefasst und darf im Text nicht vorkommen.
 Dieses Zeichen beendet den abzulegenden Text. Zunächst wird ein
 Wort mit der Anzahl der Zeichen im Text abgelegt, dann die Zeichen, je
 zwei pro Wort. Das erste Zeichen wird in
@@ -103,12 +128,105 @@ l l l l .
 .TE
 .LP
 Beinhaltet zwölf Zeichen und erzeugt damit sieben Worte im Speicher.
-.SH KOMMENTARE
-.I Kommentare
-werden durch
-.B ; 
-eingeleitet und erstrecken sich bis zum Ende der Eingabezeile.
-.SH BEISPIEL
+.SS FILE
+.PP
+Der Pseudobefehl
+.B FILE
+erlaubt das Einbinden von Quelltext aus weiteren Dateien. Hinter dem Befehl
+wird der Name der einzubindenden Datei angegeben der um
+.B .pps
+erweitert wird. Die Datei wird im gleichen Verzeichnis gesucht in dem sich
+die Datei die den
+-B FILE
+Befehl enthält befindet.
+Die Verarbeitung geschieht als ob der Inhalt der benannten Datei an Stelle des
+.B FILE
+Befehls eingefügt orden wäre. Mit
+.B FILE
+eingebundene Dateien können ihrerseits weitere Dateien mit
+.B FILE
+einbeinden. Die maximale Verschachtelungstiefe ist zehn.
+.TP
+.I Beispiel:
+.TS
+l l l l .
+	FILE	maclib	; Makro Bibliothek einfügen
+.TE
+.LP
+Liest den Quelltext aus der Datei "maclib.pps".
+.SS MACRO / MEND
+.PP
+Der Pseudobefehl
+.B MACRO
+definiert ein (neues) Makros. Makros sind Anweisungsfolgen die unter einem
+Namen, der nach dem
+.B MACRO
+Befehl angegegben wird, gespeichert werden und anschließend
+(mehrfach) unter diesem Namen
+abgerufen werden können. Makros akzeptieren bis zu neun Parameter die im
+Textkörper des Makros referenziert werden können. Dabei steht \\1 für den
+ersten, entsprechend \\9 für den neunten Parameter.
+.PP
+Um Sprünge innerhalb eines Makros zu erlauben, können lokale Symbole verwendet
+werden. Lokale Symbole enden mit einem oder mehr Prozentzeichen (%) die
+beim Aufruf des Makros durch die aktuelle Aufrufnummer des Makros ersetz werden.
+Somit sind lokale Symbole bei jedem Makroaufruf eindeutig.
+.PP
+Die Definition eines Makros wird mit dem Pseudobefehl
+.B MEND
+abgeschlossen.
+.TP
+.I Beispiel:
+.TS
+l l l l .
+	MACRO	LJP	; Longjump
+	JMP I	(.+1)	; indirect via next word
+	\\1		; target is here
+	ENDM
+.TE
+.TP
+Anschließend können mit dem Makro Sprünge zu Adressen auf anderen Seiten eingefügt werden:
+.TS
+l l l l .
+	LJP	SUBPRG	; Longjump to SUBPRG, takes two words
+.TE
+.LP
+Der Aufruf eines Makros unterscheidet sich nicht vom Aufruf eines Befehls.
+Währen Befehle immer nur ein Speicherwort belegen kann eine Makroaufruf
+jedoch prinipell beleibig viele Speicherworte füllen (im Beispiel zwei).
+.SS ZMEM
+.PP
+Der Pseudobefehl
+.B ZMEM
+wird verwendet um - insbesondere in Makros - dynamisch Konstanten in der
+Zero-Page abzulegen. Der Konstante wird zusätzlich ein Symbol zugewiesen.
+Hinter dem befehl steht zunächst das zuzuweisende Symbol und dann der Wert.
+Es wird zunächst untersucht ob eine Konstante mit dem gewünschten Wert
+bereits angelegt wurde, dann wird nur dem Symbol die Adresse dieser
+Konstanten zugewiesen. Existiert die Konstante noch nicht wird die Konstante
+in die höchste, nicht von Konstanten belegte Adresse in der Zero-Page
+gespeichert. Damit liegt die erste Konstante im Speicherwort 0177, die
+zweite in 0176 usw.. Es wird nicht überwacht ob die Speicherzelle bereits
+von manuell definierten Konstanten oder Befehlen belegt sind!
+.TP
+.I Beispiel:
+.TS
+l l l l .
+	MACRO	MOVI	; Move immediate value to address
+	ZMEM	TMI%% \\1
+	RCL	TMI%%
+	STO 	\\2
+	ENDM
+.TE
+.PP
+In dieser Makrodefinition wird (zur Assemlierungszeit) eine Konstante
+entsprechend dem ersten Paramter in der Zero-Page abgelegt. Ihr wird ein
+lokales Symbol zugewiesen. Zur Laufzeit wird die Konstante in den Akkumulator
+geladen und im Speicherwort das über den zweiten Paramter des Makros
+fstgelegt ist gespeichert. Das Makro belegt ausser der Speicherzelle in der
+Zero-Page noch zwei Speicherzellen am Aufrufort.
+
+.SH PROGRAMMBEISPIEL
 .TS
 l
 l s s

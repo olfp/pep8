@@ -236,18 +236,19 @@ Bei diesen Befehlen ist Bit 3 gesetzt und Bit 4 auf null.
 Diese Befehle können in einem Befehlswort kombiniert werden, solange die 
 Befehle zum gleichen Kombinationstyp gehören. 
 Die Sprungbedingungen entsprechend den Bits 6 bis 8
-werden oder-verknüpft, wenn Bit 9 des Befehlswortes null ist
+werden oder-verknüpft, wenn Bit 5 des Befehlswortes null ist
 .RI ( Oder-Typ ).
-Ist Bit 9 eins, wird die Bedingung invertiert, d.h. der Sprung wird nicht genommen, wenn 
+.PP
+Ist Bit 5 eins, wird die Bedingung invertiert, d.h. der Sprung wird nicht genommen, wenn 
 eine der durch Bit 6 bis 8 selektierten Bedingungen wahr ist. Dadurch ergeben sich drei neue 
 Sprungbedingungen, die und-verknüft werden, um zu bestimmen ob der Sprung genommen wird
-.RI ( Und-Typ ). 
+.RI ( Und-Typ ).
+.PP
 Ist keines der Bedingungsbits 6 bis 8 gesetzt wird niemals gesprungen
 .RI ( "Skip never" ),
-effektiv ein (zweites) NOP. Wird ohne eine Bedingung auszuwählen, die Bedeutung 
-mit Bit 9 invertiert, wird immer gesprungen 
+effektiv ein (zweites) NOP. Wird dies mit 
+mit Bit 5 invertiert, wird immer gesprungen 
 .RI ( "Skip always" ).
-Ist Bit 11 gesetzt wird der Prozessor angehalten. Bit 5 ist ungenutzt.
 .PP
 .in +.4i
 .ll -.4i
@@ -259,8 +260,8 @@ ce ce ce ce ce le s le s le s le
 ce ce ce ce ce ce ce ce ce ce ce ce 
 | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | ce | .
 &&&&&&&&&&&
-&&&&&SMA&SNL&N/U
-1&1&1&1&0&N/U&SZA&NEG&HLT
+&&&&&SMA&SNL
+1&1&1&1&0&Inv&SZA&
 _&_&_&_&_&_&_&_&_&_&_&_
 0& 1& 2& 3& 4& 5& 6& 7& 8& 9&10&11
 _&_&_&_&_&_&_&_&_&_&_&_
@@ -273,12 +274,6 @@ _&_&_&_&_&_&_&_&_&_&_&_
 .BR SKN " (Skip never, no operation, 7400)"
 Nicht springen - nichtstun.
 .TP
-.BR HLT " (Halt the program, 7401)"
-Das Programm anhalten.
-.TP
-.BR SKP " (Skip always, 7404)"
-Den Programmzähler erhöhen. (ohne Bedingung)
-.TP
 .BR SNL " (Skip on non-zero Link, 7410, Oder-Typ)"
 Wenn das Verbindungsbit nicht null ist, den Programmzähler erhöhen.
 .TP
@@ -288,19 +283,22 @@ Wenn der Akkumulator null ist, den Programmzähler erhöhen.
 .BR SMA " (Skip on minus accumulator, 7440, Oder-Typ)"
 Bei negativem Akkumulator den Programmzähler erhöhen.
 .TP
-.BR SZL " (Skip on zero Link, 7414, Und-Typ)"
+.BR SKP " (Skip always, 7500)"
+Den Programmzähler erhöhen. (ohne Bedingung)
+.TP
+.BR SZL " (Skip on zero Link, 7510, Und-Typ)"
 Wenn das Verbindungsbit null ist, den Programmzähler erhöhen.
 .TP
-.BR SNA " (Skip on non-zero accumulator, 7424, Und-Typ)"
+.BR SNA " (Skip on non-zero accumulator, 7520, Und-Typ)"
 Wenn der Akkumulator nicht null ist, den Programmzähler erhöhen.
 .TP
-.BR SPA " (Skip on plus accumulator, 7444, Und-Typ)"
+.BR SPA " (Skip on plus accumulator, 7540, Und-Typ)"
 Bei positivem Akkumulator den Programmzähler erhöhen.
 .PP
 .I "Befehle zum Ansprechen von Ein-/Ausgabegeräten"
 .PP
 Mit diesen Befehlen werden Ein-/Ausgabegeräte angesteuert.
-Der pep-8 Prozessor unterstützt bis zu 16 Geräte die 
+Der pep-8 Prozessor unterstützt bis zu 16 Geräte (0..15) die 
 mehrere Untereinheiten unterstützen können.
 Bei diesen Befehlen sind Bit 3 und Bit 4 gesetzt.
 Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 8 bis 11 kodiert.
@@ -372,6 +370,13 @@ Reader unterstützt die Befehle
 Diese Gerät simuliert ein Oszilloskop dessen X- und Y-Eingänge über zwei AD-Wandler angesteuert werden. 
 Programmgesteuert kann - nach der Ansteuerung der korrekten Koordinaten - der Elektronenstrahl kurz verstärkt 
 werden und so ein Punkt im (lang nachleuchtenden) Phosphor des Bildschirms erzeugt werden.
+.PP
+.I Prozessor, Gerät 15
+.PP
+Über die Gerätenummer 15 wird der Prozessor gesteuert. Dies wird verwendet um die CPU programmgesteuert mit eine RSD Befehhl anzuhalten (i.e. am Programmende).
+.TP
+.BR HLT " (Halt the program, 7777, RSD 0017)"
+Das Programm anhalten.
 .SH SIEHE AUCH
 .BR pot (1),
 .BR pot (5),

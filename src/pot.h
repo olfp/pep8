@@ -21,12 +21,11 @@
 #define EQU	'='		/* Assign values to symbols */
 #define ORG	'*'		/* Set address of generated code */
 #define DOT	'.'		/* value of current pc */
-#define PRM	'\\'	/* Macro param lead in */
+#define PRM	'\\'		/* Macro param lead in */
 #define MNO	'%'		/* Macro no in labels */
 #define EOA	'$'		/* Terminate assembly */
 
-#define DOT	'.'
-#define SEP '/'
+#define SEP 	'/'
 
 #define SRC	".pps"
 #define DST	".pmi"
@@ -49,6 +48,9 @@
 #define STRTEX	'('		/* start arithmetic expression */
 #define ENDEX	')'		/* end expression */
 
+#define BRALBL	'<'		/* branch label (neg. displacement) */
+#define MAXDSP  07		/* max displacement (3 bits) */
+
 #define ARITHC	"+-*/&"		/* arithmetic operands */
 
 #define TERROR	0		/* token error */
@@ -57,6 +59,8 @@
 #define TISMAC	3		/* token is a mnemonic */
 #define	TISPRM	4		/* token is a macro positional param */
 #define TMNEMO	5		/* token is a macro */
+#define TISDSP	6		/* token is a displacement label */
+#define TISOVR	7		/* token caused displacement overlow */
 
 #define MAXPARA 10		/* max macro params */
 

@@ -1,4 +1,8 @@
 *.o
 bin/*
 *.ps
+*.pdf
+*.pls
+*.psy
+*.pmi
 *~
