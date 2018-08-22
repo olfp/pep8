@@ -6,18 +6,28 @@ sixbit \- Zeichenformat des
 .BR pot (1)
 Assemblers für Texte.
 .SH BESCHREIBUNG
-Dieses Dokument beschreibt ein Format zur Kodierung von Zeichen
-in jeweils sechs Bit. Damit ist es auf Systemen nützlich deren 
-wortbreit ein vielfaches von secht Bit ist. Der
+Das
+.BR sixbit (7)
+Format für Texte erlaubt die kodierung von alphanumerischen Zeichen in
+jeweils sechs Bits.Damit ist es auf Systemen nützlich deren 
+Wortbreite ein Vielfaches von sechs Bit ist. Der
 .BR pep8 (7) 
 Prozessor erfüllt dieses Kriterium.
-.ZH UMFANG
-Aufgrung der Beschränkung auf nur sechs Bit, können nur Großbbuchstaben,
+.SH UMFANG
+Aufgrund der Beschränkung auf sechs Bit können nur 64 verschiedene Zeichen
+kodiert werden, damit ist der Zeichenvorrat nicht ausreichend für Ziffern,
+Satz- und Sonderzeichen sowie Groß-
+.B und
+Kleinbuchstaben (2 x 26 + 10 für Klein- und Großbuchstaben sowie Ziffern
+ließe nur Platz für 2 weitere Zeichen). Aus die Kleinbuchstaben wurd
+entsprechend verzeichtet.
+.PP
+Es können also nur Großbbuchstaben,
 Ziffern, das Leerzeichen
 .RI ( Space )
 und die Zeichen ! " # $ % & \' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _
 kodiert werden.
-.SH KODETABELLE
+.SH KODIERTABELLE
 Alle Werte in okaler Notation. Die signifikate Stelle ist vertikal 
 aufgetragen.
 .RS
@@ -39,7 +49,7 @@ c|c c c c c c c c .
 .RE
 .SH KONVERSION
 Um 
-.I sixbit
-Zeichen in ACSII umzuwandeln muß zum Kodewert 32 (40 oktal) addiert werden.
+.BR sixbit (7)
+Zeichen in ACSII umzuwandeln muß zum Zeichenwert 32 (40 oktal) addiert werden.
 .SH SIEHE AUCH
 .BR pot (5)
