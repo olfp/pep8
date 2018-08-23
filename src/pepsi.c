@@ -32,7 +32,9 @@ extern char *optarg;
 WORD8 mem8[MEM8SIZ];			/* memory of pdp8 */
 WORD8 pc8 = 0;				/* current mem location, default 0 */
 WORD8 ac8;				/* accumulator */
-WORD8 link8;			        /* link bit */
+BIT8  link8;			        /* link bit */
+BIT8  ien8 = 0;				/* interrupt enable */
+BIT8  irq8 = 0;				/* interrupt request */
 
 int memtop;				/* highest touched mem location */
 
@@ -361,6 +363,17 @@ int main( int argc, char *argv[] ) {
 
     if( pc8 > memtop )
       memtop = pc8;
+
+    /* check for interrupt enable and interrut request */
+
+    if( ien8 & irq8 ) {
+      ien8 = 0;			/* disable interrupts */
+      irq8 = 0;			/* flag as serviced */
+      mem8[0] = pc8;		/* save pc in loc 0 */
+      pc8 = 00001;		/* jump to loc 1 */
+      if(verbose)
+	printf("INTERRUPT!\n");
+    }
     
     if( brkfirst ) {
       for( brk = brkfirst; brk != NULL; brk = brk->next ) {

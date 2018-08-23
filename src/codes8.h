@@ -89,7 +89,11 @@ OPCODE opcodes[] = {
   "DSM", 07740,			/* Device set sense mask from AC */
   "RSD", 07760,			/* Reset device */
 
-  "HLT", 07777,			/* Halt, RSD CPU */
+  /* virtuel cpu device 017 */
+
+  "ION", 07637,			/* ION, enable interrupts, SRO CPU */
+  "IOF", 07657,			/* IOF, disable interrupts, DGA CPU */
+  "HLT", 07777,			/* HLT, stop processor, RSD CPU */
 
   /* end of opcodes */
 

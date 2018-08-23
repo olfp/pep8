@@ -10,6 +10,12 @@ Der
 .BR "DEC pdp-8"
 abgeleitet und soll der Vermittlung grundlegender Konzepte
 von Rechnerarchitekturen und Assemblerprogrammierung dienen.
+.PP
+Der Prozessor lehnt sich am historischen Prozessor der
+.IB "DEC " pdp-8
+an, vereinfacht aber an vielen Stellen und nimt keine Rücksticht
+auf die tatsächliche Implementierung in Hardware. Für Fortgeschrittenen
+werden Ein-/Ausgabegeräte und Unterbrechungsverarbeitung unterstützt.
 .SH PROGRAMMIERMODELL
 Der extrem einfach aufgebaute pep-8 Prozessor besteht aus einem
 Programmzähler (Program Counter, PC) und einem Akkumulator (Accumulator, AC),
@@ -102,6 +108,7 @@ gesetzt wird dieser Wert noch dereferenziert, d.h. der Inhalt des durch ihn
 adressierten Speicherwortes bildet die effektive Adresse. 
 Wird nicht indirekt adressiert, bildet der Wert aus effektiver Seite und 
 Adresse im Befehlswort direkt die effektive Adresse.
+.bp
 .SH BEFEHLE
 Der pep-8 Prozessor verfügt über sieben Befehle die auf dem Hauptspeicher
 operieren. Bei diesen wird der Operationscode in den Bits null bis drei
@@ -301,7 +308,7 @@ Mit diesen Befehlen werden Ein-/Ausgabegeräte angesteuert.
 Der pep-8 Prozessor unterstützt bis zu 16 Geräte (0..15) die 
 mehrere Untereinheiten unterstützen können.
 Bei diesen Befehlen sind Bit 3 und Bit 4 gesetzt.
-Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 8 bis 11 kodiert.
+Das jeweils angesprochene Gerät wird im Befehlswort in den Bits 8 bis 11 kodiert. In den Bits 5 bis 7 ist der E/A Kode, der die Operation bestimmt gespeichert.
 .PP
 .in +.4i
 .ll -.4i
@@ -347,6 +354,46 @@ Den Wert des Akkumulators als Meldungsauswahlmaske an das Gerät
 .BR RSD " (Reset device, 7760)"
 Das Gerät zurücksetzen und Untereinheit null auswählen.
 .PP
+.SH UNTERBRECHUNGEN
+Der
+.BR pep8 (7)
+unterstützt Unterbrechungen durch Ein-/Ausgabegeräte. Sind Unterbrechungen
+freigeschaltet und ein Gerät erzeugt eine Unterbrechungsanforderung, so
+wird nach Beendigung des aktuellen Befehls ein implezites
+.B JMS I 0
+durchgeführt. Es wird also die Addresse des Befehls, der ohne vorliegen einer
+Unterbrechungsanforderung ausgeführt worden wäre in Adresse 0 (Null)
+gespeichert und die Ausführung an Adresse 1 fortgesetzt. Ausserden wird
+die Unterbrechungsverarbeitung blockeier, so das die Rücksprungadresse nicht
+von einer weiteren Unterbrechung überschrieben werden kann.
+.PP
+Da verschiedene Geräte eine Unterbrechung anfordern können, ist es Aufgabe der
+Unterbrechungs-Bearbitungsroutine festzustellen welches Gerät die Unterbrechung
+angefordert hat. Ausserdem hat die Routine dafür zu sorgen das der Inhalt von
+Akkumulator und Verbindungsbit gesichert werden, damit sie beim Ende der
+Unterbrechungsroutine wieder in den Zustand versetzt werden können die sie
+bei der Unterbrechung hatten.
+.PP
+Am Ende der Routine können dann auch die Unterbrechungen wieder ativiert
+werden, bevor über ein
+.B JMP I 0
+der normale Programmablauf wieder aufgenommen wird.
+.PP
+Das aktivieren und deaktivieren der Unterbrechungsverarbeitung geschieht über
+das
+.I Prozessor
+Gerät mit der Nummer 15 mit Hilfe der Befehle
+.B ION
+.I (Interrupts On)
+und
+.B IOF
+.IR "(Interrupts Off)" .
+Für jedes Gerät, das Unterbrechungen unterstützt, müssen diese über die
+Meldungsauswählmaske freigeschaltet werden. Es wird alo nur eine
+Unterbrechung angefordert wenn Unterbrechungen grundsätzlich über
+.B ION
+freigeschaltet sind und zusätzlich die entsprechende Gerätespezifische
+Unterbrechung über die Meldungsauswahlmaske freigeschaltet ist.
 .SH GERÄTE
 .I Teletype, Gerät 0 (Null)
 .PP
@@ -356,7 +403,16 @@ kann
 .BR pepsi (1)
 Zeichen ein- und ausgeben, wenn das Gerät beim Start freigeschaltet wird.
 Das Teletype (TTY) unterstützt die Befehle 
-.BR SRI ",  " SRO ", " DGA " und " DPA . 
+.BR SRI ",  " SRO ", " DGA ", " DPA " und " DSM .
+.PP
+Über das Bit 0 der Auswahlmaske für
+.B DSM
+wird das Gerät veranlasst bei
+vorliegen eines Eingabezeichens eine Unterbrechung auszulösen. Bei freigeschalteten Unterbrechungen kann si mit
+.B "CLA CLL CML RAR"
+eine 1 in Bit 0 des Akkumulators geladen werden, um dann mit
+.B "DSM 0"
+die Unterbrechungen beim Vorliegen eines Eingabezeichens zu aktivieren.
 .PP
 .I Papertape Reader, Gerät 1
 .PP
@@ -373,10 +429,17 @@ werden und so ein Punkt im (lang nachleuchtenden) Phosphor des Bildschirms erzeu
 .PP
 .I Prozessor, Gerät 15
 .PP
-Über die Gerätenummer 15 wird der Prozessor gesteuert. Dies wird verwendet um die CPU programmgesteuert mit eine RSD Befehhl anzuhalten (i.e. am Programmende).
+Über die Gerätenummer 15 wird der Prozessor gesteuert. Dies wird verwendet um die CPU programmgesteuert mit eine RSD Befehl (E/A Code 7) anzuhalten (i.e. am Programmende).
+.PP Des weiteren können über die E/A Kodes 1 und 2 die Unterbrechungen Ein- bzw. Ausgeschaltet werden.
 .TP
 .BR HLT " (Halt the program, 7777, RSD 0017)"
 Das Programm anhalten.
+.TP
+.BR ION " (Enable interrupte, 7637, SRO 0017)"
+Unterbrechungen ermöglichen.
+.TP
+.BR IOF " (Disable interrupts, 7657, DGA 0017)"
+Unterbrechungen blockieren.
 .SH SIEHE AUCH
 .BR pot (1),
 .BR pot (5),

@@ -71,6 +71,8 @@ extern WORD8 mem8[MEM8SIZ];		/* memory of pep8 */
 extern WORD8 pc8;			/* current mem location */
 extern WORD8 ac8;			/* accumulator */
 extern BIT8  link8;			/* link bit */
+extern BIT8  ien8;			/* interrupt enable */
+extern BIT8  irq8;			/* interrupt request */
 
 extern int memtop;			/* highest touch mem location */
 

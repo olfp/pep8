@@ -56,17 +56,18 @@ typedef struct devdesc_t {
 
 static int port_base;
 
-static int csd = -1;				/* tty client socket desc. */
-static char in_ch = -1;			/* tty input char buffer */
-static char out_ch = -1;		/* tty input char buffer */
+static int  csd = -1;		/* tty client socket desc. */
+static char in_ch = -1;		/* tty input char buffer */
+static char out_ch = -1;	/* tty input char buffer */
+static WORD8 tty_mask = 0;	/* tty sense mask for interrupts */
 
-static FILE *ppt_file;			/* file actiong as paper tape */
+static FILE *ppt_file;		/* file acting as paper tape */
 
-static int ssd = -1;				/* scope client socket desc. */
+static int ssd = -1;		/* scope client socket desc. */
 static int out_sx = -1;		/* scope out x buffer */
 static int out_sy = -1;		/* scope out y buffer */
 static int out_si = -1;		/* scope intensify */
-static int rdydly = 0;			/* ready delay in microsecs */
+static int rdydly = 0;		/* ready delay in microsecs */
 
 void *tty_write_sock(void *arg) {
 
@@ -115,25 +116,28 @@ void *tty_read_sock(void *arg) {
       exit(1);
     } else {
       if(connect(csd, (struct sockaddr *)&caddr, sizeof(struct sockaddr_in)) < 0) {
-				perror("ERROR: TTY socket connect failed");
-				exit(1);
+	perror("ERROR: TTY socket connect failed");
+	exit(1);
       } else {
-				while((rv = read(csd, &in_ch, 1)) > 0) {
-					/* loop */
-				}
-				if(rv < 0) {
-					if(errno != EINTR) {
-						perror("ERROR: Client socket read");
-						close(csd);
-						pthread_exit(NULL);
-					} else {
-						/* signal */
-					}
-				} else {
-					/* server close */
-					close(csd);
-					pthread_exit(NULL);
-				}
+	while((rv = read(csd, &in_ch, 1)) > 0) {
+	  /* poll loop */
+	  if(tty_mask & TTYKIE) {	/* keyboard interrupt enabled */
+	    irq8 = 1;			/* request interrupt */
+	  }
+	}
+	if(rv < 0) {
+	  if(errno != EINTR) {
+	    perror("ERROR: Client socket read");
+	    close(csd);
+	    pthread_exit(NULL);
+	  } else {
+	    /* signal */
+	  }
+	} else {
+	  /* server close */
+	  close(csd);
+	  pthread_exit(NULL);
+	}
       }
     }
   }
@@ -193,6 +197,13 @@ int tty_putc(WORD8 *acp) {
   return 0;
 }
 
+int tty_smask(WORD8 *acp) {
+
+  tty_mask = *acp;
+
+  return 0;
+}
+
 void ppt_init(int dev, char *devdesc) {
   if((ppt_file = fopen(devdesc, "r")) == NULL ) {
     fprintf( stderr, "Error opening data file %s as PPT.\n", devdesc);
@@ -218,7 +229,7 @@ void *sco_write_sock(void *arg) {
   struct hostent *hp;
   struct in_addr ip;
   char sbuf[24];
-	int posx, posy;
+  int posx, posy;
 
 
   params = (char *)arg;
@@ -248,39 +259,39 @@ void *sco_write_sock(void *arg) {
       exit(1);
     } else {
       if(connect(ssd, (struct sockaddr *)&caddr, sizeof(struct sockaddr_in)) < 0) {
-				perror("ERROR: Scope socket connect failed");
-				exit(1);
+	perror("ERROR: Scope socket connect failed");
+	exit(1);
       } else {
-				while(1) {
-					if((ssd > 0) && !rdydly && (out_si > 0)) {
-						if(out_sx & BIT9) {
-							posx = SGNOFF - ((~out_sx & MASK8) + 1);
-						} else {
-							posx = SGNOFF + out_sx;
-						}
-						if(out_sy & BIT9) {
-							posy = SGNOFF + ((~out_sy & MASK8) + 1);
-						} else {
-							posy = SGNOFF - out_sy;
-						}
+	while(1) {
+	  if((ssd > 0) && !rdydly && (out_si > 0)) {
+	    if(out_sx & BIT9) {
+	      posx = SGNOFF - ((~out_sx & MASK8) + 1);
+	    } else {
+	      posx = SGNOFF + out_sx;
+	    }
+	    if(out_sy & BIT9) {
+	      posy = SGNOFF + ((~out_sy & MASK8) + 1);
+	    } else {
+	      posy = SGNOFF - out_sy;
+	    }
 
-						sprintf(sbuf, "%d,%d\n", posx, posy);
-						if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
-							if(errno != EINTR) {
-								perror("ERROR: Scope client socket write");
-								close(ssd);
-								pthread_exit(NULL);
-							} else {
-								// signal
-							}
-						}
-						out_si = -1;
-						rdydly = -1;
-					}
-					usleep(1);
-					rdydly--;
-				}
-    	}
+	    sprintf(sbuf, "%d,%d\n", posx, posy);
+	    if((rv = write(ssd, sbuf, strlen(sbuf))) < 0) {
+	      if(errno != EINTR) {
+		perror("ERROR: Scope client socket write");
+		close(ssd);
+		pthread_exit(NULL);
+	      } else {
+		// signal
+	      }
+	    }
+	    out_si = -1;
+	    rdydly = -1;
+	  }
+	  usleep(1);
+	  rdydly--;
+	}
+      }
     }
   }
 }
@@ -307,7 +318,7 @@ int sco_rdyout(WORD8 *acp) {
 
 int sco_putx(WORD8 *acp) {
 
-	rdydly = 2;
+  rdydly = 2;
   out_sx = (*acp & MASK9);	/*  512 pix */
 
   return 0;
@@ -315,7 +326,7 @@ int sco_putx(WORD8 *acp) {
 
 int sco_puty(WORD8 *acp) {
 
-	rdydly = 2;
+  rdydly = 2;
   out_sy = (*acp & MASK9);	
 
   return 0;
@@ -340,7 +351,7 @@ static DEVDESC devices[MAXDEV] = {
     tty_putc,
     0,
     0,
-    0,
+    tty_smask,
     0,
   },
   {
@@ -379,11 +390,11 @@ void chario_init(int iobase, char *devdesc[]) {
   for(i = 0; i < MAXDEV; i++) {
     if(devdesc[i]) {
       if(devices[i].dev_init) {
-				printf("Initializing device %d, %s:", i, devices[i].desc);
-				devices[i].dev_init(i, devdesc[i]);
-				printf(" ok.\n");
+	printf("Initializing device %d, %s:", i, devices[i].desc);
+	devices[i].dev_init(i, devdesc[i]);
+	printf(" ok.\n");
       } else {
-				fprintf(stderr, "WARNING: Unknown device: %d\n", i);
+	fprintf(stderr, "WARNING: Unknown device: %d\n", i);
       }
     }
   }

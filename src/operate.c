@@ -19,8 +19,15 @@ void decodeopr( WORD8 opcode ) {
       iop = (opcode & IOPMSK) >> IOPSHF;
       dev = (opcode & DEVMSK) >> DEVSHF;
       if(dev == CPUDEV) {		/* virtual cpu device */
-	if(opcode & RSD) {			/* dev reset -> halt */
+	if(iop == ION) {		/* enable interrupts */
+	  ien8 = 1;
+	}
+	if(iop == IOF) {		/* disable interrupts */
+	  ien8 = 0;
+	}
+	if(iop == HLT) {		/* dev reset -> halt */
 	  running = FALSE;		/* stop CPU */
+	  ien8 = 0;
 	  pc8--;                        /* make pc8 point to HLT instr. */
 	}
       } else {

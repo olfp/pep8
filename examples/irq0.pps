@@ -1,0 +1,105 @@
+;
+; basic interrupt functions
+;
+
+TTY=	0		; teletype device is 0
+
+IPCSAV:	NOP		; interrupt saves pc in loc 0
+INTEXE: JMP I	INTVEC	; interrupt jumps here
+INTVEC:	START		; at startup jump to main program
+
+ISRVEC:	INTSRV
+ACCSAV: 0
+LNKSAV: 0
+
+QUITCH:	56		; '.' dot is 56 octal in ascii
+LFCHAR: 12		; line feed
+CRCHAR: 15		; carriage return
+CHRBUF:	0		; single char buffer
+CHRPTR:	LINBUF		; pointer in line buffer
+RNGMSK: 0077		; ringbuffer mask (modulo)
+LREADY: 0		; mailbox for line ready
+OUTPTR: LINBUF		; output pointer in line buffer
+BASPTR: LINBUF		; buffer base pointer
+
+	PAGE		; main program
+
+START:	RCL	ISRVEC	; load addr of int service routine
+	STO	INTVEC	; store to interrupt vector
+	CLA CLL CML RAR	; ac0 = 1 = KIE, keyboard int enable
+	DSM 	TTY	; enable keyboard ready interrupt */
+	ION		; enable interrupts
+
+MAINLP:	RCL	OUTPTR	; compatre out ptr and chr ptr
+	CLL CMA IAC
+	TAD 	CHRPTR
+	SNA
+	JMP	MAINLP	; out ptr behind chr ptr
+CHROUT:	RCL I	OUTPTR	; load next char
+	JMS	PRNTAC	; else print char
+	CLL CMA IAC
+	TAD 	CRCHAR
+	SNA
+	JMS	NEWLIN
+	JMS	PLSPTR	; advace out ptr
+	JMP	MAINLP
+
+END:	HLT
+
+PLSPTR:	0
+	RCL	OUTPTR
+	IAC CLL
+	AND	RNGMSK
+	TAD	BASPTR
+	STO	OUTPTR	; move output ptr
+	JMP I	PLSPTR
+
+NEWLIN:	0
+	RCL	LFCHAR
+	JMS	PRNTAC
+	JMP I	NEWLIN
+	
+PRNTAC:	0
+WAITPR:	SRO	TTY	; printer ready?
+	JMP	WAITPR
+	DPA 	TTY	; print char
+	JMP I	PRNTAC
+
+	PAGE		; isr routine(s)
+
+INTSRV:	STO	ACCSAV	; save ac
+	CLA RAR		; move link to ac
+	STO	LNKSAV	; save link
+
+SKPCHN:	SRI	TTY	; check tty as int cause
+	SKP		; if not, skip
+	JMP	TTYSRV	; else service int
+
+IPANIC:	HLT		; all devices checked, confused
+
+TTYSRV:	DGA	TTY	; get char for tty (ascii)
+	STO	CHRBUF	; save to char buffer
+	CMA IAC		; complement
+	TAD 	QUITCH	; compare to quit-char
+	SNA		; skip if different
+	HLT		; end program
+	RCL	CHRBUF	; not finished
+	STO I	CHRPTR	; save in line buffer
+	RCL 	CHRPTR	; get pointer
+	IAC CLL		; increment
+	AND	RNGMSK	; make wraparound in ringbuffer
+	TAD	BASPTR  ; add base
+	STO	CHRPTR
+	JMP	INTXIT	; done with int
+
+INTXIT:	RCL	LNKSAV	; get link
+	RAL		; restore it
+	RCL	ACCSAV	; restore ac
+	ION		; reenable interrupts
+	JMP I	IPCSAV	; return from interrupt
+
+	PAGE
+
+LINBUF:	0		; data
+
+	$		; eof

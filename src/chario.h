@@ -9,8 +9,9 @@
 
 #define MAXDEV 16			/* we have four device bits */
 
-#define BIT9	(1<<8)		/* bit number nine */
+#define BIT9	(1<<8)			/* bit number nine */
 #define SGNOFF	256			/* scope offset */
+#define TTYKIE	04000			/* Mask: TTY keyboard interrupt */
 
 static int devstat[MAXDEV];
 

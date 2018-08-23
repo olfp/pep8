@@ -52,4 +52,8 @@
 
 #define CPUDEV	00017			/* virtual cpu control device */
 
+#define ION	((00620&IOPMSK)>>IOPSHF)/* interrupts on (SRO CPUDEV) */
+#define IOF	((00640&IOPMSK)>>IOPSHF)/* interrupts off (DGA CPUDEV) */
+#define HLT	((00760&IOPMSK)>>IOPSHF)/* halt processor (RSD CPUDEV) */
+
 #endif
