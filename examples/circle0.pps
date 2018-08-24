@@ -1,0 +1,214 @@
+;
+; scope draw circle quadrant
+;
+
+SCO=	2
+
+START:	RCL	QUADA
+	STO 	THETA
+
+LOOP:
+	RCL	THETA	; get angle
+	CLL CMA IAC	; make negative
+	TAD	SENDP	; add end of sin tab
+	STO	SINPTR
+	RCL I	SINPTR	; get cos(theta)
+	STO 	X0
+	DGA 	SCO	; is x-value
+
+	RCL	SINSP	; start of sin tab
+	CLL
+	TAD	THETA	; add angle
+	STO	SINPTR
+	RCL I 	SINPTR	; get sin(theta)
+	STO 	Y0
+	DPA 	SCO	; is y-value
+
+W1:	SRO 	SCO
+	JMP	W1
+	DUS 	SCO
+
+Q1:	RCL	X0
+	CLL CMA IAC
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	DPA 	SCO	; is y-value
+
+W2:	SRO 	SCO
+	JMP	W2
+	DUS 	SCO
+
+Q2:	RCL	X0
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	CLL CMA IAC
+	DPA 	SCO	; is y-value
+
+W3:	SRO 	SCO
+	JMP	W3
+	DUS 	SCO
+
+Q3:	RCL	X0
+	CLL CMA IAC
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	CLL CMA IAC
+	DPA 	SCO	; is y-value
+
+W4:	SRO 	SCO
+	JMP	W4
+	DUS 	SCO
+
+INCT:	RCL	THETA
+	DAC
+	STO	THETA
+	SMA
+	JMP	LOOP
+	JMP 	START
+	
+QUADA:	177	; one quadrant 90° octal
+THETA:	0
+X0:	0
+Y0:	0
+NEG128:	(-200)
+POS256: 400
+
+SINSP:	SINS
+SENDP:	SEND
+SINPTR:	0
+
+	PAGE
+
+SINS:	000
+	002
+	003
+	005
+	006
+	010
+	011
+	013
+	015
+	016
+	020
+	021
+	023
+	024
+	026
+	027
+	031
+	032
+	034
+	035
+	037
+	041
+	042
+	044
+	045
+	047
+	050
+	052
+	053
+	054
+	056
+	057
+	061
+	062
+	064
+	065
+	067
+	070
+	071
+	073
+	074
+	076
+	077
+	100
+	102
+	103
+	104
+	106
+	107
+	110
+	111
+	113
+	114
+	115
+	116
+	120
+	121
+	122
+	123
+	124
+	126
+	127
+	130
+	131
+	132
+	133
+	134
+	135
+	136
+	137
+	141
+	142
+	143
+	144
+	144
+	145
+	146
+	147
+	150
+	151
+	152
+	153
+	154
+	154
+	155
+	156
+	157
+	160
+	160
+	161
+	162
+	162
+	163
+	164
+	164
+	165
+	166
+	166
+	167
+	167
+	170
+	170
+	171
+	171
+	172
+	172
+	173
+	173
+	173
+	174
+	174
+	174
+	175
+	175
+	175
+	176
+	176
+	176
+	176
+	176
+	176
+	177
+	177
+	177
+	177
+	177
+	177
+SEND:	177
+
+	$	; eof

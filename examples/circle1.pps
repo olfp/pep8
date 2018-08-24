@@ -1,0 +1,110 @@
+;
+; scope draw circle quadrant
+;
+
+PPT=	1
+SCO=	2
+
+RESET:	JMP I	RSTVEC
+RSTVEC:	INIT
+
+QUADA:	177	; one quadrant 90° octal
+THETA:	0
+X0:	0
+Y0:	0
+
+SINSP:	SINS
+SENDP:	0
+SINPTR:	SINS
+CHRBUF:	0
+BIT8:	0200
+
+	PAGE
+
+INIT:
+PPTW:	SRI	PPT
+	JMP	PPTW
+	DGA	PPT
+	STO	CHRBUF
+	AND	BIT8	; char with bit 8 set signals eof
+	SZA
+	JMP	START
+	RCL	CHRBUF
+	STO I	SINPTR
+	RCL 	SINPTR
+	STO	SENDP
+	IAC
+	STO	SINPTR
+	JMP	PPTW
+	
+
+START:	RCL	QUADA
+	STO 	THETA
+
+LOOP:
+	RCL	THETA	; get angle
+	CLL CMA IAC	; make negative
+	TAD	SENDP	; add end of sin tab
+	STO	SINPTR
+	RCL I	SINPTR	; get cos(theta)
+	STO 	X0
+	DGA 	SCO	; is x-value
+
+	RCL	SINSP	; start of sin tab
+	CLL
+	TAD	THETA	; add angle
+	STO	SINPTR
+	RCL I 	SINPTR	; get sin(theta)
+	STO 	Y0
+	DPA 	SCO	; is y-value
+
+W1:	SRO 	SCO
+	JMP	W1
+	DUS 	SCO
+
+Q1:	RCL	X0
+	CLL CMA IAC
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	DPA 	SCO	; is y-value
+
+W2:	SRO 	SCO
+	JMP	W2
+	DUS 	SCO
+
+Q2:	RCL	X0
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	CLL CMA IAC
+	DPA 	SCO	; is y-value
+
+W3:	SRO 	SCO
+	JMP	W3
+	DUS 	SCO
+
+Q3:	RCL	X0
+	CLL CMA IAC
+	DGA 	SCO	; is x-value
+
+	RCL	Y0
+	CLL CMA IAC
+	DPA 	SCO	; is y-value
+
+W4:	SRO 	SCO
+	JMP	W4
+	DUS 	SCO
+
+INCT:	RCL	THETA
+	DAC
+	STO	THETA
+	SMA
+	JMP	LOOP
+	JMP 	START
+	
+	PAGE
+
+SINS:	000
+
+	$	; eof

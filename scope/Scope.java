@@ -35,6 +35,7 @@ public class Scope extends JPanel implements Runnable {
 	Graphics2D g2d = (Graphics2D) g;
 	
 	Dimension d = getSize();
+	g2d.setColor(fgColor);
 	g2d.setBackground(bgColor);
 	g2d.clearRect(0,0,d.width,d.height);
 
@@ -43,7 +44,6 @@ public class Scope extends JPanel implements Runnable {
 	}
 	for(int idx = 0; idx < displaylist.size(); idx++) {
 	    TimePoint p = displaylist.get(idx); 
-	    g2d.setColor(fgColor);
 	    g2d.drawLine(p.x, p.y, p.x, p.y);
 	    p.t--;
 	}

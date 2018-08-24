@@ -318,6 +318,7 @@ void interact() {
         break;
       case 'g':
         singlestep = FALSE;		/* go to next breakpoint */
+        verbose = FALSE;
         done = TRUE;
         break;
       case 'v':
