@@ -36,6 +36,7 @@ static void usage() {
   printf("p <addr>       - print ten source lines starting at <addr>\n");
   printf("p <addr>,<cnt> - print <cnt> source lines starting at <addr>\n");
   printf("s              - print the symbol table\n");
+  printf("v              - toggle verbose mode\n");
   printf("w <addr>       - watch word at address <addr>\n");
   printf("w <addr>,<cnt> - watch <cnt> words at address <addr>\n");
   printf("wc             - clear watch list\n");
@@ -317,8 +318,10 @@ void interact() {
         break;
       case 'g':
         singlestep = FALSE;		/* go to next breakpoint */
-        verbose = FALSE;
         done = TRUE;
+        break;
+      case 'v':
+        verbose = !verbose;		/* toggle verbose mode */
         break;
       case 'q':
         running = FALSE;		/* quit the simulator */

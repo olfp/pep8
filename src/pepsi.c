@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #ifdef GNURL
@@ -40,6 +41,7 @@ int memtop;				/* highest touched mem location */
 
 int running = TRUE;			/* run or halt */
 int interactive = FALSE;		/* interactive mode */
+int metrics = FALSE;			/* output metrics */
 int singlestep = FALSE;			/* pause after each instruction */
 int verbose = FALSE;			/* print trace while processing */
 int usesource = FALSE;			/* whether to use the source */
@@ -66,14 +68,18 @@ BRKPNT *brklast = NULL;			/* last breakpoint */
 
 int submod = 0;				/* breakpoint offset for jms */
 
+/* timings */
+struct timeval  tstart, tfinish;
+
 static void usage( char *name ) {
 
   fprintf(stderr ,"%s - pep8 simulator.\n", name);
-  fprintf(stderr ,"usage: %s [-vsti] [-o addr] [-d addr,cnt ...] [-e d0,d1 ...] <image>.[pmi]\n", name);
+  fprintf(stderr ,"usage: %s [-vstim] [-o addr] [-d addr,cnt ...] [-e d0,d1 ...] <image>.[pmi]\n", name);
   fprintf(stderr, "  v - verbose: print status information while running\n");
   fprintf(stderr, "  s - source: use assembler source listing for display\n");
   fprintf(stderr, "  t - trace: enter interactive trace mode\n");
-  fprintf(stderr, "  i - interactive: same as trace\n");
+  fprintf(stderr, "  i - interactive: combies v, s and t\n");
+  fprintf(stderr, "  m - metrics: output runtime and ips\n");
   fprintf(stderr, "  o - set origin of program counter\n");
   fprintf(stderr, "  d - dump cnt words at addr after HLT instruction\n");
   fprintf(stderr, "  e - enable listed devices\n");
@@ -105,6 +111,11 @@ int main( int argc, char *argv[] ) {
   DUMP *newdump;
   BRKPNT *brk;
   SYMBOL *lastsym, *newsym, *sym;
+  /* metrics */
+  struct timeval  tstart, tfinish;
+  double runtime, ips, mips;
+  char *magpfx = "";
+  unsigned long icnt8 = 0;
 
   prog = argv[0];
   if(!(prog = strrchr(prog, '/'))) {
@@ -116,7 +127,7 @@ int main( int argc, char *argv[] ) {
   for(i = 0; i < MAXDEV; i++)
     devices[i] = NULL;
   
-  while( (optch = getopt( argc, argv, "vstio:d:p:e:?" )) > 0 ) {
+  while( (optch = getopt( argc, argv, "vstimo:d:p:e:?" )) > 0 ) {
     switch( optch ) {
     case 'v':			/* verbose */
       verbose = TRUE;
@@ -131,6 +142,9 @@ int main( int argc, char *argv[] ) {
       /* fallthru */
     case 't':			/* trace */
       singlestep = TRUE;
+      break;
+    case 'm':			/* metrics */
+      metrics = TRUE;
       break;
     case 'o':			/* set origin */
 /*
@@ -350,6 +364,10 @@ int main( int argc, char *argv[] ) {
 
   chario_init(iobase, devices);
 
+  /* stamp start time */
+  
+  gettimeofday(&tstart, NULL);
+
   /* go ahead */
 
   while( running ) {
@@ -360,7 +378,8 @@ int main( int argc, char *argv[] ) {
       interact();
     }
     execute( mem8[pc8] );
-
+    icnt8++;
+    
     if( pc8 > memtop )
       memtop = pc8;
 
@@ -391,6 +410,18 @@ int main( int argc, char *argv[] ) {
       verbose = TRUE;
     }
   }
+
+  /* stamp stop time */
+  
+  gettimeofday(&tfinish, NULL);
+  runtime = (double) (tfinish.tv_usec - tstart.tv_usec) / 1000000 +
+    (double) (tfinish.tv_sec - tstart.tv_sec);
+  ips = (double)icnt8 / runtime;
+  mips = ips / 1000000;
+
+  if(metrics)
+    printf("Processed %ld instructions in %lf seconds, %.2lf MIPS.\n",
+	   icnt8, runtime, mips);
 
   /* close io devices */
 
