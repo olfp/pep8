@@ -573,7 +573,8 @@ assemble(char *line, FILE *lstfile, FILE *tmpfile, WORD8 * assembly)
 	  if (*tok) {
 	    textmode = *tok++;
 	    len = strrchr(tok, textmode) - tok;
-	    fprintf(lstotmp(lstfile, tmpfile), "%04o: %-5s %04o\t%s", pc8, errstr, len, oline);
+	    if (lstfile)	  
+	      fprintf(lstotmp(lstfile, tmpfile), "%04o: %-5s %04o\t%s", pc8, errstr, len, oline);
 	    mem8[pc8++] = len;
 	    cnt++;
 	    while (*tok && (*tok != textmode)) {
