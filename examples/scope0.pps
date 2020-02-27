@@ -23,9 +23,9 @@ W2:	SRO 	SCO
 	JMP	W2
 	SIP
 
-	JMP	LOOP
+END:	JMP	LOOP
 	
 X1:	12
 Y1:	12
-X2:	24
-Y2:	24		
+X2:	-24
+Y2:	-24		

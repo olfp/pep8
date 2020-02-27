@@ -67,6 +67,8 @@ static int ssd = -1;		/* scope client socket desc. */
 static int out_sx = -1;		/* scope out x buffer */
 static int out_sy = -1;		/* scope out y buffer */
 static int out_si = -1;		/* scope intensify */
+static int buf_sx = -1;
+static int buf_sy = -1;
 static int rdydly = 0;		/* ready delay in microsecs */
 
 void *tty_write_sock(void *arg) {
@@ -313,13 +315,18 @@ void sco_init(int dev, char *devdesc) {
 
 int sco_rdyout(WORD8 *acp) {
 
+  if(rdydly <= 0) {
+    out_sx = buf_sx;
+    out_sy = buf_sy;
+  }
+
   return (rdydly <= 0);
 }
 
 int sco_putx(WORD8 *acp) {
 
   rdydly = 2;
-  out_sx = (*acp & MASK9);	/*  512 pix */
+  buf_sx = (*acp & MASK9);	/*  512 pix */
 
   return 0;
 }
@@ -327,7 +334,7 @@ int sco_putx(WORD8 *acp) {
 int sco_puty(WORD8 *acp) {
 
   rdydly = 2;
-  out_sy = (*acp & MASK9);	
+  buf_sy = (*acp & MASK9);	
 
   return 0;
 }

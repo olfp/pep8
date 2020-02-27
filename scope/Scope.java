@@ -18,8 +18,11 @@ public class Scope extends JPanel implements Runnable {
 	
     private Thread runner;
     protected static List<TimePoint> displaylist = new LinkedList<TimePoint>();
-    private Color bgColor = new Color( 0x50, 0x50, 0x50 );
-    private Color fgColor = new Color( 0xfe , 0xb3 , 0x08 );
+    //private Color bgColor = new Color( 0x50, 0x50, 0x50 );
+    //private Color fgColor = new Color( 0xfe , 0xb3 , 0x08 );
+    private Color bgColor = new Color( 0x0, 0x0, 0x0 );
+    private float fgHue = .42F; //0.42F / 360.F;
+    private float fgSat = 1.F; // 0.97F; 
     private static int phosfade = 500;
   
     public Scope() {
@@ -35,7 +38,7 @@ public class Scope extends JPanel implements Runnable {
 	Graphics2D g2d = (Graphics2D) g;
 	
 	Dimension d = getSize();
-	g2d.setColor(fgColor);
+	//g2d.setColor(fgColor);
 	g2d.setBackground(bgColor);
 	g2d.clearRect(0,0,d.width,d.height);
 
@@ -44,6 +47,7 @@ public class Scope extends JPanel implements Runnable {
 	}
 	for(int idx = 0; idx < displaylist.size(); idx++) {
 	    TimePoint p = displaylist.get(idx); 
+	    g2d.setColor(Color.getHSBColor(fgHue, fgSat, ((float)p.t / (float)phosfade)));
 	    g2d.drawLine(p.x, p.y, p.x, p.y);
 	    p.t--;
 	}
@@ -111,7 +115,6 @@ public class Scope extends JPanel implements Runnable {
 			    TimePoint o = displaylist.get(displaylist.indexOf(p));
 			    o.t = phosfade;
 			}
-			    
 		    }
 		}
 			
