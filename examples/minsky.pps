@@ -1,0 +1,76 @@
+;
+; scope draw minsky circle
+;
+
+SCO=    2
+
+        JMP     LOOP
+; for reasons unknown first coord/point is thrown away, send dummy
+        RCL     SIN
+        DGA     SCO     ; is x-value
+
+        RCL     COS
+        DPA     SCO     ; is y-value
+
+W0:     SRO     SCO
+        JMP     W0
+        DUS     SCO
+
+LOOP:
+        RCL     OFF
+        CLL CMA IAC
+        TAD     SIN
+        DGA     SCO     ; is x-value
+
+        RCL     OFF
+        CLL CMA IAC
+        TAD     COS
+        DPA     SCO     ; is y-value
+
+W1:     SRO     SCO
+        JMP     W1
+        DUS     SCO
+
+        RCL     COS
+        SMA
+        JMP     POSC
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        JMP     ICOS
+POSC:   CLL RAR
+        CLL RAR
+        CLL RAR
+        CLL RAR
+        CLL RAR
+
+ICOS:   CLL CMA IAC
+        TAD     SIN
+        STO     SIN
+        SMA
+        JMP     POSS
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        CLL CML RAR
+        JMP     ISIN
+POSS:   CLL RAR
+        CLL RAR
+        CLL RAR
+        CLL RAR
+        CLL RAR
+ISIN:   CLL
+        TAD     COS
+        STO     COS
+
+        JMP     LOOP
+
+SIN:    0000
+COS:    0400
+OFF:    0020
+
+        $       ; eof
+
