@@ -115,7 +115,8 @@ int main( int argc, char *argv[] ) {
   int listen_sock;
   int flags, rv;
   char ebuf[255];
-  char optch, out_ch;
+  int optch;
+  char out_ch;
   char *prog;
   socklen_t addr_len = sizeof(struct sockaddr);
   struct sockaddr_in listen_addr, accept_addr;
@@ -131,7 +132,7 @@ int main( int argc, char *argv[] ) {
   }
 
   while( (optch = getopt( argc, argv, "p:?" )) > 0 ) {
-    switch( optch ) {
+    switch( (char)optch ) {
     case 'p':			/* listen on port */
       port = atoi(optarg);
       break;

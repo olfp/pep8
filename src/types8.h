@@ -14,7 +14,7 @@
 #define MASK9	00777		/* 9 Bit Mask */
 #define MASK8	00377		/* 8 Bit Mask */
 #define MASK7	00177		/* 7 Bit Mask for addresses */
-#define MASK6	00ß77		/* 6 Bit Mask for addresses */
+#define MASK6	00077		/* 6 Bit Mask for addresses */
 #define MASK4	00017		/* 4 Bit Mask */
 #define MASK3	00007		/* 3 Bit Mask */
 

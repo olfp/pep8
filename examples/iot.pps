@@ -4,9 +4,9 @@
 
 	CLA CLL
 LOOP:	RCL	CHR
-	7541		; DPC 0 aka TTO
+	DPA
 	RCL	NL
-	7541		; DPC 0
+	DPA
 	JMP 	LOOP
 	HLT
 

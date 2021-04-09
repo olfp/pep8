@@ -57,8 +57,8 @@ typedef struct devdesc_t {
 static int port_base;
 
 static int  csd = -1;		/* tty client socket desc. */
-static char in_ch = -1;		/* tty input char buffer */
-static char out_ch = -1;	/* tty input char buffer */
+static char in_ch = BIT7;	/* tty input char buffer */
+static char out_ch = BIT7;	/* tty input char buffer */
 static WORD8 tty_mask = 0;	/* tty sense mask for interrupts */
 
 static FILE *ppt_file;		/* file acting as paper tape */
@@ -74,9 +74,9 @@ static int rdydly = 0;		/* ready delay in microsecs */
 void *tty_write_sock(void *arg) {
 
   while(1) {
-    if((csd > 0) && (out_ch >= 0)) {
+    if((csd > 0) && !(out_ch & BIT7)) {
       write(csd, &out_ch, 1);
-      out_ch = -1;
+      out_ch = BIT7;
     }
     usleep(3333);			/* aprox 300 cps */
   }
@@ -174,20 +174,20 @@ int tty_reset(WORD8 *acp) {
 
 int tty_rdyin(WORD8 *acp) {
 
-  return (in_ch >= 0);
+  return ((in_ch & BIT7) == 0);
 }
 
 int tty_rdyout(WORD8 *acp) {
 
-  return (out_ch < 0);
+  return ((out_ch & BIT7) > 0);
 }
 
 int tty_getc(WORD8 *acp) {
   
   char ch;
 
-  *acp = (in_ch > 0) ? in_ch : 0;
-  in_ch = -1;					   /* invalidate buffer */
+  *acp = ((in_ch & BIT7) == 0) ? in_ch : 0;
+  in_ch = BIT7;					   /* invalidate buffer */
 
   return 0;
 }
@@ -195,7 +195,6 @@ int tty_getc(WORD8 *acp) {
 int tty_putc(WORD8 *acp) {
 
   out_ch = (*acp & MASK7);	/* 7 Bit ASCII */
-
   return 0;
 }
 
