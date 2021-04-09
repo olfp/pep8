@@ -1,0 +1,23 @@
+;
+; 7seg tests
+;
+
+SEG= 	3 
+
+	RSD	SEG
+	; display 3 at pos 2
+	RCL	NUM2
+	DUS	SEG
+	RCL	NUM
+	DPA	SEG
+        ; display 2 at pos 1
+	CLA CLL IAC
+	DUS	SEG
+	RCL	NUM2
+	DPA	SEG
+	HLT
+
+NUM:	3
+NUM2:	2
+
+; EOF
