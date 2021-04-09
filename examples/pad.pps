@@ -1,0 +1,30 @@
+;
+; pad tests
+;
+
+PIO= 	4 
+
+	; use 8 bits
+	RCL	BITMSK
+	DSM	PIO
+	; 4 bits out, 4 bits in
+	RCL	OUTMSK
+	DUS	PIO
+
+	; first try, set all row bis high
+	RCL 	OUTMSK
+	DPA	PIO
+READ:	DGA	PIO
+	AND	INMASK
+	; non zro when a key was pressed -> column high
+	;SNA
+	JMP	READ
+	STO	RESULT
+
+	HLT
+
+BITMSK:	0377
+OUTMSK: 0017
+INMASK: 0360
+RESULT:	0
+
