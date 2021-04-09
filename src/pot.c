@@ -751,11 +751,11 @@ main(int argc, char *argv[])
   char    *inname, *outname, *lstname, *tmpname, *symname, *tmptmpl;
   char	  *lastsep, *tmpline;
   char    *prog, *file;
-  char	  optch;
+  int	  optch;
   STRLST  *zlbl;
   SYMTAB  *symtmp;
   WORD8   loc;
-  int			i, j, f, l, len, tmpfd;
+  int	  i, j, f, l, len, tmpfd;
   unsigned char oc[3];
 
   prog = argv[0];
@@ -766,7 +766,7 @@ main(int argc, char *argv[])
   }
 
   while ((optch = getopt(argc, argv, "vlsS:?")) > 0) {
-    switch (optch) {
+    switch ((char)optch) {
     case 'v':	/* verbose */
       verbose = TRUE;
       break;
