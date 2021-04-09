@@ -106,7 +106,8 @@ int main( int argc, char *argv[] ) {
   int i, j, isopt, len, dev;
   int addr;
   unsigned char oc[3];
-  char optch, *txt, *lbl;
+  int optch;
+  char *txt, *lbl;
   struct stat stbuf;
   DUMP *newdump;
   BRKPNT *brk;
@@ -128,7 +129,7 @@ int main( int argc, char *argv[] ) {
     devices[i] = NULL;
   
   while( (optch = getopt( argc, argv, "vstimo:d:p:e:?" )) > 0 ) {
-    switch( optch ) {
+    switch( (char)optch ) {
     case 'v':			/* verbose */
       verbose = TRUE;
       break;
