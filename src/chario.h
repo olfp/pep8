@@ -16,6 +16,7 @@
 
 static int devstat[MAXDEV];
 
+void chario_show();
 void chario_init(int iobase, char *devdesc[]);
 void chario_close();
 int chario(int iop, int device, WORD8 *ac);

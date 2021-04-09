@@ -74,15 +74,16 @@ struct timeval  tstart, tfinish;
 static void usage( char *name ) {
 
   fprintf(stderr ,"%s - pep8 simulator.\n", name);
-  fprintf(stderr ,"usage: %s [-vstim] [-o addr] [-d addr,cnt ...] [-e d0,d1 ...] <image>.[pmi]\n", name);
+  fprintf(stderr ,"usage: %s [-vstiml] [-o addr] [-d addr,cnt ...] [-e d0,d1[:param] ...] <image>.[pmi]\n", name);
   fprintf(stderr, "  v - verbose: print status information while running\n");
   fprintf(stderr, "  s - source: use assembler source listing for display\n");
   fprintf(stderr, "  t - trace: enter interactive trace mode\n");
   fprintf(stderr, "  i - interactive: combies v, s and t\n");
   fprintf(stderr, "  m - metrics: output runtime and ips\n");
+  fprintf(stderr, "  l - list available devices\n");
   fprintf(stderr, "  o - set origin of program counter\n");
   fprintf(stderr, "  d - dump cnt words at addr after HLT instruction\n");
-  fprintf(stderr, "  e - enable listed devices\n");
+  fprintf(stderr, "  e - enable listed devices, dev may take params\n");
   exit(EXIT_FAILURE);
 }
 
@@ -128,7 +129,7 @@ int main( int argc, char *argv[] ) {
   for(i = 0; i < MAXDEV; i++)
     devices[i] = NULL;
   
-  while( (optch = getopt( argc, argv, "vstimo:d:p:e:?" )) > 0 ) {
+  while( (optch = getopt( argc, argv, "vstimo:d:p:e:l?" )) > 0 ) {
     switch( (char)optch ) {
     case 'v':			/* verbose */
       verbose = TRUE;
@@ -174,6 +175,9 @@ int main( int argc, char *argv[] ) {
 	  fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
 	}
       } while((optarg = next)); /* extra parens for gcc */
+      break;
+    case 'l':			/* list devices */
+      chario_show();
       break;
     case 'd':			/* coredump */
       coredump = TRUE;

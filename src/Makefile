@@ -32,12 +32,13 @@ DEMOS = *.pps
 #DOC = $(VER) *.[1-9n]
 
 ALIBS =
-SLIBS = -lpthread  $(GNURLLIBS)
+SLIBS = -lpthread -lpigpio -lm $(GNURLLIBS)
 XSLIBS = -lpthread -lsocket -lxnet $(GNURLLIBS)
 CLIBS =
 
 ASMOBJS = pot.o
-SIMOBJS = pepsi.o display.o execute.o interact.o operate.o chario.o util.o
+SIMOBJS = pepsi.o display.o execute.o interact.o operate.o chario.o util.o \
+	raspi/tm1637.o
 COMOBJS = octal.o strutil.o
 
 all:	do-it-all

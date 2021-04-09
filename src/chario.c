@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -23,6 +24,8 @@
 #include "chario.h"
 #include "types8.h"
 
+#include "raspi/tm1637.h"
+
 #define IOP_RDYIN	0
 #define IOP_RDYOUT	1
 #define IOP_GETC	2
@@ -37,6 +40,8 @@
 
 #define SCODEF_HOST	"localhost"
 #define SCODEF_PORT	4321
+
+#define SEGDEF_CLKPIN	12
 
 typedef struct devdesc_t {
   char *desc;				/* text description */
@@ -165,11 +170,6 @@ void tty_init(int dev, char *devdesc) {
 
 void tty_close() {
 
-}
-
-int tty_reset(WORD8 *acp) {
-
-  return 0;
 }
 
 int tty_rdyin(WORD8 *acp) {
@@ -346,6 +346,41 @@ int sco_puti(WORD8 *acp) {
 }
 
 
+void seg_init(int dev, char *devdesc) {
+  int pin = atoi(devdesc);
+  if(pin == 0) {
+    pin = SEGDEF_CLKPIN;
+  }
+  tm1637_init(pin, pin+1, false, 1.0);
+  tm1637_clear();
+}
+
+void seg_close() {
+  tm1637_cleanup();
+}
+
+static int seg_digit = 0;
+
+int seg_putc(WORD8 *acp) {
+printf("7SEG: %d at pos %d\n", *acp, seg_digit);
+  tm1637_show_1(seg_digit, (*acp & MASK7));
+
+  return 0;
+}
+
+int seg_seld(WORD8 *acp) {
+  seg_digit = (*acp & MASK7);
+
+  return 0;
+}
+
+int seg_reset(WORD8 *acp) {
+  tm1637_clear();
+
+  return 0;
+}
+
+
 static DEVDESC devices[MAXDEV] = {
   {
     "Teletype",
@@ -386,7 +421,30 @@ static DEVDESC devices[MAXDEV] = {
     0,
     0,
   },
+  {
+    "7Segment",
+    seg_init,
+    seg_close,
+    0,
+    0,
+    0,
+    seg_putc,
+    seg_seld,
+    0,
+    0,
+    seg_reset,
+  },
 };
+
+void chario_show() {
+  int i;
+
+  for(i = 0; i < MAXDEV; i++) {
+    if(devices[i].desc) {
+      printf("%d: %s\n", i, devices[i].desc);
+    }
+  }
+}
 
 void chario_init(int iobase, char *devdesc[]) {
   int i;
