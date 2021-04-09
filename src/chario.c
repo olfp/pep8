@@ -380,6 +380,52 @@ int seg_reset(WORD8 *acp) {
   return 0;
 }
 
+static int pio_offset = 2;
+static int pio_usebits = 0;
+
+void pio_init(int dev, char *devdesc) {
+   if (gpioInitialise()<0) exit(42);
+}
+
+int pio_read(WORD8 *acp) {
+  uint32_t bits = gpioRead_Bits_0_31();
+  //bits = bits >> pio_offset;
+printf("PIO read %08x\n", bits);
+  
+  *acp = (bits & MASK12);
+
+  return 0;
+}
+
+int pio_write(WORD8 *acp) {
+  int bits = *acp;
+
+  for (int p = 0; p < 11; p++) {
+    if(pio_usebits & (1 << p)) {
+      gpioWrite(p + pio_offset, (bits & (1 << p)) ? 1 : 0);
+    }
+  }
+
+  return 0;
+}
+
+int pio_dirs(WORD8 *acp) {
+  int mask = *acp;
+
+  for (int p = 0; p < 11; p++) {
+    if(pio_usebits & (1 << p)) {
+      gpioSetMode(p + pio_offset, (mask & (1 << p)) ? PI_OUTPUT : PI_INPUT);
+    }
+  }
+
+  return 0;
+}
+
+int pio_mask(WORD8 *acp) {
+  pio_usebits = *acp;
+
+  return 0;
+}
 
 static DEVDESC devices[MAXDEV] = {
   {
@@ -434,6 +480,19 @@ static DEVDESC devices[MAXDEV] = {
     0,
     seg_reset,
   },
+  {
+    "GPIO",
+    pio_init,
+    0,
+    0,
+    0,
+    pio_read,
+    pio_write,
+    pio_dirs,
+    0,
+    pio_mask,
+    0,
+  }
 };
 
 void chario_show() {
