@@ -4,27 +4,43 @@
 
 PIO= 	4 
 
-	; use 8 bits
-	RCL	BITMSK
+	RCL	BITMSK 		; use 8 bits
 	DSM	PIO
-	; 4 bits out, 4 bits in
-	RCL	OUTMSK
+	RCL	OUTMSK		; 4 bits out, 4 bits in
 	DUS	PIO
 
-	; first try, set all row bis high
-	RCL 	OUTMSK
-	DPA	PIO
+	RCL 	OUTMSK 		; ony write first 4 bits
+	DSM	PIO 
+
+COLSCN:	RCL	ROWBHI		; start with hi column bit
+	STO	ROWBIT
+BITL:	DPA	PIO
 READ:	DGA	PIO
 	AND	INMASK
 	; non zro when a key was pressed -> column high
-	;SNA
-	JMP	READ
-	STO	RESULT
+	SZA
+	JMP	FINIS		; key pressed
+	RCL	ROWBIT
+	CLL RAR
+	STO	ROWBIT
+	; zero after four bit cycle complete
+	SZA
+	JMP	BITL		; next bit
+	JMP	COLSCN		; no keypress, restart
+	
+
+FINIS:	CLL RAR
+	CLL RAR
+	CLL RAR
+	CLL RAR
+	STO	COLVAL
 
 	HLT
 
 BITMSK:	0377
 OUTMSK: 0017
 INMASK: 0360
-RESULT:	0
+ROWBHI: 0010
+ROWBIT: 0
+COLVAL:	0
 
