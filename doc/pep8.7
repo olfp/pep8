@@ -414,16 +414,17 @@ eine 1 in Bit 0 des Akkumulators geladen werden, um dann mit
 .B "DSM 0"
 die Unterbrechungen beim Vorliegen eines Eingabezeichens zu aktivieren.
 .PP
-.BR pepsi(1) 
+.BR pepsi (1) 
 kommuniziert mit dem Terminalsimulator über einen TCP Verbindung, wobei 
-.BR teletype(1) 
+.BR teletype (1) 
 den Server implementiert und 
-.BR pepsi(1) 
+.BR pepsi (1) 
 den Client. Entsprechend ist 
-.BR teletype(1) zuerst zu starten.
+.BR teletype (1) 
+zuerst zu starten.
 .PP
 Wird der Terminalsimulator 
-.BR teletype(1) 
+.BR teletype (1) 
 auf einem anderen Host oder Port als dem Standard localhost:4200 gestartet können Host und Port dem Gerät 
 übergeben werden, i.e 
 .BR "-e 0" : localhost : 4200 .
@@ -454,13 +455,13 @@ kann abgefragt werden ob der Strahl bereits positioniert ist, dann kann mit
 .B SIP 
 der Strahl kurzzeitig verstärkt werden um den Leuchtpunkt zu erzeugen.
 .PP
-.BR pepsi(1) 
+.BR pepsi (1) 
 kommuniziert mit dem X/Y-Point Plotter über einen TCP Verbindung, 
-.BR scope(1)
+.BR scope (1)
 implementiert den Server, entsprechend ist es zuerst zu starten.
 .PP
 Wird der X/Y-Point Plotter
-.BR scope(1)
+.BR scope (1)
 auf auf einem anderen Host oder Port als dem Standard localhost:4321 gestartet können Host und Port dem Gerät
 übergeben werden, i.e
 .BR "-e 0" : localhost : 4321 .
