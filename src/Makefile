@@ -2,9 +2,15 @@
 #  Makefile for pdp-8 project
 #
 
+# GPIO = No
+
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-	HW := $(shell cat /proc/cpuinfo | awk -F: '/Hardware/ {gsub(/[ 0-9]/, "",$$2); print $$2}')
+	ifeq ($(GPIO),No)
+		HW := disabled
+	else
+		HW := $(shell cat /proc/cpuinfo | awk -F: '/Hardware/ {gsub(/[ 0-9]/, "",$$2); print $$2}')
+	endif
 else
 	HW := other
 endif

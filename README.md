@@ -3,6 +3,9 @@ Practical Education Processor based on pdp-8
 
 Includes an assembler, a simulator and several devices, including a virtual teletype. An emulated scope display is available seperately (see scope dir).
 
+When run on a Raspberry Pi with Pi OS it can use GPIO Pins. To supress building with GPIO support, set edit
+src/Makefile and remove the comment at the top to set GPIO = No.
+
 Binaries are build sometimes. Use the source if possible.
 
 To install binaries download release (.deb) and install with "sudo apt install ./pep8-xxx.deb" or "dpkg -i pep8-xxx.deb".
