@@ -285,7 +285,7 @@ void *sco_write_sock(void *arg) {
 		close(ssd);
 		pthread_exit(NULL);
 	      } else {
-		// signal
+		/* signal */
 	      }
 	    }
 	    out_si = -1;
@@ -342,7 +342,7 @@ int sco_puty(WORD8 *acp) {
 
 int sco_puti(WORD8 *acp) {
 
-  out_si = 1; //*acp;
+  out_si = 1; /* *acp; */
 
   return 0;
 }
@@ -392,7 +392,7 @@ void pio_init(int dev, char *devdesc) {
 
 int pio_read(WORD8 *acp) {
   uint32_t bits = gpioRead_Bits_0_31();
-  //printf("%08x - * %08x *\n", bits, (bits >> 6) & 0xf);
+  /* rintf("%08x - * %08x *\n", bits, (bits >> 6) & 0xf); */
 
   bits = bits >> pio_offset;
   
@@ -406,7 +406,7 @@ int pio_write(WORD8 *acp) {
 
   for (int p = 0; p < 11; p++) {
     if(pio_usebits & (1 << p)) {
-      //printf("PIO write %d <- 0x%02x\n", p + pio_offset, (bits & (1 << p)) ? 1 : 0);
+      /* printf("PIO write %d <- 0x%02x\n", p + pio_offset, (bits & (1 << p)) ? 1 : 0); */
       gpioWrite(p + pio_offset, (bits & (1 << p)) ? 1 : 0);
     }
   }
@@ -420,10 +420,10 @@ int pio_dirs(WORD8 *acp) {
   for (int p = 0; p < 11; p++) {
     if(pio_usebits & (1 << p)) {
       int dir = mask & (1 << p) ? PI_OUTPUT : PI_INPUT;
-      //printf("PIO dir %d <- 0x%02x\n", p + pio_offset, dir);
+      /* printf("PIO dir %d <- 0x%02x\n", p + pio_offset, dir); */
       gpioSetMode(p + pio_offset, dir);
       if(dir == PI_INPUT) {
-        //printf("PIO pulldown %d <- 0x%02x\n", p + pio_offset, PI_PUD_DOWN);
+        /* printf("PIO pulldown %d <- 0x%02x\n", p + pio_offset, PI_PUD_DOWN); */
 	gpioSetPullUpDown(p + pio_offset, PI_PUD_DOWN);
       } 
     }

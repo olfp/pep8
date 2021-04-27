@@ -276,7 +276,7 @@ pseudoop(char *tok)
 static void
 macnify(char *tok)
 {
-  char *first, *last, fmt[SYMLEN];;
+  char *first, *last, fmt[SYMLEN];
   int len;
 	
   first = strchr(tok, MNO);
