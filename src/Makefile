@@ -2,6 +2,19 @@
 #  Makefile for pdp-8 project
 #
 
+ifeq ($(UNAME),Linux)
+	HW := $(shell cat /proc/cpuinfo | awk -F: '/Hardware/ {gsub(/[ 0-9]/, "",$2); print $2}')
+else
+	HW := other
+endif
+
+ifeq ($(HW),BCM)
+	RASPI = true
+	RASPIDEFS = -D__raspi__
+	RASPILIBS = -lpigpio
+	RASPIOBJS = raspi/tm1637.o
+endif
+
 VER=VERSION
 
 CC = gcc
@@ -19,7 +32,7 @@ oldGNURL  = -DGNURL -DMACRL
 GNURL     = -DGNURL
 GNURLLIBS = -lreadline -ltermcap
 
-CFLAGS = -pedantic -g $(GNURL)
+CFLAGS = -pedantic -g $(GNURL) $(RASPIDEFS)
 #CFLAGS =  -ansi -pedantic -g -D_POSIX_SOURCE $(GNURL)
 LDFLAGS = -g
 #CFLAGS = -ansi -pedantic -O6 -D_POSIX_SOURCE $(GNURL)
@@ -32,13 +45,13 @@ DEMOS = *.pps
 #DOC = $(VER) *.[1-9n]
 
 ALIBS =
-SLIBS = -lpthread -lpigpio -lm $(GNURLLIBS)
+SLIBS = -lpthread $(RASPILIBS)  -lm $(GNURLLIBS)
 XSLIBS = -lpthread -lsocket -lxnet $(GNURLLIBS)
 CLIBS =
 
 ASMOBJS = pot.o
 SIMOBJS = pepsi.o display.o execute.o interact.o operate.o chario.o util.o \
-	raspi/tm1637.o
+	$(RASPIOBJS)
 COMOBJS = octal.o strutil.o
 
 all:	do-it-all

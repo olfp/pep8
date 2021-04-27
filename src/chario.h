@@ -9,7 +9,7 @@
 
 #define MAXDEV 16			/* we have four device bits */
 
-#define BIT7	(1<<7)			/* bit number seven */
+#define BIT7	((char)(1<<7))		/* bit number seven */
 #define BIT9	(1<<8)			/* bit number nine, yes odd nums */
 #define SGNOFF	256			/* scope offset */
 #define TTYKIE	04000			/* Mask: TTY keyboard interrupt */

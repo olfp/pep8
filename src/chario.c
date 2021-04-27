@@ -24,7 +24,9 @@
 #include "chario.h"
 #include "types8.h"
 
+#ifdef __raspi__
 #include "raspi/tm1637.h"
+#endif
 
 #define IOP_RDYIN	0
 #define IOP_RDYOUT	1
@@ -345,6 +347,7 @@ int sco_puti(WORD8 *acp) {
   return 0;
 }
 
+#ifdef __raspi__
 
 void seg_init(int dev, char *devdesc) {
   int pin = atoi(devdesc);
@@ -435,6 +438,8 @@ int pio_mask(WORD8 *acp) {
   return 0;
 }
 
+#endif
+
 static DEVDESC devices[MAXDEV] = {
   {
     "Teletype",
@@ -475,6 +480,7 @@ static DEVDESC devices[MAXDEV] = {
     0,
     0,
   },
+#ifdef __raspi__
   {
     "7Segment",
     seg_init,
@@ -501,6 +507,7 @@ static DEVDESC devices[MAXDEV] = {
     pio_mask,
     0,
   }
+#endif
 };
 
 void chario_show() {
