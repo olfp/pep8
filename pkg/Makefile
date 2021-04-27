@@ -1,4 +1,4 @@
-ARCH := $(shell uname -am | tr ' ' '_')
+ARCH := $(shell uname -sm | tr ' ' '_')
 debian: 
 	mkdir -p pep8/usr/local/bin
 	mkdir -p pep8/usr/local/man/man1
