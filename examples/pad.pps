@@ -2,8 +2,13 @@
 ; pad tests
 ;
 
-PIO= 	4 
+PIO= 	4
+SEG=	3
 
+	; init 7seg
+	RSD	SEG
+
+	; init pad
 	RCL	BITMSK 		; use 8 bits
 	DSM	PIO
 	RCL	OUTMSK		; 4 bits out, 4 bits in
@@ -35,6 +40,17 @@ FINIS:	CLL RAR
 	CLL RAR
 	STO	COLVAL
 
+	; display row
+	RCL	ROWPOS
+	DUS	SEG
+	RCL	ROWBIT
+	DPA	SEG
+	; display col
+	RCL	COLPOS
+	DUS	SEG
+	RCL	COLVAL
+	DPA	SEG
+	
 	HLT
 
 BITMSK:	0377
@@ -43,4 +59,6 @@ INMASK: 0360
 ROWBHI: 0010
 ROWBIT: 0
 COLVAL:	0
+ROWPOS: 1
+COLPOS: 3
 

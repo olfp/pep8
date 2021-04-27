@@ -1,0 +1,4 @@
+Package: pep8
+Version: 2021
+Maintainer: Olaf Püschel <olf@unixpro.de>
+Description: Practical Education Processor (Simulator) based on pdp-8
