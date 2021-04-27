@@ -349,7 +349,17 @@ int sco_puti(WORD8 *acp) {
 
 #ifdef __raspi__
 
+void checkuid(int dev) {
+  if(geteuid()) {
+    fprintf(stderr, "Must be root for GPIO access!\n");
+    exit(dev);
+  }
+}
+
 void seg_init(int dev, char *devdesc) {
+  /* must be root to access GPIO */
+  checkuid(dev);
+
   int pin = atoi(devdesc);
   if(pin == 0) {
     pin = SEGDEF_CLKPIN;
@@ -387,7 +397,9 @@ static int pio_offset = 2;
 static int pio_usebits = 0;
 
 void pio_init(int dev, char *devdesc) {
-   if (gpioInitialise()<0) exit(42);
+  /* must be root to access GPIO */
+  checkuid(dev);
+  if (gpioInitialise()<0) exit(42);
 }
 
 int pio_read(WORD8 *acp) {

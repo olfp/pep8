@@ -2,8 +2,9 @@
 #  Makefile for pdp-8 project
 #
 
-ifeq ($(UNAME),Linux)
-	HW := $(shell cat /proc/cpuinfo | awk -F: '/Hardware/ {gsub(/[ 0-9]/, "",$2); print $2}')
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	HW := $(shell cat /proc/cpuinfo | awk -F: '/Hardware/ {gsub(/[ 0-9]/, "",$$2); print $$2}')
 else
 	HW := other
 endif

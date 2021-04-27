@@ -107,7 +107,7 @@ int main( int argc, char *argv[] ) {
   int i, j, isopt, len, dev;
   int addr;
   unsigned char oc[3];
-  int optch;
+  int optch, norun = 0;
   char *txt, *lbl;
   struct stat stbuf;
   DUMP *newdump;
@@ -178,6 +178,7 @@ int main( int argc, char *argv[] ) {
       break;
     case 'l':			/* list devices */
       chario_show();
+      norun = 1;
       break;
     case 'd':			/* coredump */
       coredump = TRUE;
@@ -207,6 +208,10 @@ int main( int argc, char *argv[] ) {
     }
   }
   
+  if( norun ) {
+    exit(0);
+  }
+
   if( optind >= argc ) {
     usage(prog);
   }
