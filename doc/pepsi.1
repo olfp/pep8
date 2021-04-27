@@ -90,8 +90,11 @@ Option kann mehrfach angegeben werden.
 .TP
 .IR "\-e dev" [ :params ] ,...
 Aktivieren von einem oder mehreren Geräten. Für jedes Gerät wird die
-Gerätenummer und ein Parametersatz angegeben. Mehrere Geräte werden
+Gerätenummer und ggf. ein Parametersatz angegeben. Mehrere Geräte werden
 durch Komma getrennt.
+.TP
+.IR "\-l"
+Auflisten der unterstützten Geräte.
 .SH INTERAKTIVE KOMMANDOS
 Im interaktiven Modus hält der Simulator an, bevor er eine Anweisung ausführt
 und gibt die aktuelle Quelltextzeile (wenn verfügbar) und den Zustand
@@ -264,13 +267,18 @@ Speicherseite angegeben werden. Seitennummer und Offset werden auch oktal
 angegeben. Im Quelltextmodus können statt numerischer Adressen auch die 
 im Programm definierten Symbole verwendet werden.
 .SH EIN-/AUSGABE
-Zur Zeit wird nur ein Ein-/Ausgabegerät unterstützt, ein Fernschreiber mit
-300 Baud. Die Gerätenummer ist null, das Gerät besitzt keine 
-Untereinheiten und verfügt weder über ein Statuswort noch eine 
-Meldungsauswahlmaske. Als Parameter bei der Aktivierung können Hostname und 
+.B Gerät "0", Fernschreiber
+.PP
+Ist dieses Gerät selektiert verbindet sich der 
+.BR pepsi (1)
+mit einem simulierten Fernschreiber, der von 
+.BR teletype (1) 
+realisiert wird.
+.PP
+Als Parameter bei der Aktivierung können Hostname und 
 Port des 
 .BR teletype (1)
-Servers der den Fernschreiber simuliert in der Form
+Servers in der Form
 .IB host : port
 angegeben werden. Werden die Parameter weggelassen wird 
 .IB localhost : 4200
@@ -278,8 +286,50 @@ benutzt. Wird
 .BR teletype (1)
 ohne Parameter auf dem lokalen System gestartet wird ebenfalls Port 4200 
 benutzt, so dass im Regelfall ohne Parameter gearbeitet werden kann.
+.PP
+.B Gerät "1", Lochstreifen-Leser
+.PP
+Mit dem Lochstreifen-Leser können Daten aus einer Datei des
+Host-Systems gelesen werden. Der Name dieser Datei wird als Parameter angegeben.
+.PP
+.B Gerät "2", X/Y-Punkt Plotter
+.PP
+Dieses Gerät simuliert eine Osziloskopröhre mit einzeln ansteuerbaren Achsen.
+Über Einzelpulse können nachleuchtende Punkte an beliebigen Stellen gesetzt werden.
+.PP
+Das Gerät wird über die Java-App "Scope" realisiert mit der sich der Simulator 
+verbindet.
+.PP
+Als Parameter bei der Aktivierung können Hostname und
+Port des 
+.BR scope (1)
+Servers in der Form
+.IB host : port
+angegeben werden. Werden die Parameter weggelassen wird
+.IB localhost : 4321
+benutzt. Wird 
+.BR scope (1)
+ohne Parameter auf dem lokalen System gestartet wird ebenfalls Port 4321
+benutzt, so dass im Regelfall ohne Parameter gearbeitet werden kann.
+.PP
+.B Gerät "3", GPIO 7-Segment Anzeige
+.PP
+Auf Platformen mit GPIO Pins (Raspberry Pi) kann über diese Gerät einen an zwei
+GPIO Pins angschlossene 7-Segment Anzeige auf Basis eines TM1637 Controller-Chip 
+angesteuert werden.
+.PP
+Als Parameter bei der Aktivierung kann der für "Clock" zu verwendene Pin angeben werden,
+der für "Data" verwendete ist automatisch der nächste.
+Wird der Parameter weggelassen werden die Pins 12 und 13 verwendet.
+.PP
+.B Gerät "4", GPIO Ein- und Ausgabe
+.PP
+Auf Platformen mit GPIO Pins (Raspberry Pi) können über diese Gerät bis zu zwölf
+GPIO Pins als Ein- bzw. Ausgabe verwendet werden. Es werden die Pins 2 bis 14 angesteuert.
 .SH SIEHE AUCH
 .BR pot (1),
+.BR teletye(1)
+.BR scope(1)
 .BR pot (5),
 .BR pep8 (7)
 .SH BUGS

@@ -414,6 +414,21 @@ eine 1 in Bit 0 des Akkumulators geladen werden, um dann mit
 .B "DSM 0"
 die Unterbrechungen beim Vorliegen eines Eingabezeichens zu aktivieren.
 .PP
+.BR pepsi(1) 
+kommuniziert mit dem Terminalsimulator über einen TCP Verbindung, wobei 
+.BR teletype(1) 
+den Server implementiert und 
+.BR pepsi(1) 
+den Client. Entsprechend ist 
+.BR teletype(1) zuerst zu starten.
+.PP
+Wird der Terminalsimulator 
+.BR teletype(1) 
+auf einem anderen Host oder Port als dem Standard localhost:4200 gestartet können Host und Port dem Gerät 
+übergeben werden, i.e 
+.BR "-e 0" : localhost : 4200 .
+Wir nur ein anderer Host verwendet kann die Angabe des Ports entfallen.
+.PP
 .I Papertape Reader, Gerät 1
 .PP
 Dem Gerät wird beim Freischalten eine Datei zugewiesen aus der  Einzelzeichen gelesen 
@@ -421,11 +436,77 @@ werden können. Am Dateiende geht das Grät in den nicht-bereit Zustand. Der Pap
 Reader unterstützt die Befehle 
 .BR SRI " und " DGA .
 .PP
+Die Datei muss beim Freischalten des Gerätes angegeben werden, i.e.
+.B "-e "
+.I meinedatei.tap
+.PP
 .I X/Y-Point Plotter (Scope), Gerät 2
 .PP
-Diese Gerät simuliert ein Oszilloskop dessen X- und Y-Eingänge über zwei AD-Wandler angesteuert werden. 
+Dieses Gerät simuliert ein Oszilloskop dessen X- und Y-Eingänge über zwei AD-Wandler angesteuert werden. 
 Programmgesteuert kann - nach der Ansteuerung der korrekten Koordinaten - der Elektronenstrahl kurz verstärkt 
 werden und so ein Punkt im (lang nachleuchtenden) Phosphor des Bildschirms erzeugt werden.
+.PP
+Mit 
+.BR DGA " und " DPA
+werden die X- bzw. die Y-Koordinate gesetzt. Mit
+.B SSR
+kann abgefragt werden ob der Strahl bereits positioniert ist, dann kann mit
+.B SIP 
+der Strahl kurzzeitig verstärkt werden um den Leuchtpunkt zu erzeugen.
+.PP
+.BR pepsi(1) 
+kommuniziert mit dem X/Y-Point Plotter über einen TCP Verbindung, 
+.BR scope(1)
+implementiert den Server, entsprechend ist es zuerst zu starten.
+.PP
+Wird der X/Y-Point Plotter
+.BR scope(1)
+auf auf einem anderen Host oder Port als dem Standard localhost:4321 gestartet können Host und Port dem Gerät
+übergeben werden, i.e
+.BR "-e 0" : localhost : 4321 .
+Wir nur ein anderer Host verwendet kann die Angabe des Ports entfallen.
+.PP
+.I GPIO 7-Segment Anzeige, Gerät 3
+.PP
+Auf Platformen mit General-Purpose I/O (aktuell wird die Raspberry Pi Familie unterstützt) kann über 
+zwei GPIO Pins eine 7-Segement Anzeige mit TM1637 Controller-Chip angesteuert werden. Es werden zwei
+aufeinander folgende Pins für 
+.BR Clock " und " Data
+benötigt. Die Nummer des ersten Pins (Clock) kann als Parameter übergeben werden, der 
+Default ist Pin 12, entsprechend
+.IR "-e 3:12" . 
+Als zweiter Pin wird dann Pin 1 für Data benutzt.
+.PP
+Das Gerät unterstützt
+.B RSD
+zum Löschen der Anzeige, 
+.B DUS 
+zum Auswählen der Ziffer (wobei die zu verwendenden Werte vom Anzeigen-Modell abhängen, der Prototyp hat
+die Ziffer mit Index "0" ganz links) und
+.B DPA
+zum Anzeigen eines Wertes. Dabei wird der Wert des Akkumulators als Dezimalziffer angezeigt.
+.PP
+.I GPIO Ein-/Ausgabe, Gerät 4
+.PP
+Auf Platformen mit General-Purpose I/O (aktuell wird die Raspberry Pi Familie unterstützt) können mit 
+diesem Gerät bis zu 12 GPIO Pins zur Ein- oder Ausgabe verwendet werden. Dabei entspricht Bit 11 (LSB)
+dem GPIO Pin 2 und Bit 0 (MSB) dem Pin 14.
+.PP
+Mit dem 
+.B DSM 
+Befehl wird selektiert welche Pins verwendet werden (ein gesetztes Bit selektiert einen Pin).
+Der 
+.B DUS 
+Befehl bestimmt welche Pins als Ausgabe und welche als Eingabe verwendte werden. Ein gesetztes Bit 
+selektiert den Pin zur Ausgabe.
+.PP
+Mit 
+.B DPA 
+werden die vorher für Ausgabe selektierten Pins auf die entsprechenden Bitwerte im Akkumulator gesetzt.
+Die für Eingabe selektierten Pins werden mit
+.B DGA
+eingelesen und an die entsprecheden Positionen im Akkumulator geschrieben. Nicht für die Eingabe 
+selektierte Pins haben keinen definierten Zustand.
 .PP
 .I Prozessor, Gerät 15
 .PP
