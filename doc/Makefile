@@ -26,7 +26,7 @@ PDF=pot.1.pdf pot.5.pdf pepsi.1.pdf pep8.7.pdf sixbit.7.pdf teletype.1.pdf
 
 all: $(PDF)
 
-clean:
+distclean:
 	rm -f $(PDF)
 
 install:
