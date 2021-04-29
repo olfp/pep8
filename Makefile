@@ -16,6 +16,9 @@ clean: $(CLEANDIRS)
 
 $(CLEANDIRS):
 	$(MAKE) -C $(basename $@) clean 
+	
+install:
+	$(MAKE) --directory=src install
 
 # eof
 
