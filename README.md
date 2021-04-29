@@ -6,7 +6,7 @@ Includes an assembler, a simulator and several devices, including a virtual tele
 When run on a Raspberry Pi with Pi OS it can use GPIO Pins. To supress building with GPIO support, set edit
 src/Makefile and remove the comment at the top to set GPIO = No.
 
-Binaries are build sometimes. Use the source if possible.
+Binary poackages are built sometimes. Use the source if possible.
 
 To install binaries download release (.deb) and install with "sudo apt install ./pep8-xxx.deb" or "dpkg -i pep8-xxx.deb".
 Currently only a Debian style package is supplied.
