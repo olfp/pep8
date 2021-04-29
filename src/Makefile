@@ -73,8 +73,8 @@ endif
 progs:	$(BINDIR) $(PROGRAMS)
 
 $(BINDIR):
-    @echo "Folder $(BINDIR) does not exist"
-    mkdir -p $@
+	@echo "Folder $(BINDIR) does not exist"
+	mkdir -p $@
 
 $(ASM):	$(ASMOBJS) $(COMOBJS)
 	$(CC) $(LDFLAGS) -o $(ASM) $(ASMOBJS) $(COMOBJS) $(ALIBS) $(CLIBS)
