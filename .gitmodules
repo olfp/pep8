@@ -1,0 +1,3 @@
+[submodule "src/tm1637"]
+	path = src/tm1637
+	url = https://github.com/hannenz/tm1637.git

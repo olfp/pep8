@@ -20,6 +20,7 @@ ifeq ($(HW),BCM)
 	RASPIDEFS = -D__raspi__
 	RASPILIBS = -lpigpio
 	RASPIOBJS = raspi/tm1637.o
+	EXTRAS = $(RASPIOBJS)
 endif
 
 VER=VERSION
@@ -70,7 +71,7 @@ else
 do-it-all:      depend progs
 endif
 
-progs:	$(BINDIR) $(PROGRAMS)
+progs:	$(BINDIR) $(EXTRAS) $(PROGRAMS)
 
 $(BINDIR):
 	@echo "Folder $(BINDIR) does not exist"
