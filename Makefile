@@ -19,6 +19,7 @@ $(CLEANDIRS):
 	
 install:
 	$(MAKE) --directory=src install
+	$(MAKE) --directory=ttysrv install
 
 # eof
 
