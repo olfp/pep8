@@ -70,7 +70,11 @@ else
 do-it-all:      depend progs
 endif
 
-progs:	$(PROGRAMS)
+progs:	$(BINDIR) $(PROGRAMS)
+
+$(BINDIR):
+    @echo "Folder $(BINDIR) does not exist"
+    mkdir -p $@
 
 $(ASM):	$(ASMOBJS) $(COMOBJS)
 	$(CC) $(LDFLAGS) -o $(ASM) $(ASMOBJS) $(COMOBJS) $(ALIBS) $(CLIBS)
