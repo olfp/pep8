@@ -29,6 +29,9 @@ all: $(PDF)
 distclean:
 	rm -f $(PDF)
 
+clean:
+	echo "to clean PDFs run 'make distclean'"
+
 install:
 	cp $(SRC1) /usr/local/man/man1
 	cp $(SRC5) /usr/local/man/man5
