@@ -111,12 +111,59 @@ WAIT:	SRO	TTY		; skip if tty ready
 ; EOF
 ```
 
-To build and run, out this in a file named `hello.pps`, then run the assembler:
+To build and run, out this in a file named `hello.pps` (pep8 program soucre), then run the assembler:
 ```
-pot hello
+$ pot hello
+```
+This will create the pep8 binary `hello.pmi` (pep8 memory image). Since this programm uses the teletype 
+for I/O, you need to run the tty emulator. Open a new console window and run `teletype`. Then, go back to
+where you ran the assembler and run the simulator:
+```
+$ pepsi -e 0 hello
+Initializing device 0, Teletype: ok.
+$
+```
+The tty simulator should now show 
+```
+$ teletype 
+TTY listening on port 4200.
+Escape character is '^]'.
+HELLO WORLD!
+
 ```
 
-
+If you want to explore the details or debug your program, run the simulator in interactive mode. To have access to the symbols and source code, you need to have the assembler generate symbol and listing files.
+```
+$ cat minadd.pps 
+START:	CLL CLA
+	RCL	ONE
+	TAD	TWO	
+	STO	RESULT
+	HLT	
+ONE:	1
+TWO:	2
+RESULT:	0
+$ pot -ls minadd
+$ pepsi -i minadd
+START:	CLL CLA
+pc: 0000: 7300 - l:0 ac: 0000
+>r
+	RCL	ONE
+pc: 0001: 0005 - l:0 ac: 0000
+arg: 005 -(ZP)-> 0001
+	TAD	TWO	
+pc: 0002: 4006 - l:0 ac: 0001
+arg: 006 -(ZP)-> 0002
+	STO	RESULT
+pc: 0003: 1007 - l:0 ac: 0003
+arg: 007 -(ZP)-> 0000
+	HLT	
+pc: 0004: 7777 - l:0 ac: 0003
+	HLT	
+pc: 0004: 7777 - l:0 ac: 0003
+>q
+$
+```
 
 Credits: Thank you for the GPIO and tm16437 support code
 

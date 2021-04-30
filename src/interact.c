@@ -35,6 +35,7 @@ static void usage() {
   printf("p              - print the next ten source lines\n");
   printf("p <addr>       - print ten source lines starting at <addr>\n");
   printf("p <addr>,<cnt> - print <cnt> source lines starting at <addr>\n");
+  printf("r              - go, like g but keep verbose mode\n"); 
   printf("s              - print the symbol table\n");
   printf("v              - toggle verbose mode\n");
   printf("w <addr>       - watch word at address <addr>\n");
@@ -319,6 +320,10 @@ void interact() {
       case 'g':
         singlestep = FALSE;		/* go to next breakpoint */
         verbose = FALSE;
+        done = TRUE;
+        break;
+      case 'r':
+        singlestep = FALSE;             /* go to next breakpoint, keep verbose */
         done = TRUE;
         break;
       case 'v':
