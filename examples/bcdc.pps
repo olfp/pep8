@@ -1,0 +1,203 @@
+;
+; four digit bcd calculator
+;
+
+TTY=    0                       ; TTY is device zero
+
+	MACRO	LEA
+	ZMEM	APTR% \1
+	RCL	APTR%
+	ENDM
+
+        JMP I   VEC             ; jumpstart (just in case)
+VEC:    START
+
+PUTSV:	PUTS			; longjump poiters
+DISPV:  DISPCH
+
+SAR=    CLL RAR                 ; shift ac right
+NEG=	CLL CMA IAC		; negate ac
+PRINT=  JMS I   PUTSV           ; print following counted str
+
+DBUF:	0
+	0
+	0
+DEND:	0			; display reg, four words
+
+DIGPTR:	DEND
+
+CURCH:	0			; current char
+
+EOF:    4                       ; ^D, end of file
+NL:     12                      ; ^J, new line
+CR:     15                      ; ^M, carriage retuen
+SPACE:  40                      ; ' '
+CHAR0:  60                      ; 0
+CHAR9:  71                      ; 9
+
+GETCH:  NOP                     ; get char from tty
+WAITI:  SRI     TTY
+        JMP     WAITI
+        DGA     TTY             ; read char
+        JMP I   GETCH
+
+PUTCH:  NOP                     ; print char on tty
+WAITO:  SRO     TTY
+        JMP     WAITO
+        DPA     TTY             ; print char
+        JMP I   PUTCH
+
+PUTDIG:	NOP
+	CLL
+	TAD	CHAR0
+	JMS	PUTCH
+	JMP I	PUTDIG
+
+TERPRI: NOP                     ; print cr-lf
+        RCL     CR              
+        JMS     PUTCH
+        RCL     NL
+        JMS     PUTCH
+        JMP I   TERPRI
+
+START:  JMS     BANNER          ; print startup banner
+MNLOOP:	JMS 	DISPLY		; refresh
+	JMS     GETCH		; read input
+	STO	CURCH
+	JMS I	DISPV		; do something
+	RCL	CURCH
+	NEG
+        TAD     EOF             ; compare with eof
+        SNA
+        JMP     FINIS           ; got eof
+        JMP     MNLOOP          ; loop
+
+FINIS:  JMS     TERPRI
+        PRINT
+        TEXT    /BYE/
+	JMS	TERPRI
+	HLT
+
+DISPLY:	NOP
+	RCL	CR
+	JMS	PUTCH
+	
+	RCL	DSTRT
+	STO	DPTR
+NXTDIG:	RCL I 	DPTR
+	JMS 	PUTDIG
+	RCL 	DPTR
+	IAC
+	STO 	DPTR		; incremented
+	NEG
+	TAD	DLAST		; check end
+	SMA
+	JMP	NXTDIG
+	JMP I 	DISPLY
+
+DSTRT:	DBUF
+DLAST:	DEND
+DPTR:	0
+DPTR2:	0
+
+BANNER: NOP
+        JMS     TERPRI
+        PRINT
+        TEXT    /BCD CALC/
+        JMS     TERPRI
+        JMP I   BANNER
+
+PUTS:   NOP                     ; print following counted str
+        RCL I   PUTS            ; ret vec is ptr
+        STO     LEN             ; first word is length
+PLOOP:  RCL     PUTS
+        IAC
+        STO     PUTS            ; increment to first char(s)
+        CLL                     ; unflag inword
+        JMS     CHKLEN
+        RCL I   PUTS            
+        SAR
+        SAR
+        SAR
+        SAR
+        SAR
+        SAR
+        CLL
+        TAD     ASCII
+        JMS     PUTCH
+        STL                     ; flag inword
+        JMS     CHKLEN
+        RCL I   PUTS            ; lower sixbit
+        AND     MASK6
+        CLL
+        TAD     ASCII
+        JMS     PUTCH
+        JMP     PLOOP
+PDONE:  CLA
+        TAD     PUTS            ; add inword flag
+        STO     PUTS
+        JMP I   PUTS
+
+CHKLEN: NOP
+        RCL     LEN
+        SNA
+        JMP     PDONE
+        CMA IAC
+        CMA
+        STO     LEN
+        JMP I   CHKLEN
+
+LEN:    0                       ; length countdown
+ASCII:  40                      ; offset sixbit acsii
+MASK6:  77                      ; sixbit mask
+
+	PAGE
+
+DISPCH:	NOP
+        RCL	CURCH
+        NEG
+        TAD     CHAR0           ; compare to '0'
+        SMA SZA                 ; inverted cond
+        JMP     NODIG           ; not a digit
+        RCL	CURCH
+        NEG
+        TAD     CHAR9           ; compare to '9'
+        SPA                     ; inverted cond
+        JMP     NODIG           ; not a digit
+
+	; its a digit
+
+	RCL	DIGPTR		; check if full
+	NEG
+	TAD	DBUF
+	SNA
+	JMP	DISPCH		; no room
+
+	; put new digit in display buffer
+	
+	RCL	DSTRT
+SFTDIG:	STO	DPTR2
+	IAC			; disp buf second digit
+	STO	DPTR
+	RCL I 	DPTR
+	STO 	DPTR2
+	RCL	DPTR
+	NEG
+	TAD	DLAST
+	SNA
+	JMP	NEWDIG
+	RCL	DPTR
+	JMP	SFTDIG
+	
+NEWDIG:	RCL	CHAR0
+	NEG
+	TAD	CURCH		; get digit value
+
+	STO I	DIGPTR		; to display reg
+	CLA CLL CMA		; load -1
+	TAD 	DIGPTR
+	STO	DIGPTR
+
+NODIG:	NOP
+
+	JMP I	DISPCH
