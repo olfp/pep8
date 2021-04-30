@@ -14,6 +14,7 @@ ifeq ($(UNAME_S),Linux)
 else
 	HW := other
 endif
+$(info GPIO is [${HW}])
 
 ifeq ($(HW),BCM)
 	RASPI = true
@@ -100,9 +101,9 @@ clean:	aclean sclean clean8
 depend:	dep
 
 dep:
-	@echo checking dependencies ...
+	@echo -n checking dependencies ...
 	@for s in *.c; do $(CPP) -MM $$s; done >.depend
-	@ echo ... done.
+	@ echo done.
 
 install:
 	install -m 755 $(ASM) /usr/local/bin

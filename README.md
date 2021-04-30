@@ -4,7 +4,7 @@ Practical Education Processor based on pdp-8
 Includes an assembler, a simulator and several devices, including a virtual teletype. An emulated scope display is available seperately (see scope dir).
 
 When run on a Raspberry Pi with Pi OS it can use GPIO Pins. To supress building with GPIO support, set edit
-src/Makefile and remove the comment at the top to set GPIO = No.
+the Makefile and remove the comment at line 5 to set GPIO = No.
 
 Binary poackages are built sometimes. Use the source if possible.
 
