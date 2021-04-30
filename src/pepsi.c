@@ -1,7 +1,7 @@
 /*
   pep8 simulator
 
-  (c) olf 07/05, 2018
+  (c) olf 07/05, 2018, 2021
 
   takes .pmi file and executes it
 
@@ -106,6 +106,8 @@ int doopts( int argc, char *argv[] ) {
   char *daddr, *dcnt, *next;
   int optch, dev, norun = 0;
   DUMP *newdump;
+
+  optind = 1; /* else fils on 2nd run from xopts */
 
   while( (optch = getopt( argc, argv, "hvstimo:d:p:e:l?" )) > 0 ) {
     switch( (char)optch ) {
@@ -266,7 +268,6 @@ int main( int argc, char *argv[] ) {
     strcpy( optname, inname );
     strcpy( strrchr(optname, DOT ), OPT );
 
-
     if( (optfile = fopen( optname, "r" )) != NULL ) {
       /* found an option file */
       char *opts = NULL;
@@ -411,7 +412,6 @@ int main( int argc, char *argv[] ) {
   } 
 
   /* set up io devices */
-
   chario_init(iobase, devices);
 
   /* stamp start time */
