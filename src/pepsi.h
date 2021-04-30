@@ -18,6 +18,7 @@
 #define SRC	".pls"
 #define IMG	".pmi"
 #define COR	".pci"
+#define OPT	".pop"
 
 #define SRCOFF	17			/* offset of sourceline in listfile */
 

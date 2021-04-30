@@ -8,6 +8,8 @@ the Makefile and remove the comment at line 5 to set GPIO = No.
 
 Binary poackages are built sometimes. Use the source if possible.
 
+There are man pages for all command and format, but they are currentyl German only and it's unlikely to change.
+
 Since pep8 uses pigpio and hannenz/tm1637 for the Raspberry Pi hardware support you need to
 
 1. If not already present, install the pigpio library

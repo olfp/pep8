@@ -1,9 +1,9 @@
 /*
-   pep8 simulator
+  pep8 simulator
 
-   (c) olf 07/05, 2018
+  (c) olf 07/05, 2018
 
-   takes .pmi file and executes it
+  takes .pmi file and executes it
 
 */
 
@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #ifdef GNURL
 #include <readline/readline.h>
@@ -36,6 +37,8 @@ WORD8 ac8;				/* accumulator */
 BIT8  link8;			        /* link bit */
 BIT8  ien8 = 0;				/* interrupt enable */
 BIT8  irq8 = 0;				/* interrupt request */
+
+char *prog;				/* name programm was called by */
 
 int memtop;				/* highest touched mem location */
 
@@ -84,6 +87,7 @@ static void usage( char *name ) {
   fprintf(stderr, "  o - set origin of program counter\n");
   fprintf(stderr, "  d - dump cnt words at addr after HLT instruction\n");
   fprintf(stderr, "  e - enable listed devices, dev may take params\n");
+  fprintf(stderr, "If <image>.pop exists, the first line is treated as additional options.\n");
   exit(EXIT_FAILURE);
 }
 
@@ -98,19 +102,98 @@ static void init_rl( char *progname ) {
 
 #endif
 
+int doopts( int argc, char *argv[] ) {
+  char *daddr, *dcnt, *next;
+  int optch, dev, norun = 0;
+  DUMP *newdump;
+
+  while( (optch = getopt( argc, argv, "hvstimo:d:p:e:l?" )) > 0 ) {
+    switch( (char)optch ) {
+    case 'v':                   /* verbose */
+      verbose = TRUE;
+      break;
+    case 's':                   /* use source */
+      usesource = TRUE;
+      break;
+    case 'i':                   /* interactive */
+      interactive = TRUE;
+      usesource = TRUE;
+      verbose = TRUE;
+      /* fallthru */
+    case 't':                   /* trace */
+      singlestep = TRUE;
+      break;
+    case 'm':                   /* metrics */
+      metrics = TRUE;
+      break;
+    case 'o':                   /* set origin */
+      origin = optarg;
+      break;
+    case 'e':                   /* enable devices */
+      do {
+        if((next = strchr(optarg, ARGSEP))) { /* extra parens for gcc */
+          *(next++) = '\0';
+        }
+        if(isdigit(*optarg)) {
+          dev = *optarg++ - '0';
+          if(!*optarg) {
+            devices[dev] = "";
+          } else if(*optarg == DEVSEP) {
+            devices[dev] = ++optarg;
+          } else {
+            fprintf(stderr, "WARNING: Bad device spec: %s\n", optarg);
+          }
+        } else {
+          fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
+        }
+      } while((optarg = next)); /* extra parens for gcc */
+      break;
+    case 'l':                   /* list devices */
+      chario_show();
+      norun = 1;
+      break;
+    case 'd':                   /* coredump */
+      coredump = TRUE;
+      daddr = optarg; /* (char *)strdup(optarg); */
+      dcnt = strchr(daddr, OFFSEP);
+      if(dcnt) {
+        *dcnt = '\0';
+        dcnt++;
+      }
+      if(dcnt && !checkoctal(dcnt, 0)) {
+        fprintf(stderr, "Warning: bad dump range %s, count must be octal.\n",
+                optarg);
+      } else {
+        newdump = (DUMP *) malloc( sizeof(DUMP));
+        newdump->from = upstr(daddr);
+        if(dcnt)
+          sscanf( dcnt, "%o", &(newdump->cnt));
+        else
+          newdump->cnt = 1;
+        newdump->next = dumps;
+        dumps = newdump;
+      }
+      break;
+    default:                    /* report usage */
+      usage(prog);
+      break;
+    }
+  }
+  return norun;
+}
+
 int main( int argc, char *argv[] ) {
 
-  FILE *infile, *corefile, *srcfile;
-  char *inname, *corename, *srcname;
+  FILE *infile, *corefile, *srcfile, *optfile;
+  char *inname, *corename, *srcname, *optname;
   char linebuf[BUFLEN], last[BUFLEN], lblbuf[BUFLEN];
-  char *prog, *file, *daddr, *dcnt, *next;
-  int i, j, isopt, len, dev;
+  char *file;
+  int i, j, isopt, len;
   int addr;
   unsigned char oc[3];
   int optch, norun = 0;
   char *txt, *lbl;
   struct stat stbuf;
-  DUMP *newdump;
   BRKPNT *brk;
   SYMBOL *lastsym, *newsym, *sym;
   /* metrics */
@@ -129,84 +212,7 @@ int main( int argc, char *argv[] ) {
   for(i = 0; i < MAXDEV; i++)
     devices[i] = NULL;
   
-  while( (optch = getopt( argc, argv, "vstimo:d:p:e:l?" )) > 0 ) {
-    switch( (char)optch ) {
-    case 'v':			/* verbose */
-      verbose = TRUE;
-      break;
-    case 's':			/* use source */
-      usesource = TRUE;
-      break;
-    case 'i':			/* interactive */
-      interactive = TRUE;
-      usesource = TRUE;
-      verbose = TRUE;
-      /* fallthru */
-    case 't':			/* trace */
-      singlestep = TRUE;
-      break;
-    case 'm':			/* metrics */
-      metrics = TRUE;
-      break;
-    case 'o':			/* set origin */
-/*
-      origin = (char *)strdup(optarg);
-*/
-      origin = optarg;
-      break;
-    case 'e':			/* enable devices */
-      do {
-	if((next = strchr(optarg, ARGSEP))) { /* extra parens for gcc */
-	  *(next++) = '\0';
-	}
-	if(isdigit(*optarg)) {
-	  dev = *optarg++ - '0';
-	  if(!*optarg) {
-	    devices[dev] = "";
-	  } else if(*optarg == DEVSEP) {
-/*
-	    devices[dev] = (char *)strdup(++optarg);
-*/
-	    devices[dev] = ++optarg;
-	  } else {
-	    fprintf(stderr, "WARNING: Bad device spec: %s\n", optarg);
-	  }
-	} else {
-	  fprintf(stderr, "WARNING: No device spec: %s\n", optarg);
-	}
-      } while((optarg = next)); /* extra parens for gcc */
-      break;
-    case 'l':			/* list devices */
-      chario_show();
-      norun = 1;
-      break;
-    case 'd':			/* coredump */
-      coredump = TRUE;
-      daddr = optarg; /* (char *)strdup(optarg); */
-      dcnt = strchr(daddr, OFFSEP);
-      if(dcnt) {
-	*dcnt = '\0';
-	dcnt++;
-      }
-      if(dcnt && !checkoctal(dcnt, 0)) {
-	fprintf(stderr, "Warning: bad dump range %s, count must be octal.\n",
-		optarg);
-      } else {
-	newdump = (DUMP *) malloc( sizeof(DUMP));
-	newdump->from = upstr(daddr);
-	if(dcnt)
-	  sscanf( dcnt, "%o", &(newdump->cnt));
-	else
-	  newdump->cnt = 1;
-	newdump->next = dumps;
-	dumps = newdump;
-      }
-      break;
-    default:			/* report usage */
-      usage(prog);
-      break;
-    }
-  }
+  norun = doopts(argc, argv);
   
   if( norun ) {
     exit(0);
@@ -256,6 +262,40 @@ int main( int argc, char *argv[] ) {
     strcpy( srcname, inname );
     strcpy( strrchr(srcname, DOT ), SRC );
 
+    optname = malloc( len );
+    strcpy( optname, inname );
+    strcpy( strrchr(optname, DOT ), OPT );
+
+
+    if( (optfile = fopen( optname, "r" )) != NULL ) {
+      /* found an option file */
+      char *opts = NULL;
+      size_t len = 0;
+      wordexp_t p;
+      int xargc;
+      char** xargv;
+
+      getline(&opts, &len, optfile);
+      /* getline store the buffer size in len, not the string length! */
+      len = strlen(opts);
+      opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
+      /* Note! This expands shell variables. */
+      int err = wordexp(opts, &p, 0);
+      if ( !err) {
+        xargc = p.we_wordc;
+        xargv = calloc(xargc + 1, sizeof(char *));
+	xargv[0] = "xopts";
+        for (i = 0; i < p.we_wordc; i++) {
+          xargv[i+1] = strdup(p.we_wordv[i]);
+        }
+        wordfree(&p);
+        doopts(xargc+1, xargv);
+      } else {
+	fprintf( stderr, "Cannot parse option file, error: %d\n", err);
+	exit(EXIT_FAILURE);
+      }
+    }
+
     /* get size of image file */
 
     if( stat(inname, &stbuf) == -1)  {
@@ -276,80 +316,80 @@ int main( int argc, char *argv[] ) {
     }
 
     if( usesource ) {
-		maxtxt = len; /*  - 1; */
+      maxtxt = len; /*  - 1; */
 
-		/* open source file */
+      /* open source file */
       
-		if( (srcfile = fopen( srcname, "r" )) == NULL ) {
-			fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
-			exit(EXIT_FAILURE);
-		}
+      if( (srcfile = fopen( srcname, "r" )) == NULL ) {
+	fprintf( stderr, "%s: Listfile %s not found.\n", argv[0], srcname );
+	exit(EXIT_FAILURE);
+      }
 
-		text = (char **) malloc( maxtxt * sizeof(char **));
+      text = (char **) malloc( maxtxt * sizeof(char **));
         
-		for( i = 0; i < maxtxt; i++ )
-			text[i] = NULL;		/* make sure no junk is in there */
+      for( i = 0; i < maxtxt; i++ )
+	text[i] = NULL;		/* make sure no junk is in there */
     
-		i = -1;				/* current location */
+      i = -1;				/* current location */
 
-		/* read source lines */
+      /* read source lines */
 
-		while( fgets( linebuf, BUFLEN, srcfile )) {
-			upstr(linebuf);
+      while( fgets( linebuf, BUFLEN, srcfile )) {
+	upstr(linebuf);
 
-			sscanf( linebuf, "%o:", (unsigned *)&addr );
-			txt = last + SRCOFF;
-			if( addr != i ) {
-				if(i < 0) 				/* first line, zero loc */
-					i = 0;
-				text[i] = malloc( strlen(txt) + 1 );
-				strcpy( text[i], txt );
-				i = addr;
-			}
-			txt = strcpy( lblbuf, linebuf) + SRCOFF;
-			if( strchr(COMM, *txt) )
-				*txt = '\0';				/* whole line comment */
-			else
-				txt = strtok( txt, COMM );		/* strip of comment */
-			lbl = txt = unspace(txt);		/* strip of whitespace */
-			while( txt && *txt && !strchr(LBLCHR, *txt) && !strchr(TOKDEL, *txt)) {
-				txt++;
-			}
-			if( txt && *txt && strchr(LBLCHR, *txt)) {
-				*txt = '\0'; 				/* strip of LBLCHR */
-				newsym = (SYMBOL *) malloc( sizeof(SYMBOL));
-				newsym->location = addr;
-				strcpy(newsym->symbol, lbl);
-				newsym->next = NULL;
-				if( symbols == NULL ) {
-					symbols = lastsym = newsym;
-				} else {
-					lastsym->next = newsym;
-					lastsym = newsym;
-				}
-			}
-			strcpy( last, linebuf );  
-		}
+	sscanf( linebuf, "%o:", (unsigned *)&addr );
+	txt = last + SRCOFF;
+	if( addr != i ) {
+	  if(i < 0) 				/* first line, zero loc */
+	    i = 0;
+	  text[i] = malloc( strlen(txt) + 1 );
+	  strcpy( text[i], txt );
+	  i = addr;
+	}
+	txt = strcpy( lblbuf, linebuf) + SRCOFF;
+	if( strchr(COMM, *txt) )
+	  *txt = '\0';				/* whole line comment */
+	else
+	  txt = strtok( txt, COMM );		/* strip of comment */
+	lbl = txt = unspace(txt);		/* strip of whitespace */
+	while( txt && *txt && !strchr(LBLCHR, *txt) && !strchr(TOKDEL, *txt)) {
+	  txt++;
+	}
+	if( txt && *txt && strchr(LBLCHR, *txt)) {
+	  *txt = '\0'; 				/* strip of LBLCHR */
+	  newsym = (SYMBOL *) malloc( sizeof(SYMBOL));
+	  newsym->location = addr;
+	  strcpy(newsym->symbol, lbl);
+	  newsym->next = NULL;
+	  if( symbols == NULL ) {
+	    symbols = lastsym = newsym;
+	  } else {
+	    lastsym->next = newsym;
+	    lastsym = newsym;
+	  }
+	}
+	strcpy( last, linebuf );  
+      }
 
-		text[i] = malloc( strlen(last + SRCOFF) + 1 );
-		strcpy( text[i], last + SRCOFF );
+      text[i] = malloc( strlen(last + SRCOFF) + 1 );
+      strcpy( text[i], last + SRCOFF );
 	  
-		fclose( srcfile );
+      fclose( srcfile );
     }
 
     /* open input file */
 
     if( (infile = fopen( inname, "r" )) == NULL ) {
-		fprintf( stderr, "%s: File %s not found.\n", argv[0], inname );
-		exit(EXIT_FAILURE);
+      fprintf( stderr, "%s: File %s not found.\n", argv[0], inname );
+      exit(EXIT_FAILURE);
     }
 
     for( addr = 0, i = 0; i < len; i += 2, addr += 2 ) {
 
-		fread( oc, sizeof(unsigned char), 3, infile );
+      fread( oc, sizeof(unsigned char), 3, infile );
       
-		mem8[addr]   = (oc[0] << 4) | (oc[1] >> 4);
-		mem8[addr+1] = ((oc[1] & MASK4) << 8) | oc[2];
+      mem8[addr]   = (oc[0] << 4) | (oc[1] >> 4);
+      mem8[addr+1] = ((oc[1] & MASK4) << 8) | oc[2];
     }
   
     fclose( infile );
@@ -444,18 +484,19 @@ int main( int argc, char *argv[] ) {
 
       getparam( dumps->from, &addr, NULL, 0);
       if(addr < 0) {
-		fprintf(stderr, "Warning: cannot dump from %s, %s.\n", dumps->from,
-			(symbols ? "neither symbol nor octal" : "no symbols loaded"));
+	fprintf(stderr, "Warning: cannot dump from %s, %s.\n", dumps->from,
+		(symbols ? "neither symbol nor octal" : "no symbols loaded"));
       } else {
-		if(!checkoctal(dumps->from, 0))
-			printf("%s:\n", dumps->from);
-			dumpmem( addr, dumps->cnt );
-		}
+	if(!checkoctal(dumps->from, 0))
+	  printf("%s:\n", dumps->from);
+	dumpmem( addr, dumps->cnt );
+      }
       
-		dumps = dumps->next;
+      dumps = dumps->next;
     }
   }
 
   exit(EXIT_SUCCESS);
 }
 
+/* eof */
