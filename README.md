@@ -111,7 +111,17 @@ WAIT:	SRO	TTY		; skip if tty ready
 ; EOF
 ```
 
+To build and run, out this in a file named `hello.pps`, then run the assembler:
+```
+pot hello
+```
+
+
+
 Credits: Thank you for the GPIO and tm16437 support code
 
 * joan2937 for the pigpio library (http://abyz.me.uk/rpi/pigpio/)
 * Johannes Braun for the tm1637 driver code (https://github.com/hannenz/tm1637)
+* Edson de Castro for the pdp8 (https://www.linkedin.com/in/edson-decastro-1240aa12)
+
+
