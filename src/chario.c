@@ -171,7 +171,9 @@ void tty_init(int dev, char *devdesc) {
 }
 
 void tty_close() {
-
+  while((out_ch & BIT7) == 0) {
+    /* wait for output complete */
+  }
 }
 
 int tty_rdyin(WORD8 *acp) {
