@@ -2,8 +2,6 @@
 #  Makefile for pdp-8 project
 #
 
-# GPIO = No
-
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	ifeq ($(GPIO),No)
@@ -13,15 +11,6 @@ ifeq ($(UNAME_S),Linux)
 	endif
 else
 	HW := other
-endif
-$(info GPIO is [${HW}])
-
-ifeq ($(HW),BCM)
-	RASPI = true
-	RASPIDEFS = -D__raspi__
-	RASPILIBS = -lpigpio
-	RASPIOBJS = tm1637/tm1637.o
-	EXTRAS = $(RASPIOBJS)
 endif
 
 VER=VERSION
@@ -33,6 +22,18 @@ BINDIR=../bin
 ASM = $(BINDIR)/pot
 SIM = $(BINDIR)/pepsi
 
+NMODE = 755
+SMODE = 755
+
+$(info GPIO is [${HW}])
+ifeq ($(HW),BCM)
+	RASPI = true
+	RASPIDEFS = -D__raspi__
+	RASPILIBS = -lpigpio
+	RASPIOBJS = tm1637/tm1637.o
+	EXTRAS = $(RASPIOBJS)
+	SMODE = 6755
+endif
 
 PROGRAMS = $(ASM) $(SIM)
 
@@ -106,8 +107,8 @@ dep:
 	@ echo done.
 
 install:
-	install -m 755 $(ASM) /usr/local/bin
-	install -m 755 $(SIM) /usr/local/bin
+	install -m $(NMODE) $(ASM) /usr/local/bin
+	install -m $(SMODE) $(SIM) /usr/local/bin
 
 tar:
 	@echo creating archive ...
