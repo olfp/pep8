@@ -20,7 +20,7 @@ ifeq ($(HW),BCM)
 	RASPI = true
 	RASPIDEFS = -D__raspi__
 	RASPILIBS = -lpigpio
-	RASPIOBJS = raspi/tm1637.o
+	RASPIOBJS = tm1637/tm1637.o
 	EXTRAS = $(RASPIOBJS)
 endif
 
