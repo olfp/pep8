@@ -25,7 +25,7 @@
 #include "types8.h"
 
 #ifdef __raspi__
-#include "raspi/tm1637.h"
+#include "tn1637/tm1637.h"
 #endif
 
 #define IOP_RDYIN	0
