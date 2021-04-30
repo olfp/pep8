@@ -32,5 +32,6 @@ To install binaries download release (.deb) and install with "sudo apt install .
 Currently only a Debian style package is supplied.
 
 Credits: Thank you for the GPIO and tm16437 support code
-joan2937 for the pigpio library (http://abyz.me.uk/rpi/pigpio/)
-Johannes Braun for the tm1637 driver code (https://github.com/hannenz/tm1637)
+
+* joan2937 for the pigpio library (http://abyz.me.uk/rpi/pigpio/)
+* Johannes Braun for the tm1637 driver code (https://github.com/hannenz/tm1637)
