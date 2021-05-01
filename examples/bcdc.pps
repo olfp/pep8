@@ -61,8 +61,7 @@ TERPRI: NOP                     ; print cr-lf
         JMP I   TERPRI
 
 START:  JMS     BANNER          ; print startup banner
-MNLOOP:	JMS 	DISPLY		; refresh
-	JMS     GETCH		; read input
+MNLOOP:	JMS     GETCH		; read input
 	STO	CURCH
 	JMS I	DISPV		; do something
 	RCL	CURCH
@@ -200,4 +199,7 @@ NEWDIG:	RCL	CHAR0
 
 NODIG:	NOP
 
-	JMP I	DISPCH
+	JMS 	DISPLY		; refresh
+NOACTN:	JMP I	DISPCH
+
+; EOF

@@ -273,7 +273,7 @@ int main( int argc, char *argv[] ) {
       char *opts = NULL;
       size_t len = 0;
       wordexp_t p;
-      int xargc;
+      int err, xargc;
       char** xargv;
 
       getline(&opts, &len, optfile);
@@ -281,7 +281,7 @@ int main( int argc, char *argv[] ) {
       len = strlen(opts);
       opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
       /* Note! This expands shell variables. */
-      int err = wordexp(opts, &p, 0);
+      err = wordexp(opts, &p, 0);
       if ( !err) {
         xargc = p.we_wordc;
         xargv = calloc(xargc + 1, sizeof(char *));
