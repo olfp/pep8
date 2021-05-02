@@ -38,15 +38,17 @@ DEND:	0			; display reg, four words
 SBUF:	0
 	0
 	0
-SEND:	0
+SEND:	0			; second reg, four words
+
+OPCHAR: 0			; char from op to perform
 
 DSPSIZ: (DEND-DBUF+1)
 DIGFRE:	0
 
 CURCH:	0			; current char
 
-ZMODE:	0
-DPTR:	0
+ZMODE:	0			; zero for leading zeros
+DPTR:	0			; poitner in disp reg
 DPTR2:	0
 
 EOF:    4                       ; ^D, end of file
@@ -257,7 +259,17 @@ CLRLOP:	CLA
 	JMP	CLRLOP
 	JMP	REFRSH
 
-NOCLR:	NOP
+NOCLR:	RCL	CURCH
+	CMP	CHARP
+	BNE	NONO
+
+	; add op
+	RCL	CURCH
+	STO   	OPCHAR
+	JMS   	ADDOP
+	JMS	CLRDSP
+
+NONO:	NOP
 
 REFRSH:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
