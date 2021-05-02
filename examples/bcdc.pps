@@ -4,29 +4,50 @@
 
 TTY=    0                       ; TTY is device zero
 
-	MACRO	LEA
-	ZMEM	APTR% \1
-	RCL	APTR%
-	ENDM
-
-        JMP I   VEC             ; jumpstart (just in case)
-VEC:    START
-
-PUTSV:	PUTS			; longjump poiters
-DISPV:  DISPCH
-
 SAR=    CLL RAR                 ; shift ac right
 NEG=	CLL CMA IAC		; negate ac
-PRINT=  JMS I   PUTSV           ; print following counted str
+
+	MACRO	RLI
+	ZMEM	APTR%% \1
+	RCL	APTR%%
+	ENDM
+
+	MACRO	CPI
+	ZMEM	CPTR%% \1
+	NEG
+	TAD	CPTR%%
+	ENDM
+
+	MACRO	JPL
+	ZMEM	JVEC%% \1
+	JMP I	JVEC%%
+	ENDM
+
+	MACRO	JSL
+	ZMEM	CVEC%% \1
+	JMS I	CVEC%%
+	ENDM
+
+BOOT:	JPL	START           ; jumpstart (just in case)
 
 DBUF:	0
 	0
 	0
 DEND:	0			; display reg, four words
 
-DIGPTR:	DEND
+SBUF:	0
+	0
+	0
+SEND:	0
+
+DSPSIZ: (DEND-DBUF+1)
+DIGFRE:	0
 
 CURCH:	0			; current char
+
+ZMODE:	0
+DPTR:	0
+DPTR2:	0
 
 EOF:    4                       ; ^D, end of file
 NL:     12                      ; ^J, new line
@@ -34,6 +55,9 @@ CR:     15                      ; ^M, carriage retuen
 SPACE:  40                      ; ' '
 CHAR0:  60                      ; 0
 CHAR9:  71                      ; 9
+CHARP:	43			; plus
+CHARM:	45			; minus
+CHARC:	103			; C for clear
 
 GETCH:  NOP                     ; get char from tty
 WAITI:  SRI     TTY
@@ -60,10 +84,22 @@ TERPRI: NOP                     ; print cr-lf
         JMS     PUTCH
         JMP I   TERPRI
 
+	PAGE
+
+BANNER: NOP
+        JMS     TERPRI
+        JSL	PUTS
+        TEXT    /BCD CALC/
+        JMS     TERPRI
+        JMP I   BANNER
+
 START:  JMS     BANNER          ; print startup banner
+	RCL	DSPSIZ
+	STO	DIGFRE
+	JMS	DISPLY
 MNLOOP:	JMS     GETCH		; read input
 	STO	CURCH
-	JMS I	DISPV		; do something
+	JSL	DISPCH		; do something
 	RCL	CURCH
 	NEG
         TAD     EOF             ; compare with eof
@@ -72,7 +108,7 @@ MNLOOP:	JMS     GETCH		; read input
         JMP     MNLOOP          ; loop
 
 FINIS:  JMS     TERPRI
-        PRINT
+        JSL	PUTS
         TEXT    /BYE/
 	JMS	TERPRI
 	HLT
@@ -80,31 +116,37 @@ FINIS:  JMS     TERPRI
 DISPLY:	NOP
 	RCL	CR
 	JMS	PUTCH
+	CLA
+	STO	ZMODE
 	
-	RCL	DSTRT
+	RLI	DBUF
 	STO	DPTR
-NXTDIG:	RCL I 	DPTR
+NXTDIG:	RCL	ZMODE
+	SZA
+	JMP	NRMDIG
+SUPLZD:	RCL	DPTR
+	CPI	DEND
+	SNA
+	JMP	NRMDIG		; last digit
+	RCL I 	DPTR
+	SZA
+	JMP	NOLZRD		; not a zero
+	RCL	SPACE
+	JMS 	PUTCH
+	JMP	ADVPTR
+NOLZRD:	CLA IAC
+	STO	ZMODE
+NRMDIG:	RCL I 	DPTR
 	JMS 	PUTDIG
-	RCL 	DPTR
+ADVPTR:	RCL 	DPTR
 	IAC
 	STO 	DPTR		; incremented
-	NEG
-	TAD	DLAST		; check end
+	CPI	DEND
 	SMA
 	JMP	NXTDIG
 	JMP I 	DISPLY
 
-DSTRT:	DBUF
-DLAST:	DEND
-DPTR:	0
-DPTR2:	0
-
-BANNER: NOP
-        JMS     TERPRI
-        PRINT
-        TEXT    /BCD CALC/
-        JMS     TERPRI
-        JMP I   BANNER
+	PAGE
 
 PUTS:   NOP                     ; print following counted str
         RCL I   PUTS            ; ret vec is ptr
@@ -150,8 +192,6 @@ LEN:    0                       ; length countdown
 ASCII:  40                      ; offset sixbit acsii
 MASK6:  77                      ; sixbit mask
 
-	PAGE
-
 DISPCH:	NOP
         RCL	CURCH
         NEG
@@ -166,23 +206,20 @@ DISPCH:	NOP
 
 	; its a digit
 
-	RCL	DIGPTR		; check if full
-	NEG
-	TAD	DBUF
+	RCL	DIGFRE		; check if full
 	SNA
-	JMP	DISPCH		; no room
+	JMP	NOACTN		; no room
 
 	; put new digit in display buffer
 	
-	RCL	DSTRT
+	RLI	DBUF
 SFTDIG:	STO	DPTR2
 	IAC			; disp buf second digit
 	STO	DPTR
 	RCL I 	DPTR
-	STO 	DPTR2
+	STO I	DPTR2
 	RCL	DPTR
-	NEG
-	TAD	DLAST
+	CPI	DEND
 	SNA
 	JMP	NEWDIG
 	RCL	DPTR
@@ -192,14 +229,37 @@ NEWDIG:	RCL	CHAR0
 	NEG
 	TAD	CURCH		; get digit value
 
-	STO I	DIGPTR		; to display reg
+	STO	DEND		; store rigthmost  
+
 	CLA CLL CMA		; load -1
-	TAD 	DIGPTR
-	STO	DIGPTR
+	TAD 	DIGFRE
+	STO	DIGFRE
+	JMP	REFRSH
 
-NODIG:	NOP
+NODIG:	RCL	CURCH
+        NEG
+        TAD     CHARC           ; compare to 'C'
+        SZA
+        JMP     NOCLR
 
-	JMS 	DISPLY		; refresh
+	; clear disp reg
+	RCL	DSPSIZ
+	STO	DIGFRE
+	RLI	DBUF
+	STO	DPTR
+CLRLOP:	CLA
+	STO I	DPTR
+	RCL 	DPTR
+	IAC
+	STO	DPTR
+	CPI	DEND
+	SMA
+	JMP	CLRLOP
+	JMP	REFRSH
+
+NOCLR:	NOP
+
+REFRSH:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
 
 ; EOF
