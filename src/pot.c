@@ -1,11 +1,12 @@
 /*
  * pot - pep8 opcode translator
  * 
- * (c) olf 07/05
+ * (c) olf 07/05, 2021
  * 
  * takes .pps file to produce an .pmi image file to be loaded into pepsi(1)
  * 
- * missing features: 1) more pseudos: DUBL (24 bit int), FLTG (36 Bit floating point)
+ * missing features?: 	1) more pseudos: DUBL (24 bit int)
+ *			2) FLTG (36 Bit floating point)
  */
 
 #include <stdio.h>
@@ -276,13 +277,13 @@ pseudoop(char *tok)
 static void
 macnify(char *tok)
 {
-  char *first, *last, fmt[SYMLEN];
+  char *first, *last, fmt[SYMLEN+1];
   int len;
 	
   first = strchr(tok, MNO);
   last = strrchr(tok, MNO);
   len = last - first + 1;
-  strcpy(fmt, tok);
+  strlcpy(fmt, tok, SYMLEN);
   sprintf(fmt + (first - tok), "%%0%dd", len);
   sprintf(tok, fmt, curmac->refcnt);
   strncpy(oline + (tok - uline), tok, strlen(tok));
