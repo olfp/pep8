@@ -7,23 +7,43 @@ TTY=    0                       ; TTY is device zero
 SAR=    CLL RAR                 ; shift ac right
 NEG=	CLL CMA IAC		; negate ac
 
-	MACRO	RLI
+	MACRO	RLI		; recall immediate
 	ZMEM	APTR%% \1
 	RCL	APTR%%
 	ENDM
 
-	MACRO	CPI
+	MACRO	CPI		; compare with immediate
 	ZMEM	CPTR%% \1
 	NEG
 	TAD	CPTR%%
 	ENDM
 
-	MACRO	JPL
+	MACRO	CMP		; subtract to check 0/</>
+	NEG
+	TAD	\1
+	ENDM
+
+	MACRO	BUS		; negate AC and add: inv sub
+	NEG
+	TAD	\1
+	ENDM
+
+	MACRO	BNE		; branch if not zero/equal
+	SZA
+	JMP	\1
+	ENDM
+
+	MACRO	BEQ		; branch in zero/equal
+	SNA
+	JMP	\1
+	ENDM
+
+	MACRO	JPL		; jmp long 
 	ZMEM	JVEC%% \1
 	JMP I	JVEC%%
 	ENDM
 
-	MACRO	JSL
+	MACRO	JSL		; jmp sub long
 	ZMEM	CVEC%% \1
 	JMS I	CVEC%%
 	ENDM
@@ -57,8 +77,8 @@ CR:     15                      ; ^M, carriage retuen
 SPACE:  40                      ; ' '
 CHAR0:  60                      ; 0
 CHAR9:  71                      ; 9
-CHARP:	43			; plus
-CHARM:	45			; minus
+CHARP:	53			; plus '+'
+CHARM:	55			; minus '-'
 CHARC:	103			; C for clear
 
 GETCH:  NOP                     ; get char from tty
@@ -239,12 +259,33 @@ NEWDIG:	RCL	CHAR0
 	JMP	REFRSH
 
 NODIG:	RCL	CURCH
-        NEG
-        TAD     CHARC           ; compare to 'C'
-        SZA
-        JMP     NOCLR
+        CMP	CHARC           ; compare to 'C'
+        BNE	NOCLR
+	JSL	CLRDSP
+	JMP	REFRSH
+
+NOCLR:  JSL	CPYBUF		; copy disp reg to secnd reg
+
+	RCL	CURCH
+	CMP	CHARP
+	BNE	NONO
+
+	; add op
+	RCL	CURCH
+	STO   	OPCHAR
+	JSL   	ADDOP
+	JSL	CLRDSP
+	JMP	REFRSH
+
+NONO:	NOP
+
+REFRSH:	JSL 	DISPLY		; refresh
+NOACTN:	JMP I	DISPCH
+
+	PAGE
 
 	; clear disp reg
+CLRDSP:	NOP
 	RCL	DSPSIZ
 	STO	DIGFRE
 	RLI	DBUF
@@ -257,21 +298,45 @@ CLRLOP:	CLA
 	CPI	DEND
 	SMA
 	JMP	CLRLOP
-	JMP	REFRSH
+	JMP I	CLRDSP
 
-NOCLR:	RCL	CURCH
-;	CMP	CHARP
-;	BNE	NONO
+CPYBUF:	NOP
+	RLI	SEND
+	STO	DPTR2
+	RLI	DEND
+	STO	DPTR
+CPYLOP:	RCL I 	DPTR		; digit from disp reg
+	STO I	DPTR2		; save in secnd reg
+	RCL 	DPTR2
+	IAC
+	STO	DPTR2
+	RCL	DPTR
+	IAC
+	STO	DPTR2
+	CPI	SBUF
+	SZA
+	JMP	CPYLOP	
+	JMP I	CPYBUF
 
-	; add op
-;	RCL	CURCH
-;	STO   	OPCHAR
-;	JMS   	ADDOP
-;	JMS	CLRDSP
-
-NONO:	NOP
-
-REFRSH:	JSL 	DISPLY		; refresh
-NOACTN:	JMP I	DISPCH
+	; add disp reg and secnd reg
+ADDOP:	NOP
+	RLI	SEND
+	STO	DPTR2
+	RLI	DEND
+	STO	DPTR
+ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
+	CLL
+	TAD I	DPTR		; add digit from disp reg
+	STO I	DPTR		; save in disp reg
+	RCL 	DPTR2
+	IAC
+	STO	DPTR2
+	RCL	DPTR
+	IAC
+	STO	DPTR2
+	CPI	SBUF
+	SZA
+	JMP	ADDLOP
+JMP I	ADDOP
 
 ; EOF
