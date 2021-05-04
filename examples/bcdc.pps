@@ -270,6 +270,9 @@ DISPCH:	NOP
 
 	JSL	CPYBUF		; copy disp reg to secnd reg
 	JSL	CLRDSP		; clear disp reg
+	RCL	BCDCRY		; overflow?
+	SZA
+	JSL	CPYBUF		; clear secnd reg too
 	CLA
 	STO	BCDCRY		; clear error / overflow
 
@@ -299,6 +302,8 @@ NODIG:	RCL	CURCH
         CMP	CHARC           ; compare to 'C'
         BNE	NOCLR
 	JSL	CLRDSP
+	CLA
+	STO	BCDCRY		; clear overflow
 	JMP	REFRSH
 
 NOCLR: 	NOP 
@@ -318,11 +323,6 @@ NOCLR: 	NOP
 UNKNWN:	NOP			; char with unknown action
 
 REFRSH:	RCL	BCDCRY
-;	BEQ	DISPOK
-;	JSL	CLRDSP
-;	JSL	CPYBUF
-;	RCL	ERRVAL
-;	STO	DEND
 DISPOK:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
 
@@ -372,15 +372,23 @@ ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
 	DEC	DPTR2
 	DEC	DPTR
 	CPI	DBUF
-;XLOP:	SPA SNA
 	BLE	ADDLOP
+	JMS	CHKOVF		; overflow
 	JMP I	ADDOP
+
+CHKOVF:	NOP			; check for overflow
+	RCL	BCDCRY
+	BEQ	NOOVFL
+	JSL	CLRDSP		; clear dsp reg
+	JSL	CPYBUF		; clear secnd reg
+	RCL	ERRVAL		; set error indicator
+	STO	DEND	
+NOOVFL:	JMP I 	CHKOVF
 
 BCDADJ:	NOP
 	STO	BCDTMP
 	CPI	11		; compare to 9
-	SMA SZA
-	JMP	NOADJ
+	BGE	NOADJ
 	CLA IAC
 	STO	BCDCRY		; set carry
 	RCL	BCDTMP
