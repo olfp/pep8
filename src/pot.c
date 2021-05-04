@@ -283,7 +283,8 @@ macnify(char *tok)
   first = strchr(tok, MNO);
   last = strrchr(tok, MNO);
   len = last - first + 1;
-  strlcpy(fmt, tok, SYMLEN);
+  /* strlcpy(fmt, tok, SYMLEN);  *** not inn linux */
+  strcpy(fmt, tok);
   sprintf(fmt + (first - tok), "%%0%dd", len);
   sprintf(tok, fmt, curmac->refcnt);
   strncpy(oline + (tok - uline), tok, strlen(tok));

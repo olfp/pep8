@@ -1,1 +1,5 @@
--e 0
+pot: -ls
+pepsi: -e 0
+panel: dbuf,4 Display
+panel: sbuf,4 Second
+panel: nxchar NextOp

@@ -105,6 +105,7 @@ static void init_rl( char *progname ) {
 int doopts( int argc, char *argv[] ) {
   char *daddr, *dcnt, *next;
   int optch, dev, norun = 0;
+
   DUMP *newdump;
 
   optind = 1; /* else fils on 2nd run from xopts */
@@ -271,26 +272,28 @@ int main( int argc, char *argv[] ) {
     if( (optfile = fopen( optname, "r" )) != NULL ) {
       /* found an option file */
       char *opts = NULL;
-      size_t len = 0;
+      size_t len, siz = 0;
       wordexp_t p;
       int err, xargc;
       char** xargv;
 
-      getline(&opts, &len, optfile);
-      /* getline store the buffer size in len, not the string length! */
+      do {
+        len = getline(&opts, &siz, optfile);
+	printf("getline:%s\n", opts);
+      } while((len >= 0) && strcmp(opts, "pepsi"));
       len = strlen(opts);
       opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
       /* Note! This expands shell variables. */
       err = wordexp(opts, &p, 0);
       if ( !err) {
+	printf("Using additionial options: %s\n", opts);
         xargc = p.we_wordc;
         xargv = calloc(xargc + 1, sizeof(char *));
-	xargv[0] = "xopts";
         for (i = 0; i < p.we_wordc; i++) {
-          xargv[i+1] = strdup(p.we_wordv[i]);
+          xargv[i] = strdup(p.we_wordv[i]);
         }
         wordfree(&p);
-        doopts(xargc+1, xargv);
+        doopts(xargc, xargv);
       } else {
 	fprintf( stderr, "Cannot parse option file, error: %d\n", err);
 	exit(EXIT_FAILURE);
