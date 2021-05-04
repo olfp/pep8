@@ -20,8 +20,8 @@ RMO=	CLL CLA CMA		; Recall minus one aka 777
 	ENDM
 
 	MACRO	DEC		; decremtn word
-	RMO
-	TAD	\1
+	RCL	\1
+	DAC
 	STO	\1
 	ENDM
 
@@ -105,6 +105,8 @@ SEND:	0			; second reg, four words
 
 OPCHAR: 0			; char from op to perform
 
+BCDCRY: 0
+
 DSPSIZ: (DEND-DBUF+1)
 DIGFRE:	0
 
@@ -123,6 +125,7 @@ CHAR9:  71                      ; 9
 CHARP:	53			; plus '+'
 CHARM:	55			; minus '-'
 CHARC:	103			; C for clear
+ERRVAL:	25			; 'E' - '0' for Error
 
 GETCH:  NOP                     ; get char from tty
 WAITI:  SRI     TTY
@@ -267,6 +270,8 @@ DISPCH:	NOP
 
 	JSL	CPYBUF		; copy disp reg to secnd reg
 	JSL	CLRDSP		; clear disp reg
+	CLA
+	STO	BCDCRY		; clear error / overflow
 
 	; put new digit in display buffer
 	
@@ -312,7 +317,13 @@ NOCLR: 	NOP
 
 UNKNWN:	NOP			; char with unknown action
 
-REFRSH:	JSL 	DISPLY		; refresh
+REFRSH:	RCL	BCDCRY
+;	BEQ	DISPOK
+;	JSL	CLRDSP
+;	JSL	CPYBUF
+;	RCL	ERRVAL
+;	STO	DEND
+DISPOK:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
 
 	PAGE
@@ -345,6 +356,8 @@ CPYLOP:	RCL I 	DPTR		; digit from disp reg
 
 	; add disp reg and secnd reg
 ADDOP:	NOP
+	CLA
+	STO	BCDCRY		; clear bcd carry
 	RLI	SEND
 	STO	DPTR2
 	RLI	DEND
@@ -352,26 +365,33 @@ ADDOP:	NOP
 ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
 	CLL
 	TAD I	DPTR		; add digit from disp reg
+	CLL
+	TAD	BCDCRY		; add bcd carry
 	JMS 	BCDADJ		; bcd adjust
 	STO I	DPTR		; save in disp reg
 	DEC	DPTR2
 	DEC	DPTR
 	CPI	DBUF
-	BNE	ADDLOP
-JMP I	ADDOP
+;XLOP:	SPA SNA
+	BLE	ADDLOP
+	JMP I	ADDOP
 
 BCDADJ:	NOP
 	STO	BCDTMP
 	CPI	11		; compare to 9
 	SMA SZA
 	JMP	NOADJ
+	CLA IAC
+	STO	BCDCRY		; set carry
 	RCL	BCDTMP
 	CLL
-	TAI	6
-	ANI	17
-	SKP
-NOADJ:	RCL	BCDTMP
-	JMP I BCDADJ
+	TAI	6		; add correction factor
+	ANI	17		; mask bcd bits
+	JMP	ADJOK
+NOADJ:	CLA
+	STO	BCDCRY
+	RCL	BCDTMP
+ADJOK:	JMP I BCDADJ
 
 BCDTMP:	0
 

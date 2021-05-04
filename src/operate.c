@@ -44,7 +44,7 @@ void decodeopr( WORD8 opcode ) {
 	  flag = flag || !ac8;        	/* is AC == 0 ? */
 	if( opcode & SNL )
 	  flag = flag || link8;         /* is the link bit set? */
-	if( opcode & LOGGRP ) 		/* AND group */
+	if( opcode & LOGGRP )		/* AND group */
 	  flag = !flag;			/* Don't skip if any OR Bit set */
 	
 	if( flag ) {			/* shall we skip? */
@@ -77,13 +77,13 @@ void decodeopr( WORD8 opcode ) {
     if( opcode & DAC )  {
       ac8--;                            /* decrement <L,AC> */
       if( ac8 < 0 )
-        link8 = ~link8;
+	link8 = link8 ? 0 : 1;          /* complement L */
       ac8 &= MASK12;
     }
     if( opcode & IAC )  {
       ac8++;                            /* increment <L,AC> */
       if( ac8 > MASK12 )
-        link8 = ~link8;
+	link8 = link8 ? 0 : 1;          /* complement L */
       ac8 &= MASK12;
     }
   }
