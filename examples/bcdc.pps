@@ -31,6 +31,16 @@ RMO=	CLL CLA CMA		; Recall minus one aka 777
 	TAD	CPTR%%
 	ENDM
 
+	MACRO	TAI		; TAD immediate
+	ZMEM	ADIP%% \1
+	TAD	ADIP%%
+	ENDM
+
+	MACRO	ANI		; AND immediate
+	ZMEM	ANIP%% \1
+	AND	ANIP%%
+	ENDM
+
 	MACRO	CMP		; subtract to check 0/</>
 	NEG
 	TAD	\1
@@ -56,8 +66,13 @@ RMO=	CLL CLA CMA		; Recall minus one aka 777
 	JMP	\1
 	ENDM
 
-	MACRO	BLE		; branch if less
+	MACRO	BLT		; branch if less than
 	SPA
+	JMP	\1
+	ENDM
+
+	MACRO	BLE		; branch if less/equal
+	SPA SNA
 	JMP	\1
 	ENDM
 
@@ -99,7 +114,7 @@ ZMODE:	0			; zero for leading zeros
 DPTR:	0			; poitner in disp reg
 DPTR2:	0
 
-EOF:    4                       ; ^D, end of file
+EOF:    121                     ; Q, quit
 NL:     12                      ; ^J, new line
 CR:     15                      ; ^M, carriage retuen
 SPACE:  40                      ; ' '
@@ -239,7 +254,7 @@ DISPCH:	NOP
         BGT     NODIG           ; not a digit
         RCL	CURCH
         CMP     CHAR9           ; compare to '9'
-        BLE     NODIG           ; not a digit
+        BLT     NODIG           ; not a digit
 
 	; its a digit
 
@@ -337,11 +352,27 @@ ADDOP:	NOP
 ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
 	CLL
 	TAD I	DPTR		; add digit from disp reg
+	JMS 	BCDADJ		; bcd adjust
 	STO I	DPTR		; save in disp reg
 	DEC	DPTR2
 	DEC	DPTR
 	CPI	DBUF
 	BNE	ADDLOP
 JMP I	ADDOP
+
+BCDADJ:	NOP
+	STO	BCDTMP
+	CPI	11		; compare to 9
+	SMA SZA
+	JMP	NOADJ
+	RCL	BCDTMP
+	CLL
+	TAI	6
+	ANI	17
+	SKP
+NOADJ:	RCL	BCDTMP
+	JMP I BCDADJ
+
+BCDTMP:	0
 
 ; EOF

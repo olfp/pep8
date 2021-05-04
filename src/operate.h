@@ -26,7 +26,7 @@
 /* group 2 */
 
 #define LOGGRP  00100			/* AND(1) or OR(0) group of bits */
-#define CONDS	00070			/* Condition bits for skip */
+#define CONDS	00740			/* Condition bits for skip */
 #define DSPMSK  00007			/* if non-null, neg. displacement */
 
 #define SMA	00040			/* skip on AC < 0 */

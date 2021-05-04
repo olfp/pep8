@@ -46,7 +46,7 @@ void decodeopr( WORD8 opcode ) {
 	  flag = flag || link8;         /* is the link bit set? */
 	if( opcode & LOGGRP ) 		/* AND group */
 	  flag = !flag;			/* Don't skip if any OR Bit set */
-	  
+	
 	if( flag ) {			/* shall we skip? */
 	  disp = (opcode & DSPMSK);	/* displacement */
 	  if(disp)
