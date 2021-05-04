@@ -103,7 +103,8 @@ SBUF:	0
 	0
 SEND:	0			; second reg, four words
 
-OPCHAR: 0			; char from op to perform
+OPCHAR: 53			; char for op, def + for start
+NXCHAR: 0			; char pressed, next op
 
 BCDCRY: 0
 
@@ -124,6 +125,7 @@ CHAR0:  60                      ; 0
 CHAR9:  71                      ; 9
 CHARP:	53			; plus '+'
 CHARM:	55			; minus '-'
+CHAREQ:	75			; equals '='
 CHARC:	103			; C for clear
 ERRVAL:	25			; 'E' - '0' for Error
 
@@ -306,27 +308,42 @@ NODIG:	RCL	CURCH
 	STO	BCDCRY		; clear overflow
 	JMP	REFRSH
 
-NOCLR: 	NOP 
-
-	RCL	CURCH
+NOCLR: 	RCL	CURCH		; '+' or '-' ?
 	CMP	CHARP
-	BNE	UNKNWN
-
-	; add op
+	BEQ	ISPLMN
 	RCL	CURCH
-	STO   	OPCHAR
-	JSL   	ADDOP
-	RCL	DSPSIZ
-	STO	DIGFRE		; done, disp is virtuel empty
+	CMP	CHARM
+	BNE	NOPLMN		; not plus or minus
+
+	; add/sub op
+ISPLMN:	RCL	CURCH
+	STO   	NXCHAR		; remeber what to do
+	JSL	DOADD		; execute
 	JMP	REFRSH
 
-UNKNWN:	NOP			; char with unknown action
-
+NOPLMN:	RCL	CURCH		; '=' ?
+	CMP	CHAREQ
+	BNE	IGNCHR
+	RCL	NXCHAR		; equal sign, do last op
+	STO	OPCHAR
+	RCL	CHARP
+	STO	NXCHAR
+	JSL	DOADD		; execute
+	JSL	CLRSEC
+	JMP	REFRSH
+	
+IGNCHR:	NOP			; unknown char, ignore
 REFRSH:	RCL	BCDCRY
 DISPOK:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
 
 	PAGE
+
+DOADD:	NOP			; execute add/sub op
+	JSL   	ADDOP
+	RCL	DSPSIZ
+	STO	DIGFRE		; done, disp is virtuel empty
+	JMP I	DOADD
 
 	; clear disp reg
 CLRDSP:	NOP
@@ -340,6 +357,17 @@ CLRLOP:	CLA
 	CPI	DEND
 	BGE	CLRLOP
 	JMP I	CLRDSP
+
+	; clear disp reg
+CLRSEC:	NOP
+	RLI	SBUF
+	STO	DPTR
+SCLLOP:	CLA
+	STO I	DPTR
+	INC 	DPTR
+	CPI	SEND
+	BGE	SCLLOP
+	JMP I	CLRSEC
 
 CPYBUF:	NOP
 	RLI	SBUF
@@ -356,24 +384,26 @@ CPYLOP:	RCL I 	DPTR		; digit from disp reg
 
 	; add disp reg and secnd reg
 ADDOP:	NOP
-	CLA
-	STO	BCDCRY		; clear bcd carry
+	if(opchar='-') make nines complemet of dsp reg, set bcdcry
+	else clr bcdcr
 	RLI	SEND
 	STO	DPTR2
 	RLI	DEND
 	STO	DPTR
-ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
-	CLL
-	TAD I	DPTR		; add digit from disp reg
+ADDLOP:	RCL I 	DPTR		; digt from disp reg
+	CLL	
+	TAD I	DPTR2		; add digit from secnd reg
 	CLL
 	TAD	BCDCRY		; add bcd carry
-	JMS 	BCDADJ		; bcd adjust
+	JSL 	BCDADJ		; bcd adjust
 	STO I	DPTR		; save in disp reg
 	DEC	DPTR2
 	DEC	DPTR
 	CPI	DBUF
 	BLE	ADDLOP
-	JMS	CHKOVF		; overflow
+OPDONE:	JMS	CHKOVF		; overflow
+	RCL	NXCHAR
+	STO	OPCHAR
 	JMP I	ADDOP
 
 CHKOVF:	NOP			; check for overflow
@@ -384,6 +414,12 @@ CHKOVF:	NOP			; check for overflow
 	RCL	ERRVAL		; set error indicator
 	STO	DEND	
 NOOVFL:	JMP I 	CHKOVF
+
+	PAGE
+
+COMDSP:	NOP			; each dig becomes 9-d
+
+	JMP I	COMDSP
 
 BCDADJ:	NOP
 	STO	BCDTMP
