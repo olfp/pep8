@@ -6,10 +6,23 @@ TTY=    0                       ; TTY is device zero
 
 SAR=    CLL RAR                 ; shift ac right
 NEG=	CLL CMA IAC		; negate ac
+RMO=	CLL CLA CMA		; Recall minus one aka 777
 
 	MACRO	RLI		; recall immediate
 	ZMEM	APTR%% \1
 	RCL	APTR%%
+	ENDM
+
+	MACRO	INC		; increment word
+	RCL	\1
+	IAC
+	STO	\1
+	ENDM
+
+	MACRO	DEC		; decremtn word
+	RMO
+	TAD	\1
+	STO	\1
 	ENDM
 
 	MACRO	CPI		; compare with immediate
@@ -33,8 +46,23 @@ NEG=	CLL CMA IAC		; negate ac
 	JMP	\1
 	ENDM
 
-	MACRO	BEQ		; branch in zero/equal
+	MACRO	BEQ		; branch if zero/equal
 	SNA
+	JMP	\1
+	ENDM
+
+	MACRO	BGE		; branch if greater/equal
+	SMA
+	JMP	\1
+	ENDM
+
+	MACRO	BLE		; branch if less
+	SPA
+	JMP	\1
+	ENDM
+
+	MACRO	BGT		; branch if greater
+	SMA SZA
 	JMP	\1
 	ENDM
 
@@ -123,10 +151,8 @@ MNLOOP:	JMS     GETCH		; read input
 	STO	CURCH
 	JSL	DISPCH		; do something
 	RCL	CURCH
-	NEG
-        TAD     EOF             ; compare with eof
-        SNA
-        JMP     FINIS           ; got eof
+        CMP     EOF             ; compare with eof
+        BEQ     FINIS           ; got eof
         JMP     MNLOOP          ; loop
 
 FINIS:  JMS     TERPRI
@@ -144,15 +170,12 @@ DISPLY:	NOP
 	RLI	DBUF
 	STO	DPTR
 NXTDIG:	RCL	ZMODE
-	SZA
-	JMP	NRMDIG
+	BNE	NRMDIG
 SUPLZD:	RCL	DPTR
 	CPI	DEND
-	SNA
-	JMP	NRMDIG		; last digit
+	BEQ	NRMDIG		; last digit
 	RCL I 	DPTR
-	SZA
-	JMP	NOLZRD		; not a zero
+	BNE	NOLZRD		; not a zero
 	RCL	SPACE
 	JMS 	PUTCH
 	JMP	ADVPTR
@@ -160,12 +183,9 @@ NOLZRD:	CLA IAC
 	STO	ZMODE
 NRMDIG:	RCL I 	DPTR
 	JMS 	PUTDIG
-ADVPTR:	RCL 	DPTR
-	IAC
-	STO 	DPTR		; incremented
+ADVPTR:	INC 	DPTR
 	CPI	DEND
-	SMA
-	JMP	NXTDIG
+	BGE	NXTDIG
 	JMP I 	DISPLY
 
 	PAGE
@@ -203,8 +223,7 @@ PDONE:  CLA
 
 CHKLEN: NOP
         RCL     LEN
-        SNA
-        JMP     PDONE
+        BEQ     PDONE
         CMA IAC
         CMA
         STO     LEN
@@ -216,25 +235,27 @@ MASK6:  77                      ; sixbit mask
 
 DISPCH:	NOP
         RCL	CURCH
-        NEG
-        TAD     CHAR0           ; compare to '0'
-        SMA SZA                 ; inverted cond
-        JMP     NODIG           ; not a digit
+        CMP     CHAR0           ; compare to '0'
+        BGT     NODIG           ; not a digit
         RCL	CURCH
-        NEG
-        TAD     CHAR9           ; compare to '9'
-        SPA                     ; inverted cond
-        JMP     NODIG           ; not a digit
+        CMP     CHAR9           ; compare to '9'
+        BLE     NODIG           ; not a digit
 
 	; its a digit
 
 	RCL	DIGFRE		; check if full
-	SNA
-	JMP	NOACTN		; no room
+	BEQ	NOACTN		; no room
+
+	RCL	DIGFRE		; check if empty
+	CMP	DSPSIZ
+	BNE	SAVDIG
+
+	JSL	CPYBUF		; copy disp reg to secnd reg
+	JSL	CLRDSP		; clear disp reg
 
 	; put new digit in display buffer
 	
-	RLI	DBUF
+SAVDIG:	RLI	DBUF
 SFTDIG:	STO	DPTR2
 	IAC			; disp buf second digit
 	STO	DPTR
@@ -242,20 +263,16 @@ SFTDIG:	STO	DPTR2
 	STO I	DPTR2
 	RCL	DPTR
 	CPI	DEND
-	SNA
-	JMP	NEWDIG
+	BEQ	NEWDIG
 	RCL	DPTR
 	JMP	SFTDIG
 	
 NEWDIG:	RCL	CHAR0
-	NEG
-	TAD	CURCH		; get digit value
+	BUS	CURCH		; get digit value
 
 	STO	DEND		; store rigthmost  
 
-	CLA CLL CMA		; load -1
-	TAD 	DIGFRE
-	STO	DIGFRE
+	DEC	DIGFRE
 	JMP	REFRSH
 
 NODIG:	RCL	CURCH
@@ -264,20 +281,21 @@ NODIG:	RCL	CURCH
 	JSL	CLRDSP
 	JMP	REFRSH
 
-NOCLR:  JSL	CPYBUF		; copy disp reg to secnd reg
+NOCLR: 	NOP 
 
 	RCL	CURCH
 	CMP	CHARP
-	BNE	NONO
+	BNE	UNKNWN
 
 	; add op
 	RCL	CURCH
 	STO   	OPCHAR
 	JSL   	ADDOP
-	JSL	CLRDSP
+	RCL	DSPSIZ
+	STO	DIGFRE		; done, disp is virtuel empty
 	JMP	REFRSH
 
-NONO:	NOP
+UNKNWN:	NOP			; char with unknown action
 
 REFRSH:	JSL 	DISPLY		; refresh
 NOACTN:	JMP I	DISPCH
@@ -292,30 +310,22 @@ CLRDSP:	NOP
 	STO	DPTR
 CLRLOP:	CLA
 	STO I	DPTR
-	RCL 	DPTR
-	IAC
-	STO	DPTR
+	INC 	DPTR
 	CPI	DEND
-	SMA
-	JMP	CLRLOP
+	BGE	CLRLOP
 	JMP I	CLRDSP
 
 CPYBUF:	NOP
-	RLI	SEND
+	RLI	SBUF
 	STO	DPTR2
-	RLI	DEND
+	RLI	DBUF
 	STO	DPTR
 CPYLOP:	RCL I 	DPTR		; digit from disp reg
 	STO I	DPTR2		; save in secnd reg
-	RCL 	DPTR2
-	IAC
-	STO	DPTR2
-	RCL	DPTR
-	IAC
-	STO	DPTR2
-	CPI	SBUF
-	SZA
-	JMP	CPYLOP	
+	INC 	DPTR2
+	INC	DPTR
+	CPI	DEND
+	BGE	CPYLOP	
 	JMP I	CPYBUF
 
 	; add disp reg and secnd reg
@@ -328,15 +338,10 @@ ADDLOP:	RCL I 	DPTR2		; digt from scnd reg
 	CLL
 	TAD I	DPTR		; add digit from disp reg
 	STO I	DPTR		; save in disp reg
-	RCL 	DPTR2
-	IAC
-	STO	DPTR2
-	RCL	DPTR
-	IAC
-	STO	DPTR2
-	CPI	SBUF
-	SZA
-	JMP	ADDLOP
+	DEC	DPTR2
+	DEC	DPTR
+	CPI	DBUF
+	BNE	ADDLOP
 JMP I	ADDOP
 
 ; EOF
