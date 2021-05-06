@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -23,6 +24,8 @@
 
 #include "strutil.h"
 #include "util.h"
+#include "display.h"
+#include "interact.h"
 #include "chario.h"
 #include "octal.h"
 #include "pepsi.h"
@@ -46,12 +49,15 @@ int memtop;				/* highest touched mem location */
 
 int running = TRUE;			/* run or halt */
 int interactive = FALSE;		/* interactive mode */
+int frontpanel = FALSE;			/* display frontpanel info */
 int metrics = FALSE;			/* output metrics */
 int singlestep = FALSE;			/* pause after each instruction */
 int verbose = FALSE;			/* print trace while processing */
 int usesource = FALSE;			/* whether to use the source */
 int coredump = FALSE;			/* whether to produce a coredump */
 int readfile = TRUE;			/* whether to read an image file */
+
+time_t start, stop;
 
 char **text = NULL;			/* source text */
 int maxtxt = 0;				/* addr of max. text line avail. */
@@ -271,42 +277,6 @@ int main( int argc, char *argv[] ) {
     strcpy( optname, inname );
     strcpy( strrchr(optname, DOT ), OPT );
 
-    if( (optfile = fopen( optname, "r" )) != NULL ) {
-      /* found an option file */
-      char *tok, *opts = NULL;
-      size_t len, siz = 0;
-      wordexp_t p;
-      int err, cmp, xargc;
-      char** xargv;
-
-      do {
-        len = getline(&opts, &siz, optfile);
-	opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
-	cmp = strncasecmp(opts, prgtag, strlen(prgtag));
-	if(cmp == 0) {
-	  /* Note! This expands shell variables. */
-	  err = wordexp(opts, &p, 0);
-	  if ( !err) {
-	    tok = strchr(opts, ':');
-	    if(tok) tok++;
-	    printf("Extra options from '%s': %s\n", optname, tok);
-	    xargc = p.we_wordc;
-	    xargv = calloc(xargc + 1, sizeof(char *));
-	    for (i = 0; i < p.we_wordc; i++) {
-	      xargv[i] = strdup(p.we_wordv[i]);
-	    }
-	    wordfree(&p);
-	    doopts(xargc, xargv);
-	  } else {
-	    fprintf( stderr, "Cannot parse option file, error: %d\n", err);
-	    exit(EXIT_FAILURE);
-	  }
-	}
-      } while(len != -1); /* until eof */
-
-      fclose( optfile );
-    }
-
     /* get size of image file */
 
     if( stat(inname, &stbuf) == -1)  {
@@ -406,6 +376,52 @@ int main( int argc, char *argv[] ) {
     fclose( infile );
 
     memtop = len;
+
+    /* now mem layout is fixed, read optoin file (may conaton syms) */
+
+    if( (optfile = fopen( optname, "r" )) != NULL ) {
+      /* found an option file */
+      char *tok, *cmd, *opts = NULL;
+      size_t len, siz = 0;
+      wordexp_t p;
+      int err, xargc;
+      char** xargv;
+
+      do {
+        len = getline(&opts, &siz, optfile);
+	opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
+	tok = strchr(opts, ':');
+	if(tok) tok++;
+	while(tok && *tok && (*tok == ' '))
+	  tok++;
+	if(!strncasecmp(opts, prgtag, strlen(prgtag))) {
+	  /* Note! This expands shell variables. */
+	  err = wordexp(opts, &p, 0);
+	  if ( !err) {
+	    printf("Extra options from '%s': %s\n", optname, tok);
+	    xargc = p.we_wordc;
+	    xargv = calloc(xargc + 1, sizeof(char *));
+	    for (i = 0; i < p.we_wordc; i++) {
+	      xargv[i] = strdup(p.we_wordv[i]);
+	    }
+	    wordfree(&p);
+	    doopts(xargc, xargv);
+	  } else {
+	    fprintf( stderr, "Cannot parse option file, error: %d\n", err);
+	    exit(EXIT_FAILURE);
+	  }
+	}
+	if(!strncasecmp(opts, fpdtag, strlen(fpdtag))) {
+	    printf("Panel options from '%s': %s\n", optname, tok);
+	    cmd = malloc(strlen(tok) + 5);
+	    sprintf(cmd, "w %s", strtok(tok, " "));
+	    watch(cmd);
+	    frontpanel = TRUE;
+	}
+      } while(len != -1); /* until eof */
+
+      fclose( optfile );
+    }
   }
 
   /* code is in memory, go execute it */
@@ -430,9 +446,16 @@ int main( int argc, char *argv[] ) {
 
   /* go ahead */
 
+  start = clock();
   while( running ) {
     if( singlestep || verbose ) {
       display();
+    } else if(frontpanel) {
+      stop = clock();
+      if(((double)(stop - start)) > CLOCKS_PER_SEC) {
+	/* XXX showwatch(TRUE); */
+	stop = start;
+      }
     }
     if( singlestep ) {
       interact();

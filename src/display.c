@@ -12,6 +12,22 @@
 
 extern int submod;
 
+void showwatch(int clr) {
+  WATCH *watch;
+  
+  if(clr)
+    printf("\033[2J");
+
+  if(watched) {
+    putchar('\n');
+    for(watch = watched; watch; watch = watch->next) {
+      if(watch->sym)
+	printf("%s:\n", watch->sym);
+      dumpmem( watch->addr, watch->cnt);
+    }
+  }
+}
+    
 void display() {
 
   WORD8 op, arg;
@@ -66,16 +82,6 @@ void display() {
   
   putchar('\n');
 
-  /* show watchlist */
-
-  if(watched) {
-    putchar('\n');
-    for(watch = watched; watch; watch = watch->next) {
-      if(watch->sym)
-	printf("%s:\n", watch->sym);
-      dumpmem( watch->addr, watch->cnt);
-    }
-  }
-    
+  showwatch(FALSE);
 }
 

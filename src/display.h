@@ -7,6 +7,7 @@
 #ifndef __DISPLAY__
 #define __DISPLAY__
 
-int display();
+void showwatch(int);
+void display();
 
 #endif

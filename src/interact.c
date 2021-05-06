@@ -22,6 +22,8 @@
 
 #include "interact.h"
 
+static WATCH *lastwatch = NULL;
+
 static void usage() {
   printf("<cr> to execute next instruction\n\n");
   printf(".              - redisplay current trace info\n");
@@ -110,7 +112,7 @@ static void clearwatch( ) {
   }
 }
 
-static void watch( char *cmd ) {
+void watch( char *cmd ) {
 
   int addr, cnt;
   char *sym;
@@ -126,8 +128,13 @@ static void watch( char *cmd ) {
     newwatch->sym = sym;
     newwatch->addr = addr;
     newwatch->cnt = cnt;
-    newwatch->next = watched;
-    watched = newwatch;
+    newwatch->next = NULL;
+    if(lastwatch) {
+      lastwatch->next = newwatch;
+      lastwatch = newwatch;
+    } else {
+      watched = lastwatch = newwatch;
+    }
   } else {
     printf(BADMEMA);
   }

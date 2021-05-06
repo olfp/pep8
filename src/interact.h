@@ -17,4 +17,6 @@
 #define NOCTVAL "error: not an octal value!\n"
 #define BADBRKA "error: bad breakpoint address!\n"
 
+void watch( char *cmd );
+
 #endif
