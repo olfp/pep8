@@ -39,6 +39,8 @@ BIT8  ien8 = 0;				/* interrupt enable */
 BIT8  irq8 = 0;				/* interrupt request */
 
 char *prog;				/* name programm was called by */
+char *prgtag = "pepsi";		/* config tag for program */
+char *fpdtag = "panel";			/* config tag for front panel display */
 
 int memtop;				/* highest touched mem location */
 
@@ -271,33 +273,38 @@ int main( int argc, char *argv[] ) {
 
     if( (optfile = fopen( optname, "r" )) != NULL ) {
       /* found an option file */
-      char *opts = NULL;
+      char *tok, *opts = NULL;
       size_t len, siz = 0;
       wordexp_t p;
-      int err, xargc;
+      int err, cmp, xargc;
       char** xargv;
 
       do {
         len = getline(&opts, &siz, optfile);
-	printf("getline:%s\n", opts);
-      } while((len >= 0) && strcmp(opts, "pepsi"));
-      len = strlen(opts);
-      opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
-      /* Note! This expands shell variables. */
-      err = wordexp(opts, &p, 0);
-      if ( !err) {
-	printf("Using additionial options: %s\n", opts);
-        xargc = p.we_wordc;
-        xargv = calloc(xargc + 1, sizeof(char *));
-        for (i = 0; i < p.we_wordc; i++) {
-          xargv[i] = strdup(p.we_wordv[i]);
-        }
-        wordfree(&p);
-        doopts(xargc, xargv);
-      } else {
-	fprintf( stderr, "Cannot parse option file, error: %d\n", err);
-	exit(EXIT_FAILURE);
-      }
+	opts[len-1] = '\0'; /* remove trailing nl, breaks wordexp */
+	cmp = strncasecmp(opts, prgtag, strlen(prgtag));
+	if(cmp == 0) {
+	  /* Note! This expands shell variables. */
+	  err = wordexp(opts, &p, 0);
+	  if ( !err) {
+	    tok = strchr(opts, ':');
+	    if(tok) tok++;
+	    printf("Extra options from '%s': %s\n", optname, tok);
+	    xargc = p.we_wordc;
+	    xargv = calloc(xargc + 1, sizeof(char *));
+	    for (i = 0; i < p.we_wordc; i++) {
+	      xargv[i] = strdup(p.we_wordv[i]);
+	    }
+	    wordfree(&p);
+	    doopts(xargc, xargv);
+	  } else {
+	    fprintf( stderr, "Cannot parse option file, error: %d\n", err);
+	    exit(EXIT_FAILURE);
+	  }
+	}
+      } while(len != -1); /* until eof */
+
+      fclose( optfile );
     }
 
     /* get size of image file */
