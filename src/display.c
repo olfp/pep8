@@ -16,7 +16,7 @@ void showwatch(int clr) {
   WATCH *watch;
   
   if(clr)
-    printf("\033[2J");
+    printf("\033c");
 
   if(watched) {
     putchar('\n');

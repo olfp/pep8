@@ -137,6 +137,7 @@ void watch( char *cmd ) {
     }
   } else {
     printf(BADMEMA);
+    printf("Addr: %04o\n", addr );
   }
 }
 
@@ -256,7 +257,7 @@ static void listbreak(char *cmd) {
   }
 }
 
-static void printsym(char *cmd) {
+void printsym(char *cmd) {
 
   SYMBOL *sym;
 
