@@ -382,11 +382,31 @@ CPYLOP:	RCL I 	DPTR		; digit from disp reg
 	BGE	CPYLOP	
 	JMP I	CPYBUF
 
+	; make nines complemet of disp reg
+NINECO:	NOP
+	RLI	DBUF
+	STO	DPTR
+NICLOP:	RCL I	DPTR
+	NEG
+	CLL
+	TAI	11		; number nine
+	STO I 	DPTR
+	INC 	DPTR
+	CPI	DEND
+	BGE	NICLOP
+	JMP I	NINECO	
+
 	; add disp reg and secnd reg
 ADDOP:	NOP
-	if(opchar='-') make nines complemet of dsp reg, set bcdcry
-	else clr bcdcr
-	RLI	SEND
+	CLA
+	STO	BCDCRY
+	RCL	OPCHAR
+	CMP	CHARM
+	BNE	ISPLUS
+	JMS	NINECO
+	CLA IAC
+	STO	BCDCRY
+ISPLUS:	RLI	SEND
 	STO	DPTR2
 	RLI	DEND
 	STO	DPTR
@@ -406,9 +426,18 @@ OPDONE:	JMS	CHKOVF		; overflow
 	STO	OPCHAR
 	JMP I	ADDOP
 
+OPFLAG:	0
+
 CHKOVF:	NOP			; check for overflow
-	RCL	BCDCRY
-	BEQ	NOOVFL
+	CLA
+	STO	OPFLAG		; flag = 1 if op = '+'
+	RCL	OPCHAR
+	CMP	CHARP		; op was plus?
+	BNE	WASMIN
+	INC	OPFLAG
+wASMIN:	RCL	OPFLAG
+	CMP	BCDCRY
+	BNE	NOOVFL
 	JSL	CLRDSP		; clear dsp reg
 	JSL	CPYBUF		; clear secnd reg
 	RCL	ERRVAL		; set error indicator
