@@ -20,8 +20,8 @@ void showwatch(int mode) {
   WATCH *watch;
   
   if(mode == SW_PANEL) {
-    printf("\033c");
-    printf("pep8 Frontpanel %c", rotor[r++]);
+    printf("\033[H\033[J");
+    printf("pep8 Frontpanel %c\n", rotor[r++]);
     r %= 4;
   }
 
