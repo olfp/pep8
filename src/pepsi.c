@@ -476,7 +476,7 @@ int main( int argc, char *argv[] ) {
       interval = (double) (tnow.tv_usec - tlast.tv_usec) / 1000000 +
 	(double) (tnow.tv_sec - tlast.tv_sec);
       if(interval > 0.1) { /* refresh fp */
-	  showwatch(TRUE);
+	  showwatch(SW_PANEL);
 	  tlast = tnow;
       }
     }

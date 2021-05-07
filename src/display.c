@@ -8,15 +8,22 @@
 
 #include "global.h"
 #include "decode.h"
+#include "display.h"
 #include "util.h"
 
 extern int submod;
 
-void showwatch(int clr) {
+static char *rotor = "|/-\\";
+static int r = 0;
+
+void showwatch(int mode) {
   WATCH *watch;
   
-  if(clr)
+  if(mode == SW_PANEL) {
     printf("\033c");
+    printf("pep8 Frontpanel %c", rotor[r++]);
+    r %= 4;
+  }
 
   if(watched) {
     putchar('\n');
@@ -82,6 +89,6 @@ void display() {
   
   putchar('\n');
 
-  showwatch(FALSE);
+  showwatch(SW_INTERACT);
 }
 
