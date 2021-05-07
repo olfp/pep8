@@ -57,8 +57,6 @@ int usesource = FALSE;			/* whether to use the source */
 int coredump = FALSE;			/* whether to produce a coredump */
 int readfile = TRUE;			/* whether to read an image file */
 
-time_t start, stop;
-
 char **text = NULL;			/* source text */
 int maxtxt = 0;				/* addr of max. text line avail. */
 
@@ -80,7 +78,7 @@ BRKPNT *brklast = NULL;			/* last breakpoint */
 int submod = 0;				/* breakpoint offset for jms */
 
 /* timings */
-struct timeval  tstart, tfinish;
+struct timeval  tstart, tlast, tnow, tfinish;
 
 static void usage( char *name ) {
 
@@ -209,7 +207,7 @@ int main( int argc, char *argv[] ) {
   SYMBOL *lastsym, *newsym, *sym;
   /* metrics */
   struct timeval  tstart, tfinish;
-  double runtime, ips, mips;
+  double runtime, interval, ips, mips;
   char *magpfx = "";
   unsigned long icnt8 = 0;
 
@@ -377,7 +375,7 @@ int main( int argc, char *argv[] ) {
 
     memtop = len;
 
-    /* now mem layout is fixed, read optoin file (may conaton syms) */
+    /* now mem layout is fixed, read option file (may contain syms) */
 
     if( (optfile = fopen( optname, "r" )) != NULL ) {
       /* found an option file */
@@ -446,15 +444,17 @@ int main( int argc, char *argv[] ) {
 
   /* go ahead */
 
-  start = clock();
+  gettimeofday(&tlast, NULL);
   while( running ) {
     if( singlestep || verbose ) {
       display();
     } else if(frontpanel) {
-      stop = clock();
-      if(((double)(stop - start)) > CLOCKS_PER_SEC) {
-	/* XXX showwatch(TRUE); */
-	stop = start;
+      gettimeofday(&tnow, NULL);
+      interval = (double) (tnow.tv_usec - tlast.tv_usec) / 1000000 +
+	(double) (tnow.tv_sec - tlast.tv_sec);
+      if(interval > 1.0) {
+	  showwatch(TRUE);
+	  tlast = tnow;
       }
     }
     if( singlestep ) {
